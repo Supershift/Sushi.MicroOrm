@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/src/Sushi.MicroORM/bin
+/src/Sushi.MicroORM/obj
+/src/.vs/Sushi.MicroORM/v15/Server/sqlite3
+/src/Sushi.MicroORM.Tests/bin/Debug/netcoreapp2.0
+/src/Sushi.MicroORM.Tests/obj

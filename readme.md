@@ -1,4 +1,6 @@
 # Sushi MicroOrm - a fast and easy .Net Standard object mapper
+[![NuGet version (Sushi.MicroOrm)](https://img.shields.io/nuget/v/Sushi.MicroOrm.svg?style=flat-square)](https://www.nuget.org/packages/Sushi.MicroOrm/)
+[![Build status](https://dev.azure.com/supershift/Mediakiwi/_apis/build/status/Micro%20ORM)](https://dev.azure.com/supershift/Mediakiwi/_build/latest?definitionId=38)
 ## Features
 Sushi MicroOrm is a NuGet library that allows you to easily map objects to a Sql Server database. Queries and mappings can be defined typesafe using lambda expressions.
 ## Quick start
@@ -32,16 +34,17 @@ var product = connector.FetchSingle(productID);
 You can map a class to a table by defining a mapping class. In the mapping class' constructor you can map properties to columns using lambda expressions.
 
 Given the following table 'Products':
-Column name | Column type |        |
------------ | ----------- | ------ 
-ID | int | PK, not null
-Name | nvarchar(4000) | not null
-Description | varchar(4000) | not null
-Price | decimal(15,3) | not null
-ExternalID | int | null
-BarCode | varbinary(4000) | not null
-GUID | uniqueidentifier | not null
-ProductTypeID | int | null
+
+| Column name | Column type |        |
+| ----------- | ----------- | ------ |
+| ID | int | PK, not null |
+| Name | nvarchar(4000) | not null |
+| Description | varchar(4000) | not null |
+| Price | decimal(15,3) | not null |
+| ExternalID | int | null |
+| BarCode | varbinary(4000) | not null |
+| GUID | uniqueidentifier | not null |
+| ProductTypeID | int | null |
 
 You can map this using the following C# code:
 ```csharp

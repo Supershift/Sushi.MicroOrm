@@ -1,4 +1,5 @@
 # Sushi MicroOrm - a fast and easy .Net Standard object mapper
+[![NuGet version (Sushi.MicroOrm)](https://img.shields.io/nuget/v/Sushi.MicroOrm.svg?style=flat-square)](https://www.nuget.org/packages/Sushi.MicroOrm/)
 [![Build status](https://dev.azure.com/supershift/Mediakiwi/_apis/build/status/Micro%20ORM)](https://dev.azure.com/supershift/Mediakiwi/_build/latest?definitionId=38)
 ## Features
 Sushi MicroOrm is a NuGet library that allows you to easily map objects to a Sql Server database. Queries and mappings can be defined typesafe using lambda expressions.

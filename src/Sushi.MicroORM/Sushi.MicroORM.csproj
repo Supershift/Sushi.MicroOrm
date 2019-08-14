@@ -15,8 +15,11 @@
     <Company>Supershift B.V.</Company>    
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>    
     <Description>Simple and high performance micro-ORM. Supports SQL Azure and SQL Server 2012 and higher.</Description>    
-    <Copyright>2018, 2019 Supershift B.V.</Copyright>    
-    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>        
+    <Copyright>2019 Supershift B.V.</Copyright>    
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>    
+    <PackageProjectUrl>https://github.com/Supershift/Sushi.MicroOrm</PackageProjectUrl>    
+    <RepositoryUrl>https://github.com/Supershift/Sushi.MicroOrm</RepositoryUrl>    
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>        
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

@@ -241,7 +241,7 @@ namespace Sushi.MicroORM
 
         
         /// <summary>
-        /// Gets the exec reader.
+        /// Executes the <see cref="Command"/> and returns a <see cref="SqlDataReader"/> to read the result set.
         /// </summary>
         /// <value>The exec reader.</value>
         public SqlDataReader ExecReader()

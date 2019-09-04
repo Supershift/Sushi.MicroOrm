@@ -264,6 +264,46 @@ WHERE Product_Key = @productID";
         }
 
         [TestMethod]
+        public async Task ExecuteSetAsync()
+        {
+            var ConnectorProducts = new Connector<Product>();
+            string name = DateTime.UtcNow.Ticks.ToString();
+            var query = @"
+SELECT DISTINCT(Product_ProductTypeID)
+FROM cat_Products";
+
+            var productTypes = await ConnectorProducts.ExecuteSetAsync<Product.ProducType?>(query);
+
+            foreach (var productType in productTypes)
+            {
+                Console.WriteLine(productType == null ? "NULL" : productType.ToString());
+            }
+
+            Assert.AreEqual(5, productTypes.Count);
+        }
+
+        [TestMethod]
+        public async Task ExecuteSetWithFilterAsync()
+        {
+            var ConnectorProducts = new Connector<Product>();
+            string name = DateTime.UtcNow.Ticks.ToString();
+            int productID = 1;
+            var query = @"
+SELECT DISTINCT(Product_ProductTypeID)
+FROM cat_Products
+WHERE Product_Key > @productID";
+            var filter = new DataFilter<Product>();
+            filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
+            var productTypes = await ConnectorProducts.ExecuteSetAsync<Product.ProducType?>(query, filter);
+
+            foreach (var productType in productTypes)
+            {
+                Console.WriteLine(productType == null ? "NULL" : productType.ToString());
+            }
+            Assert.AreEqual(4, productTypes.Count);
+        }
+
+        [TestMethod]
         public async Task SaveNewAsync()
         {
             var order = new Order()

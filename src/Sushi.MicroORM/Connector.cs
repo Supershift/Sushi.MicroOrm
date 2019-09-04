@@ -1198,7 +1198,141 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             return default(TScalar);            
         }
 
+        /// <summary>
+        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="filter"/>.
+        /// </summary>
+        /// <param name="sqlText"></param>
+        /// <param name="filter"></param>
+        /// <returns></returns>
+        public List<Y> ExecuteSet<Y>(string sqlText)
+        {
+            return ExecuteSet<Y>(sqlText, null);
+        }
+
+        /// <summary>
+        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="filter"/>.
+        /// </summary>
+        /// <param name="sqlText"></param>        
+        /// <returns></returns>
+        public List<Y> ExecuteSet<Y>(string sqlText, DataFilter<T> filter)
+        {
+            var result = new List<Y>();
+
+            using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
+            {
+                dac.SqlText = sqlText;
+
+                if (filter != null)
+                    CreateWhereClause(filter, dac);//this will set the parameters on the DAC
+
+                //call database
+                using (SqlDataReader reader = dac.ExecReader())
+                {
+                    var type = typeof(Y);
+
+                    //read the first result set
+                    while (reader.Read())
+                    {
+                        //get the first column of each row and add its value to the result
+                        if (reader.FieldCount > 0)
+                        {
+                            var value = reader.GetValue(0);
+
+                            Y castedValue;
+                            //convert to a value we can use
+                            if (value == DBNull.Value)
+                            {
+                                castedValue = default(Y);
+                            }
+                            else
+                            {                                
+                                value = ReflectionHelper.ConvertValueToEnum(value, type);
+                                castedValue = (Y)value;
+                            }
+                            
+                            result.Add(castedValue);
+                        }
+                    }
+
+                    return result;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="filter"/>.
+        /// </summary>
+        /// <param name="sqlText"></param>        
+        /// <returns></returns>
+        public async Task<List<Y>> ExecuteSetAsync<Y>(string sqlText)
+        {
+            return await ExecuteSetAsync<Y>(sqlText, null).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="filter"/>.
+        /// </summary>
+        /// <param name="sqlText"></param>
+        /// <param name="filter"></param>
         
+        /// <returns></returns>
+        public async Task<List<Y>> ExecuteSetAsync<Y>(string sqlText, DataFilter<T> filter)
+        {
+            return await ExecuteSetAsync<Y>(sqlText, filter, CancellationToken.None).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="filter"/>.
+        /// </summary>
+        /// <param name="sqlText"></param>
+        /// <param name="filter"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<List<Y>> ExecuteSetAsync<Y>(string sqlText, DataFilter<T> filter, CancellationToken cancellationToken)
+        {
+            var result = new List<Y>();
+
+            using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
+            {
+                dac.SqlText = sqlText;
+
+                if (filter != null)
+                    CreateWhereClause(filter, dac);//this will set the parameters on the DAC
+
+                //call database
+                using (SqlDataReader reader = await dac.ExecReaderAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    var type = typeof(Y);
+
+                    //read the first result set
+                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                    {
+                        //get the first column of each row and add its value to the result
+                        if (reader.FieldCount > 0)
+                        {
+                            var value = reader.GetValue(0);
+
+                            Y castedValue;
+                            //convert to a value we can use
+                            if (value == DBNull.Value)
+                            {
+                                castedValue = default(Y);
+                            }
+                            else
+                            {
+                                value = ReflectionHelper.ConvertValueToEnum(value, type);
+                                castedValue = (Y)value;
+                            }
+
+                            result.Add(castedValue);
+                        }
+                    }
+
+                    return result;
+                }
+            }
+        }
+
 
         /// <summary>
         /// Inserts a collection of entities of <typeparamref name="T"/> using Sql Bulk Copy. The SqlDbType defined on the column attributes is ignored. Instead, the Sql Type is derived from the .NET type of the mapped properties.

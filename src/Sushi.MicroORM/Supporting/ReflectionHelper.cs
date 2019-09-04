@@ -27,16 +27,7 @@ namespace Sushi.MicroORM.Supporting
             else
             {
                 var type = info.PropertyType;
-                //if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)            
-                var underlyingType = Nullable.GetUnderlyingType(type);
-                if (underlyingType != null)
-                    type = underlyingType;
-
-                //if the type is an enum, we need to explicitly cast to the enum's underlying type
-                if (type.IsEnum)
-                {
-                    value = Enum.ToObject(type, value);
-                }
+                value = ConvertValueToEnum(value, type);
             }
             try
             {
@@ -52,7 +43,29 @@ namespace Sushi.MicroORM.Supporting
                     );
                 throw new Exception(message, innerException);
             }
-        }       
+        }
+
+        /// <summary>
+        /// Converts <paramref name="value"/> to an enumeration member if <paramref name="type"/> or its underlying <see cref="Type"/> is an <see cref="Enum"/>.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static object ConvertValueToEnum(object value, Type type)
+        {
+            //if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)            
+            var underlyingType = Nullable.GetUnderlyingType(type);
+            if (underlyingType != null)
+                type = underlyingType;
+
+            //if the type is an enum, we need to convert the value to the enum's type
+            if (type.IsEnum)
+            {
+                value = Enum.ToObject(type, value);
+            }
+
+            return value;
+        }
 
         public static PropertyInfo GetMember(Expression expression)
         {

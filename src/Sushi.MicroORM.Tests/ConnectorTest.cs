@@ -138,6 +138,8 @@ namespace Sushi.MicroORM.Tests
             Assert.IsTrue(orders.Count > 0);            
         }
 
+        
+
         [TestMethod]
         public void FetchAllInvalidMap()
         {
@@ -324,8 +326,47 @@ WHERE Product_Key = @productID";
             var filter = new DataFilter<Product>();
             filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
             var count = ConnectorProducts.ExecuteScalar<int>(query, filter);
-            Assert.AreEqual(1, count);
+            Assert.AreEqual(1, count);            
+        }
+
+        [TestMethod]
+        public void ExecuteSet()
+        {
+            var ConnectorProducts = new Connector<Product>();
+            string name = DateTime.UtcNow.Ticks.ToString();            
+            var query = @"
+SELECT DISTINCT(Product_ProductTypeID)
+FROM cat_Products";
+                        
+            var productTypes = ConnectorProducts.ExecuteSet<Product.ProducType?>(query);
+
+            foreach (var productType in productTypes)
+            {
+                Console.WriteLine(productType == null ? "NULL" : productType.ToString());
+            }
+
+            Assert.AreEqual(5, productTypes.Count);
+        }
+
+        [TestMethod]
+        public void ExecuteSetWithFilter()
+        {
+            var ConnectorProducts = new Connector<Product>();
+            string name = DateTime.UtcNow.Ticks.ToString();
+            int productID = 1;
+            var query = @"
+SELECT DISTINCT(Product_ProductTypeID)
+FROM cat_Products
+WHERE Product_Key > @productID";
+            var filter = new DataFilter<Product>();
+            filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
+            var productTypes = ConnectorProducts.ExecuteSet<Product.ProducType?>(query, filter);
             
+            foreach(var productType in productTypes)
+            {
+                Console.WriteLine(productType == null ? "NULL" : productType.ToString());
+            }
+            Assert.AreEqual(4, productTypes.Count);
         }
 
         [TestMethod]

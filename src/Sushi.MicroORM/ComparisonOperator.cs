@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Sushi.MicroORM
-{
+{   
     /// <summary>
     /// Operators that test whether two expressions are the same. The operators are used to construct predicates for a WHERE search condition.
     /// </summary>
@@ -43,6 +43,5 @@ namespace Sushi.MicroORM
         /// Compares two expressions for less than or eqaul to, i.e. WHERE {column} &lt;= {value}
         /// </summary>
         LessThanOrEquals
-
     }
 }

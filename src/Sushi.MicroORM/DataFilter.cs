@@ -64,12 +64,12 @@ namespace Sushi.MicroORM
         /// </summary>
         /// <param name="name"></param>        
         /// <param name="value"></param>        
-        public void AddParameter(string name, object value)
+        public void AddParameter<Y>(string name, Y value)
         {
             SqlParameter p = new SqlParameter();
             p.Value = value;
             p.ParameterName = name;
-            p.SqlDbType = Utility.GetSqlDbType(value.GetType());
+            p.SqlDbType = Utility.GetSqlDbType(typeof(Y));
             
             SqlParameters.Add(p);
         }

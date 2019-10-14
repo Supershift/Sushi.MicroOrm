@@ -5,10 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.Tests
-{    
+{
     [TestClass]
     public class ConnectorTest
     {
@@ -272,7 +271,7 @@ namespace Sushi.MicroORM.Tests
             var connector = new Connector<Product>();
 
             var filter = connector.CreateDataFilter();
-            filter.AddSql("LEN(Product_Name) > @length");
+            filter.AddSql("LEN(Product_Name) > @length");            
             filter.AddParameter("@length", 12);
             filter.Add(x => x.Price, 1, ComparisonOperator.GreaterThanOrEquals);
             var products = connector.FetchAll(filter);
@@ -281,6 +280,24 @@ namespace Sushi.MicroORM.Tests
                 Console.WriteLine($"{product.ID} - {product.Name} - {product.Price}");
             }
             Assert.IsTrue(products.Count > 0);
+        }
+
+        [TestMethod]
+        public void FetchWhereCustomSqlNullableParameter()
+        {
+            var connector = new Connector<Product>();
+
+            var filter = connector.CreateDataFilter();
+            filter.AddSql("Product_ProductTypeID = @productTypeID");
+            int? productTypeID = null;
+            filter.AddParameter("@productTypeID", productTypeID);
+            
+            var products = connector.FetchAll(filter);
+            foreach (var product in products)
+            {
+                Console.WriteLine($"{product.ID} - {product.Name} - {product.Price}");
+            }
+            Assert.IsTrue(products.Count == 0);
         }
 
         [TestMethod]
@@ -546,6 +563,30 @@ WHERE Product_Key > @productID";
             filter.Add(x => x.Batch, uniqueID);
             var retrievedRows = connector.FetchAll(filter);
             Assert.AreEqual(numberOfRows, retrievedRows.Count);
+        }
+
+        [TestMethod]
+        public void BulkInsertCompositeKey()
+        {
+            var rows = new List<CompositeKey>();
+
+            int numberOfRows = 100;
+
+            //assign unique ID to identifiers so we can check if all items were inserterd
+            var uniqueID = Guid.NewGuid();
+            for (int i = 0; i < numberOfRows; i++)
+            {
+                var row = new CompositeKey()
+                {
+                    FirstID = i,
+                    SecondID = i + 1,
+                    SomeValue = i.ToString()
+                };
+                rows.Add(row);
+            }
+
+            var connector = new Connector<CompositeKey>();
+            connector.BulkInsert(rows);            
         }
 
         [TestMethod]

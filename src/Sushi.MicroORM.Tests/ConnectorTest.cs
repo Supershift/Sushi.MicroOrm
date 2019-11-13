@@ -572,14 +572,13 @@ WHERE Product_Key > @productID";
 
             int numberOfRows = 100;
 
-            //assign unique ID to identifiers so we can check if all items were inserterd
-            var uniqueID = Guid.NewGuid();
-            for (int i = 0; i < numberOfRows; i++)
+            int offset = Guid.NewGuid().GetHashCode();
+            for (int i = offset; i < offset + numberOfRows; i++)
             {
                 var row = new CompositeKey()
                 {
                     FirstID = i,
-                    SecondID = i + 1,
+                    SecondID = Guid.NewGuid().GetHashCode(),
                     SomeValue = i.ToString()
                 };
                 rows.Add(row);

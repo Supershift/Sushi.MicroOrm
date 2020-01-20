@@ -14,12 +14,12 @@ namespace Sushi.MicroORM.Tests.DAL
         {
             public OrderBookedMap()
             {
-                Table("cat_Orders A");
+                Table("cat_Orders");
                 Id(x => x.ID, "Order_Key");
                 Map(x => x.CustomerID, "Order_Customer_Key");
                 Map(x => x.Created, "Order_Created");
                 Map(x => x.Comments, "Order_Comments");
-                Map(x => x.OrderCount, "(select count(*) from cat_Orders B where A.Order_Customer_Key = B.Order_Customer_Key)").Alias("Orders").ReadOnly();
+                //Map(x => x.OrderCount, "(select count(*) from cat_Orders B where A.Order_Customer_Key = B.Order_Customer_Key)").Alias("Orders").ReadOnly();
 
                 Map(x => x.DeliveryTime, "Order_DeliveryTime");
                 Map(x => x.DeliveryTime2, "Order_DeliveryTime2");

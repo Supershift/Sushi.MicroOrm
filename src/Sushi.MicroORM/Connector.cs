@@ -115,7 +115,9 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             if (IsInsert(entity))
                 Insert(entity);
             else
-                Update(entity);            
+                Update(entity);
+
+            Map.OnAfterSave(Map);
         }
 
         /// <summary>
@@ -138,6 +140,8 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 await InsertAsync(entity, false, cancellationToken).ConfigureAwait(false);
             else
                 await UpdateAsync(entity, cancellationToken).ConfigureAwait(false);
+
+            Map.OnAfterSave(Map);
         }
 
         /// <summary>

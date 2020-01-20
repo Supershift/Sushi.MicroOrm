@@ -43,9 +43,17 @@ namespace Sushi.MicroORM.Mapping
             }
         }
 
+        /// <summary>
+        /// The callback that is triggered after the SQL statement has been executed.
+        /// </summary>
+        public AfterSaveHandler AfterSave { get; set; }
+        internal void OnAfterSave(DataMap map)
+        {
+            if (AfterSave != null) AfterSave(map);
+        }
 
         /// <summary>
-        /// The event that is triggered before the SQL statement is created allowing for applying change to the statement.
+        /// The callback that is triggered before the SQL statement is created allowing for applying change to the statement.
         /// </summary>
         public AfterFetchHandler AfterFetch { get; set; }
         internal void OnAfterFetch(DataMap map, Query query)
@@ -53,7 +61,7 @@ namespace Sushi.MicroORM.Mapping
             if (AfterFetch != null) AfterFetch(new QueryData() { Map = map, Query = query });
         }
         /// <summary>
-        /// The event that is triggered before the SQL statement is created allowing for applying change to the statement.
+        /// The callback that is triggered before the SQL statement is created allowing for applying change to the statement.
         /// </summary>
         public BeforeFetchHandler BeforeFetch { get; set; }
         internal void OnBeforeFetch(DataMap map, Query query)
@@ -63,7 +71,7 @@ namespace Sushi.MicroORM.Mapping
 
 
         /// <summary>
-        /// The event that is triggered before the SQL statement is created allowing for applying change to the statement.
+        /// The callback that is triggered before the SQL statement is created allowing for applying change to the statement.
         /// </summary>
         public QueryHandler SelectQueryCreation { get; set; }
         internal void OnSelectQueryCreation(DataMap map, Query query)

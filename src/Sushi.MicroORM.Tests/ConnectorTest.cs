@@ -57,12 +57,13 @@ namespace Sushi.MicroORM.Tests
             var order = ConnectorOrders.FetchSingle(id);
             ConnectorOrders.EnableCaching();
 
-            int run = 1000;
+            int run = 10;
             while(run > 0)
             {
                 var order2 = ConnectorOrders.FetchSingle(id);
                 run--;
             }
+            ConnectorOrders.Save(order);
 
             Assert.IsTrue(order?.CustomerID == order?.Booking?.CustomerID);
         }

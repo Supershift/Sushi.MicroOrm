@@ -17,8 +17,15 @@ public static class CacheExtension
     {
         connection.Map.BeforeFetch = Map_BeforeFetch;
         connection.Map.AfterFetch = Map_AfterFetch;
+        connection.Map.AfterSave = Map_AfterSave;
 
         //BeforeFetch handler = BeforeFetch;
+    }
+
+    private static void Map_AfterSave(DataMap map)
+    {
+        var key = $"{map.GetType().Name}";
+        Console.WriteLine("AFTERSAVE");
     }
 
     private static void Map_AfterFetch(QueryData data)
@@ -40,6 +47,8 @@ public static class CacheExtension
         object result;
         if (Cache.TryGetValue(key, out result))
         {
+            Console.WriteLine("CACHE");
+
             data.Query.Result = result;
         }
     }

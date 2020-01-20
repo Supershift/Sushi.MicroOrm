@@ -26,6 +26,7 @@ namespace Sushi.MicroORM.Tests
                 string connectionString = configuration.GetConnectionString("TestDatabase");                
                 DatabaseConfiguration.SetDefaultConnectionString(connectionString);
 
+
                 var connectionString2 = configuration.GetConnectionString("Customers");
                 DatabaseConfiguration.AddMappedConnectionString("Sushi.MicroORM.Tests.DAL.Customers", connectionString2);
 
@@ -45,12 +46,61 @@ namespace Sushi.MicroORM.Tests
                 DatabaseConfiguration.AddMappedConnectionString(typeof(DAL.Customers.Address), connectionString3);
             }
         }
-        
+
+
+        [TestMethod]
+        public void FetchSingleNestedByID()
+        {
+            var ConnectorOrders = new Connector<OrderBooked>();
+
+            int id = 1;
+            var order = ConnectorOrders.FetchSingle(id);
+            ConnectorOrders.EnableCaching();
+
+            int run = 1000;
+            while(run > 0)
+            {
+                var order2 = ConnectorOrders.FetchSingle(id);
+                run--;
+            }
+
+            Assert.IsTrue(order?.CustomerID == order?.Booking?.CustomerID);
+        }
+
+        [TestMethod]
+        public void FetchAllNestedByID2()
+        {
+            int id = 1;
+
+            var ConnectorOrders = new Connector<OrderBookings>();
+            var filter = ConnectorOrders.CreateDataFilter();
+            filter.Add(x => x.ID, id);
+
+            var orders = ConnectorOrders.FetchAll(filter);
+
+            Console.WriteLine(orders.Count);
+        }
+
+        [TestMethod]
+        public void FetchAllNestedByID()
+        {
+            int id = 1;
+
+            var ConnectorOrders = new Connector<OrderBooked>();
+            var filter = ConnectorOrders.CreateDataFilter();
+            filter.Add(x => x.ID, id);
+
+            var orders = ConnectorOrders.FetchAll(filter);
+
+            Console.WriteLine(orders.Count);
+        }
+
         [TestMethod]
         public void FetchSingleByID()
         {
             var ConnectorOrders = new Connector<Order>();
             int id = 1;
+
             var order = ConnectorOrders.FetchSingle(id);
 
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -440,6 +490,27 @@ WHERE Product_Key > @productID";
                 ProductTypeID = Product.ProducType.Hifi
             };
             connector.Insert(product);
+        }
+
+        [TestMethod]
+        public void Upsert()
+        {
+            var connector = new Connector<Product>();
+            var product = new Product()
+            {
+                Description = "New insert test7",
+                Name = "New insert xx",
+                ExternalID = null,
+                Price = 12.50M,
+                BarCode = Encoding.UTF8.GetBytes("SKU-12345678"),
+                GUID = Guid.NewGuid(),
+                ProductTypeID = Product.ProducType.Hifi
+            };
+            var filter = connector.CreateDataFilter();
+            filter.Add(x => x.Description, product.Description);
+
+            connector.Upsert(product, filter);
+            Console.WriteLine($"{product.ID}");
         }
 
         [TestMethod]

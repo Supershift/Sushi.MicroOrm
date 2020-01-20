@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Sushi.MicroORM.Supporting
 {
     // Is this class based on something? Please add source (URL)
-    internal static class ReflectionHelper
+    public static class ReflectionHelper
     {
         /// <summary>
         /// Sets <paramref name="value"/> on the property defined by <paramref name="info"/> on <paramref name="entity"/>.

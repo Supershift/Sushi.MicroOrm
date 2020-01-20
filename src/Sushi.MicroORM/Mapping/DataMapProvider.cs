@@ -10,7 +10,7 @@ namespace Sushi.MicroORM.Mapping
     /// <summary>
     /// Provides methods to map class types to DataMaps
     /// </summary>
-    internal class DataMapProvider
+    public class DataMapProvider
     {        
         protected ConcurrentDictionary<Type, Type> DataMapTypes { get; } = new ConcurrentDictionary<Type, Type>();
 
@@ -47,36 +47,45 @@ namespace Sushi.MicroORM.Mapping
         public DataMap GetMapForType<T>() where T : new()
         {
             var objectType = typeof(T);
+            return GetMapForType(objectType);
+        }
+        /// <summary>
+        /// Returns an instance of DataMap for <param name="type"></param> if declared. If not, null is returned
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public DataMap GetMapForType(System.Type type)
+        {
             Type dataMapType = null;
-            if (DataMapTypes.ContainsKey(objectType))
+            if (DataMapTypes.ContainsKey(type))
             {
-                dataMapType = DataMapTypes[objectType];
-            }            
+                dataMapType = DataMapTypes[type];
+            }
 
             if (dataMapType == null)
             {
                 //check if the mapping is declared as a DataMap attribute on T
-                dataMapType = this.RetrieveMapFromAttributeOnType<T>();
-                if(dataMapType != null)
+                dataMapType = this.RetrieveMapFromAttributeOnType(type);
+                if (dataMapType != null)
                 {
                     //add the map to collection of datamaptypes
-                    this.AddMapping(typeof(T), dataMapType);
+                    this.AddMapping(type, dataMapType);
                 }
             }
 
             if (dataMapType == null)
             {
                 //check if the class has a nested class of type DataMap mapped against type T
-                var nestedTypes = objectType.GetNestedTypes();
+                var nestedTypes = type.GetNestedTypes();
                 for (int i = 0; i < nestedTypes.Length; i++)
                 {
                     var nestedType = nestedTypes[i];
-                    if(nestedType.IsSubclassOf(typeof(DataMap)))
+                    if (nestedType.IsSubclassOf(typeof(DataMap)))
                     {
                         dataMapType = nestedType;
                         //do we need to check if it is a generic type for T?
                         //add the map to collection of datamaptypes
-                        this.AddMapping(typeof(T), dataMapType);
+                        this.AddMapping(type, dataMapType);
                     }
                 }
             }
@@ -90,15 +99,13 @@ namespace Sushi.MicroORM.Mapping
             else
                 return null;
         }
-
         /// <summary>
-        /// Checks if class T has a DataMapAttribute defining the DataMap for T. Returns null if no attribute found
+        /// Checks if type<param name="type"/> has a DataMapAttribute defining. Returns null if no attribute found
         /// </summary>
-        /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public Type RetrieveMapFromAttributeOnType<T>()
+        public Type RetrieveMapFromAttributeOnType(System.Type type)
         {
-            var dataMapAttribute = Attribute.GetCustomAttribute(typeof(T), typeof(DataMapAttribute)) as DataMapAttribute;
+            var dataMapAttribute = Attribute.GetCustomAttribute(type, typeof(DataMapAttribute)) as DataMapAttribute;
             if (dataMapAttribute != null)
                 return dataMapAttribute.DataMapType;
             else

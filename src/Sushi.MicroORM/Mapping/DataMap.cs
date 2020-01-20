@@ -7,14 +7,70 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using static Sushi.MicroORM.Mapping.DataMap;
 
 namespace Sushi.MicroORM.Mapping
 {
     /// <summary>
     /// Represents the mapping between database objects and code objects.
     /// </summary>
-    public class DataMap
+    public class DataMap 
     {
+        Dictionary<string, object> _Indexer;
+        /// <summary>
+        /// Add custom attributes the the datamap, usable for extention datamaps. 
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public object this[string index]
+        {
+            get
+            {
+                if (_Indexer != null && _Indexer.ContainsKey(index))
+                    return _Indexer[index];
+                return null;
+            }
+            set
+            {
+                if (_Indexer == null)
+                    _Indexer = new Dictionary<string, object>();
+                else if (_Indexer.ContainsKey(index))
+                {
+                    _Indexer[index] = value;
+                    return;
+                }
+                _Indexer.Add(index, value);
+            }
+        }
+
+
+        /// <summary>
+        /// The event that is triggered before the SQL statement is created allowing for applying change to the statement.
+        /// </summary>
+        public AfterFetchHandler AfterFetch { get; set; }
+        internal void OnAfterFetch(DataMap map, Query query)
+        {
+            if (AfterFetch != null) AfterFetch(new QueryData() { Map = map, Query = query });
+        }
+        /// <summary>
+        /// The event that is triggered before the SQL statement is created allowing for applying change to the statement.
+        /// </summary>
+        public BeforeFetchHandler BeforeFetch { get; set; }
+        internal void OnBeforeFetch(DataMap map, Query query)
+        {
+            if (BeforeFetch != null) BeforeFetch(new QueryData() { Map = map, Query = query });
+        }
+
+
+        /// <summary>
+        /// The event that is triggered before the SQL statement is created allowing for applying change to the statement.
+        /// </summary>
+        public QueryHandler SelectQueryCreation { get; set; }
+        internal void OnSelectQueryCreation(DataMap map, Query query)
+        {
+            if (SelectQueryCreation != null) SelectQueryCreation(new QueryData() { Map = map, Query = query });
+        }
+
         /// <summary>
         /// Initializes a new instance of <see cref="DataMap"/> for a type defined by <paramref name="mappedType"/>.
         /// </summary>
@@ -99,6 +155,7 @@ namespace Sushi.MicroORM.Mapping
 
             DataMapItem dbcol = new DataMapItem
             {
+                Sender = this,
                 Column = columnName,
                 IsPrimaryKey = true,
                 IsIdentity = true,
@@ -122,6 +179,7 @@ namespace Sushi.MicroORM.Mapping
 
             DataMapItem dbcol = new DataMapItem
             {
+                Sender = this,
                 Column = columnName,
                 Info = property
             };
@@ -129,6 +187,6 @@ namespace Sushi.MicroORM.Mapping
             DatabaseColumns.Add(dbcol);
 
             return new DataMapItemSetter(dbcol);
-        }       
+        }
     }
 }

@@ -1,0 +1,63 @@
+﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
+using Sushi.MicroORM;
+using Sushi.MicroORM.Mapping;
+using Sushi.MicroORM.Supporting;
+using Sushi.MicroORM.Tests.DAL;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Text;
+
+public static class CacheExtension
+{
+    public static void EnableCaching<T>(this Connector<T> connection) where T : new()
+    {
+        connection.Map.BeforeFetch = Map_BeforeFetch;
+        connection.Map.AfterFetch = Map_AfterFetch;
+
+        //BeforeFetch handler = BeforeFetch;
+    }
+
+    private static void Map_AfterFetch(QueryData data)
+    {
+        var key = $"{data.Map.GetType().Name} [{data.Query.UniqueIdentifier}]";
+
+        using (var entry = Cache.CreateEntry(key))
+        {
+            entry.Value = data.Query.Result;
+            entry.AbsoluteExpiration = DateTime.UtcNow.AddDays(1);
+        }
+    }
+
+
+    private static void Map_BeforeFetch(QueryData data)
+    {
+        var key = $"{data.Map.GetType().Name} [{data.Query.UniqueIdentifier}]";
+
+        object result;
+        if (Cache.TryGetValue(key, out result))
+        {
+            data.Query.Result = result;
+        }
+    }
+
+    static IMemoryCache _Cache;
+    public static IMemoryCache Cache
+    {
+        get
+        {
+            if (_Cache == null)
+            {
+                var provider = new ServiceCollection()
+                               .AddMemoryCache()
+                               .BuildServiceProvider();
+
+                _Cache = provider.GetService<IMemoryCache>();
+            }
+            return _Cache;
+        }
+    }
+}

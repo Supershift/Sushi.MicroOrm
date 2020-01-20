@@ -10,12 +10,12 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>1.2.0</Version>
+    <Version>1.3.0-RC</Version>
     <Authors>Marc Molenwijk, Mark de Vries</Authors>
     <Company>Supershift B.V.</Company>    
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>    
     <Description>Simple and high performance micro-ORM. Supports SQL Azure and SQL Server 2012 and higher.</Description>    
-    <Copyright>2019 Supershift B.V.</Copyright>    
+    <Copyright>2019-2020 Supershift B.V.</Copyright>    
     <PackageLicenseExpression>MIT</PackageLicenseExpression>    
     <PackageProjectUrl>https://github.com/Supershift/Sushi.MicroOrm</PackageProjectUrl>    
     <RepositoryUrl>https://github.com/Supershift/Sushi.MicroOrm</RepositoryUrl>    

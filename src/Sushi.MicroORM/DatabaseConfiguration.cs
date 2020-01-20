@@ -71,7 +71,10 @@ namespace Sushi.MicroORM
         /// </summary>
         public static FetchSingleMode FetchSingleMode { get; set; } = FetchSingleMode.ReturnDefaultWhenNotFound;
         
-        internal static DataMapProvider DataMapProvider { get; } = new DataMapProvider();
+        /// <summary>
+        /// Gets the provider for the data map.
+        /// </summary>
+        public static DataMapProvider DataMapProvider { get; } = new DataMapProvider();
         internal static ConnectionStringProvider ConnectionStringProvider { get; } = new ConnectionStringProvider();
 
         /// <summary>

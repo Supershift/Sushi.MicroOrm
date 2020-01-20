@@ -14,9 +14,51 @@ namespace Sushi.MicroORM.Mapping
     public class DataMapItem
     {
         /// <summary>
+        /// The event that is triggered before the SQL statement is created allowing for applying change to the statement.
+        /// </summary>
+        public QueryResultHandler Reflection { get;set; }
+        internal void OnReflection(object instance, DataMapItem item, object value)
+        {
+            if (Reflection != null) Reflection(new QueryDataOutput() { Value = value, Instance = instance, DatabaseColumn = item});
+        }
+        internal bool HasReflection
+        {
+            get { return (Reflection != null); }
+        }
+        public PropertyInfo Instance { get; set; }
+
+        internal string ColumnName
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(this.Alias))
+                    return Column;
+                return Alias;
+            }
+        }
+
+        internal string ColumnAlias
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(this.Alias))
+                    return Column;
+                return $"{Column} AS {Alias}";
+            }
+        }
+
+        /// <summary>
+        /// Gets ot set the sending datamap entity.
+        /// </summary>
+        public DataMap Sender { get; set; }
+        /// <summary>
         /// Gets or set the column mapped to this item.
         /// </summary>
-        public string Column { get; set; }        
+        public string Column { get; set; }
+        /// <summary>
+        /// Gets or set the alias of the mapped column.
+        /// </summary>
+        public string Alias { get; set; }
         /// <summary>
         /// Gets or sets <see cref="PropertyInfo"/> about the mapped field or property.
         /// </summary>
@@ -41,5 +83,8 @@ namespace Sushi.MicroORM.Mapping
         /// Gets or sets the <see cref="SqlDbType"/> of the mapped column.
         /// </summary>
         public SqlDbType SqlType { get; set; }
+        /// <summary>
+        /// Map setting for joined objects
+        /// </summary>
     }
 }

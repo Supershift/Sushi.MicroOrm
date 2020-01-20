@@ -77,7 +77,6 @@ namespace Sushi.MicroORM
         /// </summary>
         public DataMap Map { get; protected set; }
 
-
         /// <summary>
         /// Creates a new instance of <see cref="DataFilter{T}"/>. Use the constructor of DataFilter for more control when creating a DataFilter.
         /// </summary>
@@ -206,57 +205,90 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         {
             using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
             {
-                ApplyFilterToCommanderFetchSingle(dac, sqlText, filter);
+                var query = ApplyFilterToCommanderFetchSingle(dac, sqlText, filter);
+
+                Map.OnBeforeFetch(Map, query);
+                if (query.Result != null)
+                    return (T)query.Result;
+                
                 SqlDataReader reader = dac.ExecReader();
-                var result = CreateFetchSingleResultFromReader(reader);
+                var result = CreateFetchSingleResultFromReader(query, reader);
+                query.Result = result;
+                Map.OnAfterFetch(Map, query);
                 return result;
             }
         }
 
-        internal void ApplyFilterToCommanderFetchSingle(SqlCommander dac, string sql, DataFilter<T> filter)
+        internal Query ApplyFilterToCommanderFetchSingle(SqlCommander dac, string sql, DataFilter<T> filter)
         {
-            var whereClause = CreateWhereClause(filter, dac);           
+            Query query = new Query();
+            query.From = Map.TableName;
+            query.OrderBy = filter?.OrderBy;
 
-            string selectColumns = string.Empty;
+            string parameterinfo = null;
+            query.Where = CreateWhereClause(filter, dac, out parameterinfo);
+            query.ParameterInfo = parameterinfo;
 
-            foreach (var param in Map.DatabaseColumns)
-            {
-                selectColumns += string.Concat(param.Column, ", ");           
-            }
+            ApplySelect(Map, query);
 
-            if (selectColumns.Length == 0)
+            if (query.Select.Count == 0)
                 throw new Exception("No columns set for the select statement");
 
             if (string.IsNullOrWhiteSpace(sql))
-                sql = $"SELECT TOP(1) {selectColumns.Substring(0, selectColumns.Length - 2)} FROM {Map.TableName} {whereClause} {filter?.OrderBy}";
+            {
+                Map.OnSelectQueryCreation(Map, query);
+                query.Sql = $"SELECT TOP(1) {(string.Join(", ", query.Select.Select(x => x.ColumnAlias).ToArray()))} FROM {query.From} {query.Where} {query.OrderBy}";
+            }
+            else
+                query.Sql = sql;
 
-            dac.SqlText = sql;
+            dac.SqlText = query.Sql;
+            return query;
         }
 
-        private void SetResultValuesToObject(SqlDataReader reader, T instance)
+        internal void ApplySelect(DataMap map, Query query)
         {
-            //map the result columns back to the properties
-            for (int column = 0; column < reader.FieldCount; column++)
+            foreach (var param in map.DatabaseColumns)
             {
-                //get the name and the value of the column
-                var columnName = reader.GetName(column);
-                var value = reader.GetValue(column);
-                //get all properties mapped to this column
-                var mappedProperties = Map.DatabaseColumns.Where(property => property.Column == columnName);
-                foreach (var property in mappedProperties)
+                if (!string.IsNullOrWhiteSpace(param.Column))
+                    query.Select.Add(param);
+            }
+        }
+
+        private void SetResultValuesToObject(Query query, SqlDataReader reader, object instance)
+        {
+            foreach (var param in query.Select)
+            {
+                for (int column = 0; column < reader.FieldCount; column++)
                 {
-                    ReflectionHelper.SetPropertyValue(property.Info, value, instance);
+                    //get the name and the value of the column
+                    var columnName = reader.GetName(column);
+                    if (param.ColumnName.Equals(columnName, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        var value = reader.GetValue(column);
+                        try
+                        {
+                            if (param.HasReflection)
+                                param.OnReflection(instance, param, value);
+                            else
+                                ReflectionHelper.SetPropertyValue(param.Info, value, instance);
+                        }
+                        catch(Exception)
+                        {
+                            Console.WriteLine($"Could not match {columnName}");
+                        }
+                    }
                 }
             }
         }
 
-        internal T CreateFetchSingleResultFromReader(SqlDataReader reader)
+        internal T CreateFetchSingleResultFromReader(Query query, SqlDataReader reader)
         {
             T instance = new T();
             bool recordFound = reader.Read();
             if (recordFound)
             {
-                SetResultValuesToObject(reader, instance);                
+                SetResultValuesToObject(query, reader, instance);                
             }
 
             if (!recordFound)
@@ -328,19 +360,31 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         {
             using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
             {
-                ApplyFilterToCommanderFetchSingle(dac, sqlText, filter);
+                var query = ApplyFilterToCommanderFetchSingle(dac, sqlText, filter);
+                Map.OnBeforeFetch(Map, query);
+                if (query.Result != null)
+                    return (T)query.Result;
+
                 SqlDataReader reader = await dac.ExecReaderAsync(cancellationToken).ConfigureAwait(false);
-                var result = CreateFetchSingleResultFromReader(reader);
+                var result = CreateFetchSingleResultFromReader(query, reader);
+
+                query.Result = result;
+                Map.OnAfterFetch(Map, query);
+
                 return result;
             }
-        }        
+        }
 
-        
-
-        //todo: move to where clause generator
         string CreateWhereClause(DataFilter<T> filter, SqlCommander dac)
         {
             var parameterinfo = string.Empty;
+            return CreateWhereClause(filter, dac, out parameterinfo);
+        }
+
+        //todo: move to where clause generator
+        private string CreateWhereClause(DataFilter<T> filter, SqlCommander dac, out string parameterinfo)
+        {
+            parameterinfo = string.Empty;
             
             var whereClause = filter?.WhereClause;
             
@@ -563,6 +607,73 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             await UpdateAsync(entity, filter, cancellationToken).ConfigureAwait(false);
         }
 
+        internal string ApplyUpsertToSqlCommander(SqlCommander dac, T entity, DataFilter<T> filter, bool isIdentityInsert = false)
+        {
+            string updateColumns = " ";
+            string whereClause = "";
+            string insertColumns = " ";
+            string valuesColumns = "";
+            string primaryParameter = null;
+            string returnCall = null;
+            DataMapItem primaryDataColumn = null;
+
+            foreach (var param in Map.DatabaseColumns)
+            {
+                if (param.IsReadOnly) continue;
+
+                //  Insert
+                if (!isIdentityInsert && param.IsIdentity && param.Column != null)
+                {
+                    primaryDataColumn = param;
+                    returnCall = string.Format("SET @{0} = SCOPE_IDENTITY()", param.Column);
+                    primaryParameter = "@" + param.Column;
+                    dac.SetParameterOutput(primaryParameter, param.SqlType, param.Length);
+                }
+                else
+                {
+                    if (insertColumns.Contains(string.Concat(" ", param.Column, ", ")))
+                        continue;
+
+                    insertColumns += string.Concat(param.Column, ", ");
+                    valuesColumns += string.Concat("@", param.Column, ", ");
+                }
+
+                //  Update
+                if (param.IsPrimaryKey) continue;
+                //  Double check
+                if (updateColumns.Contains(string.Concat(" ", param.Column, "= ")))
+                    continue;
+
+                updateColumns += string.Concat(param.Column, "= ", "@", param.Column, ", ");
+                dac.SetParameterInput(string.Concat("@", param.Column), param.Info.GetValue(entity), param.SqlType, param.Length);
+            }
+
+            if (filter?.SqlParameters != null)
+            {
+                foreach (SqlParameter p in filter.SqlParameters)
+                {
+                    updateColumns += string.Concat(p.ParameterName, "= ", "@", p.ParameterName, ", ");
+                    dac.SetParameterInput(string.Concat("@", p.ParameterName), p.Value, p.SqlDbType);
+                }
+            }
+
+            if (updateColumns.Length == 0) 
+                return null;
+
+            whereClause = CreateWhereClause(filter, dac);
+
+            string sqlText = string.Format(@"IF EXISTS(select * from {0} {5}) BEGIN update {0} set {1} {5} END ELSE BEGIN insert into {0} ({2}) values ({3}) {4} END",
+                Map.TableName,
+                updateColumns.Substring(0, updateColumns.Length - 2),
+                insertColumns.Substring(0, insertColumns.Length - 2),
+                valuesColumns.Substring(0, valuesColumns.Length - 2),
+                returnCall,
+                whereClause);
+
+            dac.SqlText = sqlText;
+            return primaryParameter;
+        }
+
         internal void ApplyUpdateToSqlCommander(SqlCommander dac, T entity, DataFilter<T> filter)
         {
             string updateColumns = " ";
@@ -600,7 +711,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 whereClause);
 
 
-            dac.SqlText = sqlText;            
+            dac.SqlText = sqlText;
         }
 
         /// <summary>
@@ -616,6 +727,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 dac.ExecNonQuery();                
             }
         }
+
 
         /// <summary>
         /// Updates records in the database for <paramref name="filter"/> using the values on <paramref name="entity"/>.
@@ -696,7 +808,9 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             if (!string.IsNullOrWhiteSpace(identityOutputParameter))
             {
                 var identityColumn = Map.DatabaseColumns.FirstOrDefault(x => x.IsIdentity);
-                identityColumn?.Info.SetValue(entity, dac.GetParamInt(identityOutputParameter), null);
+                var id = dac.GetParamInt(identityOutputParameter);
+                if (id > 0)
+                    identityColumn?.Info.SetValue(entity, id, null);
             }
         }
 
@@ -717,6 +831,25 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 ApplyIdentityColumnToEntity(entity, dac, identityParameter);                
             }
         }
+
+        /// <summary>
+        /// Updates or inserts <typeparamref name="T"/> in the database.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="filter"></param>
+        /// <param name="isIdentityInsert"></param>
+        public void Upsert(T entity, DataFilter<T> filter, bool isIdentityInsert = false)
+        {
+            using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
+            {
+                string identityParameter = ApplyUpsertToSqlCommander(dac, entity, filter, isIdentityInsert);
+                dac.ExecNonQuery();
+                
+                if (!string.IsNullOrWhiteSpace(identityParameter))
+                    ApplyIdentityColumnToEntity(entity, dac, identityParameter);
+            }
+        }
+
 
         /// <summary>
         /// Inserts <typeparamref name="T"/> in the database.
@@ -788,17 +921,23 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         {
             using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
             {
-                ApplyFilterToCommanderFetchAll(dac, filter, sqlText);
+                var query = ApplyFilterToCommanderFetchAll(dac, filter, sqlText);
+
+                Map.OnBeforeFetch(Map, query);
+                if (query.Result != null)
+                    return (List<T>)query.Result;
 
                 using (SqlDataReader reader = dac.ExecReader())
                 {
                     var result = new List<T>();
+                    var r = new Dictionary<object, object>();
 
                     //read the first result set
                     while (reader.Read())
                     {
                         T entity = new T();
-                        SetResultValuesToObject(reader, entity);
+                        SetResultValuesToObject(query, reader, entity);
+                        
                         result.Add(entity);
                     }
 
@@ -812,6 +951,9 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                                 filter.Paging.TotalNumberOfRows = (int)candidate;
                         }
                     }
+
+                    query.Result = result;
+                    Map.OnAfterFetch(Map, query);
 
                     return result;
                 }
@@ -877,7 +1019,10 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         {
             using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
             {
-                ApplyFilterToCommanderFetchAll(dac, filter, sqlText);
+                var query = ApplyFilterToCommanderFetchAll(dac, filter, sqlText);
+                Map.OnBeforeFetch(Map, query);
+                if (query.Result != null)
+                    return (List<T>)query.Result;
 
                 using (SqlDataReader reader = await dac.ExecReaderAsync(cancellationToken).ConfigureAwait(false))
                 {
@@ -887,7 +1032,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                     while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                     {
                         T entity = new T();
-                        SetResultValuesToObject(reader, entity);
+                        SetResultValuesToObject(query, reader, entity);
                         result.Add(entity);
                     }
 
@@ -902,28 +1047,24 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                         }
                     }
 
+                    query.Result = result;
+                    Map.OnAfterFetch(Map, query);
+
                     return result;
                 }
             }
         }
 
-        internal void ApplyFilterToCommanderFetchAll(SqlCommander dac, DataFilter<T> filter, string customSql)
+        internal Query ApplyFilterToCommanderFetchAll(SqlCommander dac, DataFilter<T> filter, string customSql)
         {
-            string selectColumns = "";
-            string whereClause = "";
+            Query query = new Query();
+            query.From = Map.TableName;
+            query.OrderBy = filter?.OrderBy;
+            query.Where = CreateWhereClause(filter, dac);
 
-            foreach (var param in Map.DatabaseColumns)
-            {
-                selectColumns += string.Concat(param.Column, ", ");
-            }
+            ApplySelect(Map, query);
 
-            //get order by clause
-            string orderBy = filter?.OrderBy;
-
-
-            whereClause = CreateWhereClause(filter, dac);
-
-            if (selectColumns.Length == 0) return;
+            if (query.Select.Count == 0) return query;
 
             string rowcount = null;
             if (filter?.MaxResults != null) rowcount = $"TOP({filter.MaxResults.Value})";
@@ -936,7 +1077,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             if (filter?.Paging != null && filter?.Paging?.NumberOfRows > 0)
             {                
                 //create count query
-                pagingCountQuery = $"\n\rSELECT COUNT(*) FROM {Map.TableName} {whereClause}";
+                pagingCountQuery = $"\n\rSELECT COUNT(*) FROM {query.From} {query.Where}";
 
                 //create offset query text 
                 //TODO: use parameters for this
@@ -947,7 +1088,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 {
                     var primaryKeyColumns = Map.GetPrimaryKeyColumns();
                     if (primaryKeyColumns.Count > 0)
-                        orderBy = "ORDER BY " + string.Join(",", primaryKeyColumns.Select(x => x.Column));
+                        query.OrderBy = "ORDER BY " + string.Join(",", primaryKeyColumns.Select(x => x.Column));
                 }
                 //if paging is applied, the offset/fetch next method is used. no need to apply TOP() in this case                    
                 rowcount = null;
@@ -958,18 +1099,19 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             if (string.IsNullOrWhiteSpace(customSql))
             {
                 Map.ValidateMappingForGeneratedQueries();
-                sqlText = $"SELECT {rowcount} {selectColumns.Substring(0, selectColumns.Length - 2)} FROM {Map.TableName} {whereClause} {orderBy} {pagingOffset}";
+                Map.OnSelectQueryCreation(Map, query);
+                query.Sql = $"SELECT {rowcount} {(string.Join(", ", query.Select.Select(x => x.ColumnAlias).ToArray()))} FROM {query.From} {query.Where} {query.OrderBy} {pagingOffset}";
             }
             else
-                sqlText = customSql;
+                query.Sql = customSql;
 
             //append paging's count query if we have one
             if(pagingCountQuery != null)
-                sqlText += pagingCountQuery;
+                query.Sql += pagingCountQuery;
 
-            dac.SqlText = sqlText;
+            dac.SqlText = query.Sql;
+            return query;
         }
-
 
         internal void ApplyDeleteToSqlCommander(SqlCommander dac, DataFilter<T> filter)
         {

@@ -16,6 +16,11 @@ namespace Sushi.MicroORM.Mapping
     public class DataMapItemSetter
     {
         internal DataMapItem _dbcol;
+        /// <summary>
+        /// The database column configuration
+        /// </summary>
+        public DataMapItem DataItem { get { return _dbcol; } }
+
         internal DataMapItemSetter(DataMapItem dbcol)
         {
             _dbcol = dbcol;
@@ -50,6 +55,17 @@ namespace Sushi.MicroORM.Mapping
         public DataMapItemSetter ReadOnly()
         {
             _dbcol.IsReadOnly = true;
+            return this;
+        }
+
+
+        /// <summary>
+        /// Sets the alias for the database column.
+        /// </summary>
+        /// <returns></returns>
+        public DataMapItemSetter Alias(string alias)
+        {
+            _dbcol.Alias = alias;
             return this;
         }
 

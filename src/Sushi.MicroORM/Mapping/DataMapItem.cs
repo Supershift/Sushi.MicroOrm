@@ -16,14 +16,14 @@ namespace Sushi.MicroORM.Mapping
         /// <summary>
         /// The event that is triggered before the SQL statement is created allowing for applying change to the statement.
         /// </summary>
-        public QueryResultHandler Reflection { get;set; }
-        internal void OnReflection(object instance, DataMapItem item, object value)
+        public QueryResultHandler OnReflection { get;set; }
+        internal void DoReflection(object instance, DataMapItem item, object value)
         {
-            if (Reflection != null) Reflection(new QueryDataOutput() { Value = value, Instance = instance, DatabaseColumn = item});
+            if (OnReflection != null) OnReflection(new QueryDataOutput() { Value = value, Instance = instance, DatabaseColumn = item});
         }
         internal bool HasReflection
         {
-            get { return (Reflection != null); }
+            get { return (OnReflection != null); }
         }
         public PropertyInfo Instance { get; set; }
 

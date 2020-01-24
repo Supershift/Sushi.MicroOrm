@@ -269,7 +269,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                         try
                         {
                             if (param.HasReflection)
-                                param.OnReflection(instance, param, value);
+                                param.DoReflection(instance, param, value);
                             else
                                 ReflectionHelper.SetPropertyValue(param.Info, value, instance);
                         }
@@ -833,7 +833,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
                 ApplyIdentityColumnToEntity(entity, dac, identityParameter);                
             }
-            Map.OnPostSave(Map);
+            Map.DoPostSave(Map);
         }
 
         /// <summary>
@@ -894,7 +894,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
                 ApplyIdentityColumnToEntity(entity, dac, identityParameter);
             }
-            Map.OnPostSave(Map);
+            Map.DoPostSave(Map);
         }
 
         /// <summary>

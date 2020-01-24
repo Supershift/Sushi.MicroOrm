@@ -64,7 +64,7 @@ public static class ExtendOnEntension
                 foreach (var col in join.Map.DatabaseColumns)
                 {
                     //  Important to identify the property!
-                    col.Reflection = Col_Reflection1;
+                    col.OnReflection = Col_Reflection1;
                     col.Instance = join.Info;
                     data.Query.Select.Add(col);
                 }

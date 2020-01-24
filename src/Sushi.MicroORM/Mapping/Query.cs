@@ -42,7 +42,7 @@ namespace Sushi.MicroORM.Mapping
         {
             get
             {
-                return $"{From} {ParameterInfo}";
+                return ($"{From} {ParameterInfo}").Trim();
             }
         }
 

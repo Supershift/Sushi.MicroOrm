@@ -66,7 +66,7 @@ namespace Sushi.MicroORM
                     _ConnectionString = DatabaseConfiguration.ConnectionStringProvider.GetConnectionString(typeof(T));
                 return _ConnectionString;
             }
-            protected set
+            set
             {
                 _ConnectionString = value;
             }
@@ -117,7 +117,6 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             else
                 Update(entity);
 
-            Map.OnAfterSave(Map);
         }
 
         /// <summary>
@@ -141,7 +140,6 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             else
                 await UpdateAsync(entity, cancellationToken).ConfigureAwait(false);
 
-            Map.OnAfterSave(Map);
         }
 
         /// <summary>
@@ -211,14 +209,14 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             {
                 var query = ApplyFilterToCommanderFetchSingle(dac, sqlText, filter);
 
-                Map.OnBeforeFetch(Map, query);
+                Map.DoBeforeFetch(Map, query);
                 if (query.Result != null)
                     return (T)query.Result;
                 
                 SqlDataReader reader = dac.ExecReader();
                 var result = CreateFetchSingleResultFromReader(query, reader);
                 query.Result = result;
-                Map.OnAfterFetch(Map, query);
+                Map.DoPostFetch(Map, query);
                 return result;
             }
         }
@@ -229,9 +227,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             query.From = Map.TableName;
             query.OrderBy = filter?.OrderBy;
 
-            string parameterinfo = null;
-            query.Where = CreateWhereClause(filter, dac, out parameterinfo);
-            query.ParameterInfo = parameterinfo;
+            query.Where = CreateWhereClause(filter, dac, query);
 
             ApplySelect(Map, query);
 
@@ -240,7 +236,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
             if (string.IsNullOrWhiteSpace(sql))
             {
-                Map.OnSelectQueryCreation(Map, query);
+                Map.DoApplyFilter(Map, query);
                 query.Sql = $"SELECT TOP(1) {(string.Join(", ", query.Select.Select(x => x.ColumnAlias).ToArray()))} FROM {query.From} {query.Where} {query.OrderBy}";
             }
             else
@@ -365,7 +361,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
             {
                 var query = ApplyFilterToCommanderFetchSingle(dac, sqlText, filter);
-                Map.OnBeforeFetch(Map, query);
+                Map.DoBeforeFetch(Map, query);
                 if (query.Result != null)
                     return (T)query.Result;
 
@@ -373,7 +369,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 var result = CreateFetchSingleResultFromReader(query, reader);
 
                 query.Result = result;
-                Map.OnAfterFetch(Map, query);
+                Map.DoPostFetch(Map, query);
 
                 return result;
             }
@@ -381,14 +377,14 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
         string CreateWhereClause(DataFilter<T> filter, SqlCommander dac)
         {
-            var parameterinfo = string.Empty;
-            return CreateWhereClause(filter, dac, out parameterinfo);
+            var query = new Query();
+            return CreateWhereClause(filter, dac, query);
         }
 
         //todo: move to where clause generator
-        private string CreateWhereClause(DataFilter<T> filter, SqlCommander dac, out string parameterinfo)
+        private string CreateWhereClause(DataFilter<T> filter, SqlCommander dac, Query query)
         {
-            parameterinfo = string.Empty;
+            var parameterinfo = string.Empty;
             
             var whereClause = filter?.WhereClause;
             
@@ -574,7 +570,8 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             }
 
             if (orGroupIsSet) sqlWhereClause += ")";
-                        
+
+            query.ParameterInfo = parameterinfo;            
             return sqlWhereClause;
         }
                 
@@ -643,7 +640,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 }
 
                 //  Update
-                if (param.IsPrimaryKey) continue;
+                if (param.IsPrimaryKey && param.IsIdentity) continue;
                 //  Double check
                 if (updateColumns.Contains(string.Concat(" ", param.Column, "= ")))
                     continue;
@@ -685,7 +682,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
             foreach (var param in Map.DatabaseColumns)
             {
-                if (param.IsPrimaryKey) continue;
+                if (param.IsPrimaryKey && param.IsIdentity) continue;
                 if (param.IsReadOnly) continue;
                 //  Double check
                 if (updateColumns.Contains(string.Concat(" ", param.Column, "= ")))
@@ -730,6 +727,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 ApplyUpdateToSqlCommander(dac, entity, filter);
                 dac.ExecNonQuery();                
             }
+            Map.DoPostSave(Map);
         }
 
 
@@ -746,6 +744,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 ApplyUpdateToSqlCommander(dac, entity, filter);
                 await dac.ExecNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
+            Map.DoPostSave(Map);
         }
 
         /// <summary>
@@ -834,6 +833,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
                 ApplyIdentityColumnToEntity(entity, dac, identityParameter);                
             }
+            Map.OnPostSave(Map);
         }
 
         /// <summary>
@@ -852,6 +852,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 if (!string.IsNullOrWhiteSpace(identityParameter))
                     ApplyIdentityColumnToEntity(entity, dac, identityParameter);
             }
+            Map.DoPostSave(Map);
         }
 
 
@@ -893,6 +894,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
                 ApplyIdentityColumnToEntity(entity, dac, identityParameter);
             }
+            Map.OnPostSave(Map);
         }
 
         /// <summary>
@@ -927,7 +929,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             {
                 var query = ApplyFilterToCommanderFetchAll(dac, filter, sqlText);
 
-                Map.OnBeforeFetch(Map, query);
+                Map.DoBeforeFetch(Map, query);
                 if (query.Result != null)
                     return (List<T>)query.Result;
 
@@ -957,7 +959,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                     }
 
                     query.Result = result;
-                    Map.OnAfterFetch(Map, query);
+                    Map.DoPostFetch(Map, query);
 
                     return result;
                 }
@@ -1024,7 +1026,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
             {
                 var query = ApplyFilterToCommanderFetchAll(dac, filter, sqlText);
-                Map.OnBeforeFetch(Map, query);
+                Map.DoBeforeFetch(Map, query);
                 if (query.Result != null)
                     return (List<T>)query.Result;
 
@@ -1052,7 +1054,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                     }
 
                     query.Result = result;
-                    Map.OnAfterFetch(Map, query);
+                    Map.DoPostFetch(Map, query);
 
                     return result;
                 }
@@ -1064,7 +1066,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             Query query = new Query();
             query.From = Map.TableName;
             query.OrderBy = filter?.OrderBy;
-            query.Where = CreateWhereClause(filter, dac);
+            query.Where = CreateWhereClause(filter, dac, query);
 
             ApplySelect(Map, query);
 
@@ -1103,7 +1105,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             if (string.IsNullOrWhiteSpace(customSql))
             {
                 Map.ValidateMappingForGeneratedQueries();
-                Map.OnSelectQueryCreation(Map, query);
+                Map.DoApplyFilter(Map, query);
                 query.Sql = $"SELECT {rowcount} {(string.Join(", ", query.Select.Select(x => x.ColumnAlias).ToArray()))} FROM {query.From} {query.Where} {query.OrderBy} {pagingOffset}";
             }
             else
@@ -1154,6 +1156,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 ApplyDeleteToSqlCommander(dac, filter);
                 dac.ExecNonQuery();                
             }
+            Map.DoPostDelete(Map);
         }
 
         /// <summary>
@@ -1199,6 +1202,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 ApplyDeleteToSqlCommander(dac, filter);
                 await dac.ExecNonQueryAsync(cancellationToken).ConfigureAwait(false);                
             }
+            Map.DoPostDelete(Map);
         }
 
         /// <summary>
@@ -1239,6 +1243,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public async Task ExecuteNonQueryAsync(string sqlText, DataFilter<T> filter)
         {
             await ExecuteNonQueryAsync(sqlText, filter, CancellationToken.None).ConfigureAwait(false);
+            Map.DoPostSave(Map);
         }
 
         /// <summary>

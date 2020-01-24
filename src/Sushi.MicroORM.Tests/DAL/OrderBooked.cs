@@ -52,5 +52,19 @@ namespace Sushi.MicroORM.Tests.DAL
             var result = connector.FetchAll(filter);
             return result;
         }
+
+        public static List<Order> FetchAll(int customerID, string connectionString)
+        {
+            var connector = new Connector<Order>();
+
+            var filter = connector.CreateDataFilter();
+
+            connector.ConnectionString = connectionString;
+
+            filter.Add(x => x.CustomerID, customerID);
+
+            var result = connector.FetchAll(filter);
+            return result;
+        }
     }
 }

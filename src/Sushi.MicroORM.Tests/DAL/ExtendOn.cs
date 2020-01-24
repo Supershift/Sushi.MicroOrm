@@ -14,7 +14,7 @@ public static class ExtendOnEntension
     public static DataMapItemSetter ExtendOn(this DataMapItemSetter map, string key, bool isNullable = false)
     {
         //  Sign up to event to alter the select query.
-        map.DataItem.Sender.SelectQueryCreation = Sender_SelectQueryCreation;
+        map.DataItem.Sender.OnApplyFilter = Sender_SelectQueryCreation;
 
         //  Remove "myself" from the query creation process.
         map.DataItem.Sender.DatabaseColumns.Remove(map.DataItem);

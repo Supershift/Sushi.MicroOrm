@@ -13,7 +13,7 @@ namespace Sushi.MicroORM.Tests.DAL
         {
             public ProductMap()
             {
-                Table("cat_Products");
+                Table("cat_Products").EnableCaching(true);
                 Id(x => x.ID, "Product_Key").Identity();
                 Map(x => x.Name, "Product_Name").SqlType(System.Data.SqlDbType.NVarChar);
                 Map(x => x.Description, "Product_Description").SqlType(System.Data.SqlDbType.VarChar);

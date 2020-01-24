@@ -509,6 +509,7 @@ WHERE Product_Key > @productID";
             };
             var filter = connector.CreateDataFilter();
             filter.Add(x => x.Description, product.Description);
+            filter.Add(x => x.Price, product.Price);
 
             connector.Upsert(product, filter);
             Console.WriteLine($"{product.ID}");

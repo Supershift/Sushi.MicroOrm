@@ -43,41 +43,52 @@ namespace Sushi.MicroORM.Mapping
             }
         }
 
+        #region Callback
         /// <summary>
-        /// The callback that is triggered after the SQL statement has been executed.
+        /// The callback that is triggered after the SQL DELETE statement has been executed.
         /// </summary>
-        public AfterSaveHandler AfterSave { get; set; }
-        internal void OnAfterSave(DataMap map)
+        public AfterSaveHandler OnPostDelete { get; set; }
+        internal void DoPostDelete(DataMap map)
         {
-            if (AfterSave != null) AfterSave(map);
+            if (OnPostDelete != null) OnPostDelete(map);
+        }
+
+        /// <summary>
+        /// The callback that is triggered after the SQL INSERT or UPDATE statement has been executed.
+        /// </summary>
+        public AfterSaveHandler OnPostSave { get; set; }
+        internal void DoPostSave(DataMap map)
+        {
+            if (OnPostSave != null) OnPostSave(map);
         }
 
         /// <summary>
         /// The callback that is triggered before the SQL statement is created allowing for applying change to the statement.
         /// </summary>
-        public AfterFetchHandler AfterFetch { get; set; }
-        internal void OnAfterFetch(DataMap map, Query query)
+        public AfterFetchHandler OnPostFetch { get; set; }
+        internal void DoPostFetch(DataMap map, Query query)
         {
-            if (AfterFetch != null) AfterFetch(new QueryData() { Map = map, Query = query });
+            if (OnPostFetch != null) OnPostFetch(new QueryData() { Map = map, Query = query });
         }
         /// <summary>
         /// The callback that is triggered before the SQL statement is created allowing for applying change to the statement.
         /// </summary>
-        public BeforeFetchHandler BeforeFetch { get; set; }
-        internal void OnBeforeFetch(DataMap map, Query query)
+        public BeforeFetchHandler OnBeforeFetch { get; set; }
+        internal void DoBeforeFetch(DataMap map, Query query)
         {
-            if (BeforeFetch != null) BeforeFetch(new QueryData() { Map = map, Query = query });
+            if (OnBeforeFetch != null) OnBeforeFetch(new QueryData() { Map = map, Query = query });
         }
-
 
         /// <summary>
         /// The callback that is triggered before the SQL statement is created allowing for applying change to the statement.
         /// </summary>
-        public QueryHandler SelectQueryCreation { get; set; }
-        internal void OnSelectQueryCreation(DataMap map, Query query)
+        public QueryHandler OnApplyFilter { get; set; }
+        internal void DoApplyFilter(DataMap map, Query query)
         {
-            if (SelectQueryCreation != null) SelectQueryCreation(new QueryData() { Map = map, Query = query });
+            if (OnApplyFilter != null) OnApplyFilter(new QueryData() { Map = map, Query = query });
         }
+        #endregion Callback
+
 
         /// <summary>
         /// Initializes a new instance of <see cref="DataMap"/> for a type defined by <paramref name="mappedType"/>.
@@ -105,9 +116,10 @@ namespace Sushi.MicroORM.Mapping
         /// Sets the name of the table in the database to which class T is mapped
         /// </summary>
         /// <param name="tableName"></param>
-        public void Table(string tableName)
+        public TableSetter Table(string tableName)
         {
             TableName = tableName;
+            return new TableSetter() { Map = this };
         }
 
         /// <summary>

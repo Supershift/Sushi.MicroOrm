@@ -14,7 +14,7 @@ namespace Sushi.MicroORM.Tests.DAL.Customers
             {
                 Table("cat_Customers");
                 Id(x => x.ID, "Customer_Key");
-                Map(x => x.Name, "Customer_Name");
+                Map(x => x.Name, "Customer_Name");                
             }
         }
 

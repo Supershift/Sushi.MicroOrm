@@ -126,13 +126,11 @@ namespace Sushi.MicroORM
         /// <param name="comparisonOperator"></param>
         public void Add(Expression<Func<T, object>> mappingExpression, object value, ComparisonOperator comparisonOperator)
         {
-            //MV: I think the resolving should not be done when adding to the datafilter, but when the data filter is consumed by the connector
-            //this would allow the datafilter to be created direcly instead of through a factory method on connector.
-            PropertyInfo property = ReflectionHelper.GetMember(mappingExpression.Body);
+            var members = ReflectionHelper.GetMemberTree(mappingExpression.Body);
 
-            var dataproperty = Map.DatabaseColumns.Where(x => x.Info.Equals(property)).FirstOrDefault();
+            var dataproperty = Map.DatabaseColumns.FirstOrDefault(x => x.MemberInfoTree.SequenceEqual(members));
             if (dataproperty == null)
-                throw new Exception($"Could not find member [{property.Name}] for type {typeof(T)}");
+                throw new Exception($"Could not find member [{string.Join(".", members.Select(x=>x.Name))}] for type {typeof(T)}");
 
             Add(dataproperty.Column, dataproperty.SqlType, value, comparisonOperator);            
         }
@@ -188,9 +186,9 @@ namespace Sushi.MicroORM
         /// <param name="sortOrder"></param>
         public void AddOrder(Expression<Func<T, object>> memberExpression, SortOrder sortOrder)
         {
-            PropertyInfo property = ReflectionHelper.GetMember(memberExpression.Body);
+            var property = ReflectionHelper.GetMemberTree(memberExpression.Body)?.LastOrDefault(); ;
 
-            var dataproperty = Map.DatabaseColumns.Where(x => x.Info.Equals(property)).FirstOrDefault();
+            var dataproperty = Map.DatabaseColumns.Where(x => x.MemberInfoTree.Equals(property)).FirstOrDefault();
             if (dataproperty == null)
                 throw new Exception($"No mapping defined for member [{property.Name}] on type {typeof(T)}");
 

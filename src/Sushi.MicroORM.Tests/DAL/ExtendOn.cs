@@ -19,10 +19,10 @@ public static class ExtendOnEntension
         //  Remove "myself" from the query creation process.
         map.DataItem.Sender.DatabaseColumns.Remove(map.DataItem);
         //  Extract the other Nested ORM entity type.
-        var property = map.DataItem.Info;
-        var nestedType = property.PropertyType;
+        var property = map.DataItem.MemberInfoTree;
+        var nestedType = ReflectionHelper.GetMemberType(property);
         if (nestedType.IsGenericType)
-            nestedType = property.PropertyType.GetGenericArguments().Single();
+            nestedType = nestedType.GetGenericArguments().Single();
         //  Get the ORM map from the entity type.
         var nestedMap = DatabaseConfiguration.DataMapProvider.GetMapForType(nestedType);
 
@@ -50,7 +50,7 @@ public static class ExtendOnEntension
         public string Primary_Key { get; set; }
         public string Foreign_Key { get; set; }
         public string JoinType { get; set; }
-        public PropertyInfo Info { get; set; }
+        public List<MemberInfo> Info { get; set; }
     }
 
 
@@ -76,7 +76,7 @@ public static class ExtendOnEntension
 
     private static void Col_Reflection1(QueryDataOutput data)
     {
-        var nestedinstance = data.DatabaseColumn.Instance.GetValue(data.Instance);
+        var nestedinstance = ReflectionHelper.GetMemberValue(data.DatabaseColumn.Instance,data.Instance);
         if (nestedinstance == null)
         {
 
@@ -90,10 +90,10 @@ public static class ExtendOnEntension
             //    continue;
             //}
 
-
-            nestedinstance = System.Activator.CreateInstance(data.DatabaseColumn.Instance.PropertyType);
-            ReflectionHelper.SetPropertyValue(data.DatabaseColumn.Instance, nestedinstance, data.Instance);
+            var memberType = ReflectionHelper.GetMemberType(data.DatabaseColumn.Instance);
+            nestedinstance = System.Activator.CreateInstance(memberType);
+            ReflectionHelper.SetMemberValue(data.DatabaseColumn.Instance, nestedinstance, data.Instance);
         }
-        ReflectionHelper.SetPropertyValue(data.DatabaseColumn.Info, data.Value, nestedinstance);
+        ReflectionHelper.SetMemberValue(data.DatabaseColumn.MemberInfoTree, data.Value, nestedinstance);
     }
 }

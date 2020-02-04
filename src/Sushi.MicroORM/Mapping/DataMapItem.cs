@@ -25,7 +25,7 @@ namespace Sushi.MicroORM.Mapping
         {
             get { return (OnReflection != null); }
         }
-        public PropertyInfo Instance { get; set; }
+        public List<MemberInfo> Instance { get; set; }
 
         internal string ColumnName
         {
@@ -60,9 +60,9 @@ namespace Sushi.MicroORM.Mapping
         /// </summary>
         public string Alias { get; set; }
         /// <summary>
-        /// Gets or sets <see cref="PropertyInfo"/> about the mapped field or property.
+        /// Gets or sets <see cref="MemberInfo"/> about the mapped field or property.
         /// </summary>
-        public PropertyInfo Info { get; set; }                
+        public List<MemberInfo> MemberInfoTree { get; set; }                
         /// <summary>
         /// Gets or sets a value indicating if the mapped column can be modified. If set to true, UPDATE and INSERT statements will not modify the column.
         /// </summary>

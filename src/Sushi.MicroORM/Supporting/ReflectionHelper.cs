@@ -9,41 +9,163 @@ using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.Supporting
 {
-    // Is this class based on something? Please add source (URL)
+    /// <summary>
+    /// Provides methods to work with properties and fields of mapped objects.
+    /// </summary>
     public static class ReflectionHelper
     {
         /// <summary>
-        /// Sets <paramref name="value"/> on the property defined by <paramref name="info"/> on <paramref name="entity"/>.
+        /// Determines the <see cref="Type"/> accessed by <paramref name="memberInfo"/>.
+        /// <paramref name="memberInfo"/> must be of type <see cref="MemberTypes.Field"/> or <see cref="MemberTypes.Property"/>.
         /// </summary>
-        /// <param name="info"></param>
+        /// <param name="memberInfo"></param>
+        /// <returns></returns>
+        public static Type GetMemberType(MemberInfo memberInfo)
+        {
+            switch (memberInfo.MemberType)
+            {
+                case MemberTypes.Field:
+                    return ((FieldInfo)memberInfo).FieldType;
+                case MemberTypes.Property:
+                    return ((PropertyInfo)memberInfo).PropertyType;
+                default:
+                    throw new ArgumentException($"Only {MemberTypes.Field} and {MemberTypes.Property} are supported.", nameof(memberInfo));
+            }
+        }
+
+        /// <summary>
+        /// Determines the <see cref="Type"/> accessed by <paramref name="memberInfoTree"/>.
+        /// <paramref name="memberInfoTree"/> items must be of type <see cref="MemberTypes.Field"/> or <see cref="MemberTypes.Property"/>.
+        /// </summary>
+        /// <param name="memberInfoTree"></param>
+        /// <returns></returns>
+        public static Type GetMemberType(List<MemberInfo> memberInfoTree)
+        {
+            return GetMemberType(memberInfoTree.LastOrDefault());
+        }
+
+        /// <summary>
+        /// Gets the value of the deepest level member defined by <paramref name="memberInfoTree"/> on <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="memberInfoTree"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public static object GetMemberValue(List<MemberInfo> memberInfoTree, object entity)
+        {
+            if (memberInfoTree == null)
+                throw new ArgumentNullException(nameof(memberInfoTree));
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+            if (memberInfoTree.Count == 0)
+                throw new ArgumentException("cannot contain zero items", nameof(memberInfoTree));
+
+            foreach (var memberInfo in memberInfoTree)
+            {                    
+                entity = GetMemberValue(memberInfo, entity);
+                if (entity == null)
+                    return null;
+            }
+            return entity;
+        }
+
+        /// <summary>
+        /// Gets the value of the member defined by <paramref name="memberInfo"/> on <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="memberInfo"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public static object GetMemberValue(MemberInfo memberInfo, object entity)
+        {
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+
+            switch (memberInfo.MemberType)
+            {
+                case MemberTypes.Field:
+                    return ((FieldInfo)memberInfo).GetValue(entity);
+                case MemberTypes.Property:
+                    return ((PropertyInfo)memberInfo).GetValue(entity);
+                default:
+                    throw new ArgumentException($"Only {MemberTypes.Field} and {MemberTypes.Property} are supported.", nameof(memberInfo));
+            }
+        }
+
+        /// <summary>
+        /// Sets <paramref name="value"/> on the property defined by <paramref name="memberInfo"/> on <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="memberInfo"></param>
         /// <param name="value"></param>
         /// <param name="entity"></param>
-        public static void SetPropertyValue(PropertyInfo info, object value, object entity)
-        {
+        public static void SetMemberValue(MemberInfo memberInfo, object value, object entity)
+        {   
             if (value == DBNull.Value)
             {
                 value = null;
             }
             else
             {
-                var type = info.PropertyType;
+                var type = GetMemberType(memberInfo);
                 value = ConvertValueToEnum(value, type);
             }
             try
             {
-                //set the value on the entity's correct property
-                info.SetValue(entity, value, null);
+                switch (memberInfo.MemberType)
+                {
+                    case MemberTypes.Field:
+                        ((FieldInfo)memberInfo).SetValue(entity, value);
+                        break;
+                    case MemberTypes.Property:
+                        ((PropertyInfo)memberInfo).SetValue(entity, value, null);
+                        break;
+                    default:
+                        throw new ArgumentException($"Only {MemberTypes.Field} and {MemberTypes.Property} are supported.", nameof(memberInfo));
+                }                
             }
             catch (Exception innerException)
             {
-                string message = string.Format("Error while setting the {1} property of type {0} with type {2}"
-                    , info.PropertyType.ToString() //0
-                    , info.Name //1
-                    , value == null ? "unknown (=NULL)" : value.GetType().ToString() //2
-                    );
+                string valueType = value == null ? "unknown (=NULL)" : value.GetType().ToString();
+                string message = $"Error while setting the {memberInfo.Name} member with an object of type {value}";
+                    
                 throw new Exception(message, innerException);
             }
         }
+
+        /// <summary>
+        /// Sets <paramref name="value"/> on the property defined by <paramref name="memberInfoTree"/> on <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="memberInfoTree"></param>
+        /// <param name="value"></param>
+        /// <param name="entity"></param>
+        public static void SetMemberValue(List<MemberInfo> memberInfoTree, object value, object entity)
+        {
+            if (memberInfoTree == null)
+                throw new ArgumentNullException(nameof(memberInfoTree));
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+            if (memberInfoTree.Count == 0)
+                throw new ArgumentException("cannot contain zero items", nameof(memberInfoTree));
+
+            if (memberInfoTree.Count > 1)
+            {
+                foreach (var memberInfo in memberInfoTree.GetRange(0, memberInfoTree.Count - 1))
+                {
+                    //get current node value, if null, create a new object
+                    var instance = GetMemberValue(memberInfo, entity);
+                    if (instance == null)
+                    {
+                        var type = GetMemberType(memberInfo);
+                        instance = Activator.CreateInstance(type);
+                        SetMemberValue(memberInfo, instance, entity);
+                    }
+                    entity = instance;
+                }
+            }
+            //now set the db value on the final member
+            var lastMemberInfo = memberInfoTree.Last();
+            SetMemberValue(lastMemberInfo, value, entity);
+        }
+
+
 
         /// <summary>
         /// Converts <paramref name="value"/> to an enumeration member if <paramref name="type"/> or its underlying <see cref="Type"/> is an <see cref="Enum"/>.
@@ -67,77 +189,41 @@ namespace Sushi.MicroORM.Supporting
             return value;
         }
 
-        public static PropertyInfo GetMember(Expression expression)
+        /// <summary>
+        /// Gets a collection of <see cref="MemberInfo"/> objects represented by the expression. The expression needs to be a <see cref="MemberExpression"/> or a <see cref="UnaryExpression"/> wrapping a <see cref="MemberExpression"/>.
+        /// </summary>
+        /// <param name="expression"></param>
+        /// <returns></returns>
+        public static List<MemberInfo> GetMemberTree(Expression expression)
         {
-            if (IsIndexedPropertyAccess(expression))
-                return GetDynamicComponentProperty(expression);
+            if (expression == null)
+                throw new ArgumentNullException(nameof(expression));
 
-            if (IsMethodExpression(expression))
+            var current = expression;
+            var result = new List<MemberInfo>();
+            do
             {
-                var method = ((MethodCallExpression)expression).Method;
-                return null;
-            }
-            var member = GetMemberExpression(expression, true);
-            return (PropertyInfo)member.Member;
-        }
-
-        private static MemberExpression GetMemberExpression(Expression expression, bool enforceCheck)
-        {
-            MemberExpression memberExpression = null;
-            if (expression.NodeType == ExpressionType.Convert)
-            {
-                var body = (UnaryExpression)expression;
-                memberExpression = body.Operand as MemberExpression;
-            }
-            else if (expression.NodeType == ExpressionType.MemberAccess)
-            {
-                memberExpression = expression as MemberExpression;
-            }
-
-            if (enforceCheck && memberExpression == null)
-            {
-                throw new ArgumentException("Does not access a property or field.", nameof(expression));
-            }
-
-            return memberExpression;
-        }
-
-        private static PropertyInfo GetDynamicComponentProperty(Expression expression)
-        {
-            Type desiredConversionType = null;
-            MethodCallExpression methodCallExpression = null;
-            var nextOperand = expression;
-
-            while (nextOperand != null)
-            {
-                if (nextOperand.NodeType == ExpressionType.Call)
+                //unwrap the expression contained by the unary expression
+                if (current is UnaryExpression unaryExpression)
                 {
-                    methodCallExpression = nextOperand as MethodCallExpression;
-                    desiredConversionType = desiredConversionType ?? methodCallExpression.Method.ReturnType;
-                    break;
+                    current = unaryExpression.Operand;                    
                 }
 
-                if (nextOperand.NodeType != ExpressionType.Convert)
-                    throw new ArgumentException("Expression not supported", nameof(expression));
-
-                var unaryExpression = (UnaryExpression)nextOperand;
-                desiredConversionType = unaryExpression.Type;
-                nextOperand = unaryExpression.Operand;
+                if (current is MemberExpression memberExpression)
+                {
+                    result.Add(memberExpression.Member);
+                    current = ((MemberExpression)current).Expression;
+                }
+                else
+                    current = null;
             }
+            while (current != null);
 
-            var constExpression = methodCallExpression.Arguments[0] as ConstantExpression;
+            //reverse the result, so it starts with the lowest level property
+            if(result.Count > 1)
+                result.Reverse();
 
-            return new DummyPropertyInfo((string)constExpression.Value, desiredConversionType);
-        }
-
-        private static bool IsIndexedPropertyAccess(Expression expression)
-        {
-            return IsMethodExpression(expression) && expression.ToString().Contains("get_Item");
-        }
-
-        private static bool IsMethodExpression(Expression expression)
-        {
-            return expression is MethodCallExpression || (expression is UnaryExpression && IsMethodExpression((expression as UnaryExpression).Operand));
+            return result;
         }
     }
 }

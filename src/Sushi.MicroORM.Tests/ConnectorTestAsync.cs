@@ -197,11 +197,11 @@ namespace Sushi.MicroORM.Tests
                 "E-reader"
             };
 
-            request.Add(x => x.Name, names, ComparisonOperator.In);
+            request.Add(x => x.MetaData.Name, names, ComparisonOperator.In);
             var products = await ConnectorProducts.FetchAllAsync(request);
             foreach (var product in products)
             {
-                Console.WriteLine($"{product.ID} - {product.Name}");
+                Console.WriteLine($"{product.ID} - {product.MetaData.Name}");
             }
 
             Assert.IsTrue(products.Count == 3);
@@ -212,11 +212,11 @@ namespace Sushi.MicroORM.Tests
         {
             var filter = ConnectorProducts.CreateDataFilter();
 
-            filter.Add(x => x.Description, "", ComparisonOperator.GreaterThan);
+            filter.Add(x => x.MetaData.Description, "", ComparisonOperator.GreaterThan);
             var products = await ConnectorProducts.FetchAllAsync(filter);
             foreach (var product in products)
             {
-                Console.WriteLine($"{product.ID} - {product.Name}");
+                Console.WriteLine($"{product.ID} - {product.MetaData.Name}");
             }
 
             Assert.IsTrue(products.Count > 0);
@@ -244,7 +244,7 @@ WHERE Product_Key = @productID";
 
             //check if name was updated
             var product = await ConnectorProducts.FetchSingleAsync(productID);
-            Assert.AreEqual(name, product.Name);
+            Assert.AreEqual(name, product.MetaData.Name);
         }
 
         [TestMethod]
@@ -365,11 +365,18 @@ WHERE Product_Key > @productID";
         {
             var product = new Product()
             {
-                Description = "New insert test",
-                Name = "New insert",
-                ExternalID = null,
+                MetaData = new Product.ProductMetaData()
+                {
+                    Description = "New insert test",
+                    Name = "New insert",
+                    Identification = new Product.Identification()
+                    {
+                        ExternalID = null,
+                        BarCode = Encoding.UTF8.GetBytes("SKU-12345678")
+                    }
+                },
                 Price = 12.50M,
-                BarCode = Encoding.UTF8.GetBytes("SKU-12345678")
+                
             };
             await ConnectorProducts.InsertAsync(product);
         }

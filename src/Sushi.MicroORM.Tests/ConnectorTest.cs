@@ -4,6 +4,8 @@ using Sushi.MicroORM.Tests.DAL;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 
 namespace Sushi.MicroORM.Tests
@@ -47,6 +49,48 @@ namespace Sushi.MicroORM.Tests
             }
         }
 
+        //[TestMethod]
+        //public void MultilevelMap()
+        //{
+        //    Expression<Func<DAL.Multilevel.Order, object>> myExpression = x => x.Comments;
+        //    Expression<Func<DAL.Multilevel.Order, object>> myExpression2 = x => x.Delivery.Comments;
+        //    var current = myExpression2.Body;
+
+        //    var properties = new List<PropertyInfo>();
+        //    do
+        //    {
+        //        Console.WriteLine(current.ToString());
+
+        //        if(current is UnaryExpression)
+        //        {
+        //            current = ((UnaryExpression)current).Operand;
+        //            Console.WriteLine(current.ToString());
+        //        }
+
+        //        if (current is MemberExpression member)
+        //        {
+        //            properties.Add((PropertyInfo)member.Member);
+        //            current = member.Expression;
+        //        }
+        //        else
+        //            current = null;
+        //    }
+        //    while (current != null);
+        //    properties.Reverse();
+        //    object myObject = new DAL.Multilevel.Order();
+        //    if (properties.Count > 1)
+        //    {
+        //        foreach (var property in properties.GetRange(0,properties.Count - 1))
+        //        {
+        //            var instance = Activator.CreateInstance(property.PropertyType);
+        //            property.SetValue(myObject, instance);
+        //            myObject = instance;
+        //        }
+        //    }
+        //    //now set the db value on the final property
+        //    string comment = "bla";
+        //    properties.Last().SetValue(myObject, comment);
+        //}
 
         [TestMethod]
         public void FetchSingleNestedByID()
@@ -66,21 +110,7 @@ namespace Sushi.MicroORM.Tests
             ConnectorOrders.Save(order);
 
             Assert.IsTrue(order?.CustomerID == order?.Booking?.CustomerID);
-        }
-
-        [TestMethod]
-        public void FetchAllNestedByID2()
-        {
-            int id = 1;
-
-            var ConnectorOrders = new Connector<OrderBookings>();
-            var filter = ConnectorOrders.CreateDataFilter();
-            filter.Add(x => x.ID, id);
-
-            var orders = ConnectorOrders.FetchAll(filter);
-
-            Console.WriteLine(orders.Count);
-        }
+        }        
 
         [TestMethod]
         public void FetchAllNestedByID()
@@ -94,6 +124,37 @@ namespace Sushi.MicroORM.Tests
             var orders = ConnectorOrders.FetchAll(filter);
 
             Console.WriteLine(orders.Count);
+        }
+
+        [TestMethod]
+        public void FetchAllNestedByID2()
+        {
+            int id = 1;
+
+            var connector = new Connector<OrderBooked2>();
+            var filter = connector.CreateDataFilter();
+            filter.Add(x => x.ID, id);
+
+            var orders = connector.FetchAll(filter);
+
+            Console.WriteLine(orders.Count);
+        }
+
+        [TestMethod]
+        public void SaveNested2()
+        {
+            int id = 1;
+
+            var connector = new Connector<OrderBooked2>();
+            var filter = connector.CreateDataFilter();
+            filter.Add(x => x.ID, id);
+
+            var orders = connector.FetchAll(filter);
+
+            Console.WriteLine(orders.Count);
+
+            var order = orders[0];
+            order.Save();
         }
 
         [TestMethod]
@@ -288,11 +349,11 @@ namespace Sushi.MicroORM.Tests
                 "E-reader"
             };
 
-            request.Add(x => x.Name, names, ComparisonOperator.In);
+            request.Add(x => x.MetaData.Name, names, ComparisonOperator.In);
             var products = ConnectorProducts.FetchAll(request);
             foreach (var product in products)
             {
-                Console.WriteLine($"{product.ID} - {product.Name}");
+                Console.WriteLine($"{product.ID} - {product.MetaData.Name}");
             }
 
             Assert.IsTrue(products.Count == 3);
@@ -306,11 +367,11 @@ namespace Sushi.MicroORM.Tests
             var filter = ConnectorProducts.CreateDataFilter();
 
 
-            filter.Add(x => x.Description, "", ComparisonOperator.GreaterThan);
+            filter.Add(x => x.MetaData.Description, "", ComparisonOperator.GreaterThan);
             var products = ConnectorProducts.FetchAll(filter);
             foreach (var product in products)
             {
-                Console.WriteLine($"{product.ID} - {product.Name} - {product.ProductTypeID}");
+                Console.WriteLine($"{product.ID} - {product.MetaData.Name} - {product.MetaData.ProductTypeID}");
             }
 
             Assert.IsTrue(products.Count > 0);
@@ -328,7 +389,7 @@ namespace Sushi.MicroORM.Tests
             var products = connector.FetchAll(filter);
             foreach (var product in products)
             {
-                Console.WriteLine($"{product.ID} - {product.Name} - {product.Price}");
+                Console.WriteLine($"{product.ID} - {product.MetaData.Name} - {product.Price}");
             }
             Assert.IsTrue(products.Count > 0);
         }
@@ -346,7 +407,7 @@ namespace Sushi.MicroORM.Tests
             var products = connector.FetchAll(filter);
             foreach (var product in products)
             {
-                Console.WriteLine($"{product.ID} - {product.Name} - {product.Price}");
+                Console.WriteLine($"{product.ID} - {product.MetaData.Name} - {product.Price}");
             }
             Assert.IsTrue(products.Count == 0);
         }
@@ -378,7 +439,7 @@ WHERE Product_Key = @productID";
 
             //check if name was updated
             var product = ConnectorProducts.FetchSingle(productID);
-            Assert.AreEqual(name, product.Name);
+            Assert.AreEqual(name, product.MetaData.Name);
         }
 
         [TestMethod]
@@ -482,13 +543,17 @@ WHERE Product_Key > @productID";
             var connector = new Connector<Product>();
             var product = new Product()
             {
-                Description = "New insert test",
-                Name = "New insert",
-                ExternalID = null,
+                MetaData = new Product.ProductMetaData()
+                {
+                    Description = "New insert test",
+                    Name = "New insert",
+                    Identification = new Product.Identification()
+                    {
+                        ExternalID = null,
+                        BarCode = Encoding.UTF8.GetBytes("SKU-12345678")
+                    }
+                },
                 Price = 12.50M,
-                BarCode = Encoding.UTF8.GetBytes("SKU-12345678"),
-                GUID = Guid.NewGuid(),
-                ProductTypeID = Product.ProducType.Hifi
             };
             connector.Insert(product);
         }
@@ -497,18 +562,24 @@ WHERE Product_Key > @productID";
         public void Upsert()
         {
             var connector = new Connector<Product>();
+            
             var product = new Product()
             {
-                Description = "New insert test7",
-                Name = "New insert xx",
-                ExternalID = null,
-                Price = 12.50M,
-                BarCode = Encoding.UTF8.GetBytes("SKU-12345678"),
-                GUID = Guid.NewGuid(),
-                ProductTypeID = Product.ProducType.Hifi
+                MetaData = new Product.ProductMetaData()
+                {
+                    Description = "New insert test7",
+                    Name = "New insert",
+                    Identification = new Product.Identification()
+                    {
+                        ExternalID = null,
+                        BarCode = Encoding.UTF8.GetBytes("SKU-12345678")
+                    }
+                },
+                Price = 12.50M
+
             };
             var filter = connector.CreateDataFilter();
-            filter.Add(x => x.Description, product.Description);
+            filter.Add(x => x.MetaData.Description, product.MetaData.Description);
             filter.Add(x => x.Price, product.Price);
 
             connector.Upsert(product, filter);
@@ -521,12 +592,19 @@ WHERE Product_Key > @productID";
             var ConnectorProducts = new Connector<Product>();
             var product = new Product()
             {
-                Description = "New insert test",
-                Name = "New insert",
-                ExternalID = null,
+                MetaData = new Product.ProductMetaData()
+                {
+                    Description = "New insert test",
+                    Name = "New insert",
+                    Identification = new Product.Identification()
+                    {
+                        ExternalID = null,
+                        BarCode = Encoding.UTF8.GetBytes("SKU-12345678"),
+                        GUID = Guid.Empty
+                    }
+                },
                 Price = 12.50M,
-                BarCode = Encoding.UTF8.GetBytes("SKU-12345678"),
-                GUID = Guid.Empty
+                
             };
             ConnectorProducts.Insert(product);
         }

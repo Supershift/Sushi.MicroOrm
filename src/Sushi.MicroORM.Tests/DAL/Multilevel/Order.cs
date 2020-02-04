@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sushi.MicroORM.Tests.DAL
+namespace Sushi.MicroORM.Tests.DAL.Multilevel
 {
     [DataMap(typeof(OrderMap))]    
     public class Order
@@ -18,35 +18,33 @@ namespace Sushi.MicroORM.Tests.DAL
                 Id(x => x.ID, "Order_Key");
                 Map(x => x.CustomerID, "Order_Customer_Key");
                 Map(x => x.Created, "Order_Created");
-                Map(x => x.Comments, "Order_Comments");
-                Map(x => x.DeliveryTime, "Order_DeliveryTime");
-                Map(x => x.DeliveryTime2, "Order_DeliveryTime2");
+                Map(x => x.Delivery.Comments, "Order_Comments");
+                Map(x => x.Delivery.DeliveryTime, "Order_DeliveryTime");
+                Map(x => x.Delivery.DeliveryTime2, "Order_DeliveryTime2");
                 Map(x => x.Created2, "Order_Created").ReadOnly();
             }
         }
 
-        public class InvalidOrderMap : DataMap<Order>
+        public class DeliveryInfo
         {
-            public InvalidOrderMap()
-            {
-                //the table iss missing on purpose, this allows testing of validation
-                Id(x => x.ID, "Order_Key");
-                Map(x => x.CustomerID, "Order_Customer_Key");
-                Map(x => x.Created, "Order_Created");
-                Map(x => x.Comments, "Order_Comments");
-                Map(x => x.DeliveryTime, "Order_DeliveryTime");
-                Map(x => x.DeliveryTime2, "Order_DeliveryTime2");
-                
-            }
-        }        
+            public string Comments { get; set; }
+            public TimeSpan? DeliveryTime { get; set; }
+            public TimeSpan DeliveryTime2 { get; set; }
+        }
 
-        public int ID;
-        public int CustomerID;
+        public struct GeoLocation
+        {
+            public int Longitutude { get; set; }
+            public int Latitude { get; set; }
+        }
+
+        public int ID { get; set; }
+        public int CustomerID { get; set; }
         public DateTime Created { get; set; }
         public DateTime Created2 { get; set; }
+        public DeliveryInfo Delivery;
+        public GeoLocation Location { get; set; }
         public string Comments { get; set; }
-        public TimeSpan? DeliveryTime { get; set; }
-        public TimeSpan DeliveryTime2 { get; set; }
 
         public static List<Order> FetchAll(int customerID)
         {

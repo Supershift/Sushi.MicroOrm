@@ -171,7 +171,7 @@ namespace Sushi.MicroORM.Mapping
         /// <returns></returns>
         public DataMapItemSetter Id(Expression<Func<T, object>> memberExpression, string columnName)
         {
-            PropertyInfo property = ReflectionHelper.GetMember(memberExpression.Body);
+            var members = ReflectionHelper.GetMemberTree(memberExpression.Body);
 
             DataMapItem dbcol = new DataMapItem
             {
@@ -179,9 +179,10 @@ namespace Sushi.MicroORM.Mapping
                 Column = columnName,
                 IsPrimaryKey = true,
                 IsIdentity = true,
-                Info = property
+                MemberInfoTree = members
             };
-            dbcol.SqlType = Utility.GetSqlDbType(dbcol.Info.PropertyType);
+            var memberType = ReflectionHelper.GetMemberType(dbcol.MemberInfoTree);
+            dbcol.SqlType = Utility.GetSqlDbType(memberType);
             DatabaseColumns.Add(dbcol);
 
             return new DataMapItemSetter(dbcol);
@@ -195,15 +196,16 @@ namespace Sushi.MicroORM.Mapping
         /// <returns></returns>
         public DataMapItemSetter Map(Expression<Func<T, object>> memberExpression, string columnName)
         {
-            PropertyInfo property = ReflectionHelper.GetMember(memberExpression.Body);
-
+            var members = ReflectionHelper.GetMemberTree(memberExpression.Body);
+            
             DataMapItem dbcol = new DataMapItem
             {
                 Sender = this,
                 Column = columnName,
-                Info = property
+                MemberInfoTree = members
             };
-            dbcol.SqlType = Utility.GetSqlDbType(dbcol.Info.PropertyType);
+            var memberType = ReflectionHelper.GetMemberType(dbcol.MemberInfoTree);
+            dbcol.SqlType = Utility.GetSqlDbType(memberType);
             DatabaseColumns.Add(dbcol);
 
             return new DataMapItemSetter(dbcol);

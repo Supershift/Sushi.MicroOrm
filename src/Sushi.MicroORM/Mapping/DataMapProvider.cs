@@ -86,6 +86,7 @@ namespace Sushi.MicroORM.Mapping
                         //do we need to check if it is a generic type for T?
                         //add the map to collection of datamaptypes
                         this.AddMapping(type, dataMapType);
+                        break;
                     }
                 }
             }

@@ -91,7 +91,7 @@ namespace Sushi.MicroORM
             var primaryKeyColumns = Map.GetPrimaryKeyColumns();
             foreach (var column in primaryKeyColumns)
             {
-                filter.Add(column.Column, column.SqlType, column.Info.GetValue(entity));
+                filter.Add(column.Column, column.SqlType, ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity));
             }
         }
 
@@ -102,7 +102,7 @@ namespace Sushi.MicroORM
             if (identityColumn == null)
                 throw new Exception(@"No identity primary key column defined on mapping. Cannot determine if action is update or insert. 
 Please map identity primary key column using Map.Id(). Otherwise use Insert or Update explicitly.");
-            var currentIdentityValue = identityColumn.Info.GetValue(entity);
+            var currentIdentityValue = ReflectionHelper.GetMemberValue(identityColumn.MemberInfoTree, entity);
             return currentIdentityValue == null || currentIdentityValue as int? == 0;
         }
 
@@ -155,7 +155,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 throw new Exception("Mapping does not have one and only one primary key column.");
             var primaryKeyColumn = primaryKeyColumns[0];
 
-            var primaryKeyType = primaryKeyColumn.Info.PropertyType;
+            var primaryKeyType = ReflectionHelper.GetMemberType(primaryKeyColumn.MemberInfoTree);
             if (primaryKeyType != typeof(int))
                 throw new Exception("Primary key column is not mapped to a property of type 'Int32'.");
 
@@ -266,17 +266,12 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                     if (param.ColumnName.Equals(columnName, StringComparison.CurrentCultureIgnoreCase))
                     {
                         var value = reader.GetValue(column);
-                        try
-                        {
-                            if (param.HasReflection)
-                                param.DoReflection(instance, param, value);
-                            else
-                                ReflectionHelper.SetPropertyValue(param.Info, value, instance);
-                        }
-                        catch(Exception)
-                        {
-                            Console.WriteLine($"Could not match {columnName}");
-                        }
+                        
+                        if (param.HasReflection)
+                            param.DoReflection(instance, param, value);
+                        else
+                            ReflectionHelper.SetMemberValue(param.MemberInfoTree, value, instance);
+                        
                     }
                 }
             }
@@ -646,7 +641,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                     continue;
 
                 updateColumns += string.Concat(param.Column, "= ", "@", param.Column, ", ");
-                dac.SetParameterInput(string.Concat("@", param.Column), param.Info.GetValue(entity), param.SqlType, param.Length);
+                dac.SetParameterInput(string.Concat("@", param.Column), ReflectionHelper.GetMemberValue(param.MemberInfoTree, entity), param.SqlType, param.Length);
             }
 
             if (filter?.SqlParameters != null)
@@ -689,7 +684,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                     continue;
 
                 updateColumns += string.Concat(param.Column, "= ", "@", param.Column, ", ");
-                dac.SetParameterInput(string.Concat("@", param.Column), param.Info.GetValue(entity), param.SqlType, param.Length);
+                dac.SetParameterInput(string.Concat("@", param.Column), ReflectionHelper.GetMemberValue(param.MemberInfoTree, entity), param.SqlType, param.Length);
 
             }
 
@@ -782,7 +777,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
                     insertColumns += string.Concat(databaseColumn.Column, ", ");
                     valuesColumns += string.Concat("@", databaseColumn.Column, ", ");
-                    dac.SetParameterInput(string.Concat("@", databaseColumn.Column), databaseColumn.Info.GetValue(entity), databaseColumn.SqlType, databaseColumn.Length);
+                    dac.SetParameterInput(string.Concat("@", databaseColumn.Column), ReflectionHelper.GetMemberValue(databaseColumn.MemberInfoTree, entity), databaseColumn.SqlType, databaseColumn.Length);
                 }
             }
 
@@ -812,8 +807,8 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             {
                 var identityColumn = Map.DatabaseColumns.FirstOrDefault(x => x.IsIdentity);
                 var id = dac.GetParamInt(identityOutputParameter);
-                if (id > 0)
-                    identityColumn?.Info.SetValue(entity, id, null);
+                if (id > 0 && identityColumn != null)
+                    ReflectionHelper.SetMemberValue(identityColumn.MemberInfoTree, id, entity);
             }
         }
 
@@ -1535,7 +1530,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                     //set values in the row for each column (and only if the column exists in the table definition)
                     if (dataTable.Columns.Contains(databaseColumn.Column))
                     {
-                        var value = databaseColumn.Info.GetValue(entity);
+                        var value = ReflectionHelper.GetMemberValue(databaseColumn.MemberInfoTree, entity);
                         //if null, we must use DBNull
                         if (value == null)
                             value = DBNull.Value;

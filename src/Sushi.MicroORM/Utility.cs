@@ -1,8 +1,10 @@
 ﻿using Sushi.MicroORM.Mapping;
+using Sushi.MicroORM.Supporting;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -88,7 +90,7 @@ namespace Sushi.MicroORM
                     dataColumn.ColumnName = databaseColumn.Column;
 
                     //nullable types are not supported, the underlying type needs to be provided 
-                    var type = databaseColumn.Info.PropertyType;
+                    var type = ReflectionHelper.GetMemberType(databaseColumn.MemberInfoTree);
                     var underlyingType = Nullable.GetUnderlyingType(type);
                     if (underlyingType != null)
                         type = underlyingType;

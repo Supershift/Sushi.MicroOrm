@@ -74,6 +74,17 @@ namespace Sushi.MicroORM.Tests
         }
 
         [TestMethod]
+        public async Task FetchSingleMultilevelAsync()
+        {
+            int productID = 1;
+            var product = await Product.FetchSingleAsync(productID);
+
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(product, Newtonsoft.Json.Formatting.Indented));
+
+            Assert.IsTrue(product.MetaData.Identification.GUID != Guid.Empty);
+        }
+
+        [TestMethod]
         public async Task FetchAllAsync()
         {
             var request = new DataFilter<Order>();
@@ -133,6 +144,17 @@ namespace Sushi.MicroORM.Tests
             }
 
             Assert.IsTrue(orders.Count > 0);
+        }
+
+        [TestMethod]
+        public async Task FetchAllWithJoin()
+        {
+            int customerID = 1;
+
+            var bookings = await BookedRoom.FetchAllAsync(customerID);
+
+            Console.Write(Newtonsoft.Json.JsonConvert.SerializeObject(bookings, Newtonsoft.Json.Formatting.Indented));
+            Assert.IsTrue(bookings.Count > 0);
         }
 
         [TestMethod]

@@ -14,40 +14,6 @@ namespace Sushi.MicroORM.Mapping
     public class DataMapItem
     {
         /// <summary>
-        /// The event that is triggered before the SQL statement is created allowing for applying change to the statement.
-        /// </summary>
-        public QueryResultHandler OnReflection { get;set; }
-        internal void DoReflection(object instance, DataMapItem item, object value)
-        {
-            if (OnReflection != null) OnReflection(new QueryDataOutput() { Value = value, Instance = instance, DatabaseColumn = item});
-        }
-        internal bool HasReflection
-        {
-            get { return (OnReflection != null); }
-        }
-        public List<MemberInfo> Instance { get; set; }
-
-        internal string ColumnName
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(this.Alias))
-                    return Column;
-                return Alias;
-            }
-        }
-
-        internal string ColumnAlias
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(this.Alias))
-                    return Column;
-                return $"{Column} AS {Alias}";
-            }
-        }
-
-        /// <summary>
         /// Gets ot set the sending datamap entity.
         /// </summary>
         public DataMap Sender { get; set; }
@@ -62,7 +28,7 @@ namespace Sushi.MicroORM.Mapping
         /// <summary>
         /// Gets or sets <see cref="MemberInfo"/> about the mapped field or property.
         /// </summary>
-        public List<MemberInfo> MemberInfoTree { get; set; }                
+        public List<MemberInfo> MemberInfoTree { get; } = new List<MemberInfo>();       
         /// <summary>
         /// Gets or sets a value indicating if the mapped column can be modified. If set to true, UPDATE and INSERT statements will not modify the column.
         /// </summary>
@@ -83,8 +49,19 @@ namespace Sushi.MicroORM.Mapping
         /// Gets or sets the <see cref="SqlDbType"/> of the mapped column.
         /// </summary>
         public SqlDbType SqlType { get; set; }
+
         /// <summary>
-        /// Map setting for joined objects
+        /// Gets the statement to use in a select list. If <see cref="Alias"/> is defined, this will return '<see cref="Column"/> as <see cref="Alias"/>.
+        /// Otherwiste only <see cref="Column"/> is returned.
         /// </summary>
+        public string ColumnSelectListName
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(this.Alias))
+                    return Column;
+                return $"{Column} AS {Alias}";
+            }
+        }
     }
 }

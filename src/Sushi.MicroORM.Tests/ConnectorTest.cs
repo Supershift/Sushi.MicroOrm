@@ -49,114 +49,6 @@ namespace Sushi.MicroORM.Tests
             }
         }
 
-        //[TestMethod]
-        //public void MultilevelMap()
-        //{
-        //    Expression<Func<DAL.Multilevel.Order, object>> myExpression = x => x.Comments;
-        //    Expression<Func<DAL.Multilevel.Order, object>> myExpression2 = x => x.Delivery.Comments;
-        //    var current = myExpression2.Body;
-
-        //    var properties = new List<PropertyInfo>();
-        //    do
-        //    {
-        //        Console.WriteLine(current.ToString());
-
-        //        if(current is UnaryExpression)
-        //        {
-        //            current = ((UnaryExpression)current).Operand;
-        //            Console.WriteLine(current.ToString());
-        //        }
-
-        //        if (current is MemberExpression member)
-        //        {
-        //            properties.Add((PropertyInfo)member.Member);
-        //            current = member.Expression;
-        //        }
-        //        else
-        //            current = null;
-        //    }
-        //    while (current != null);
-        //    properties.Reverse();
-        //    object myObject = new DAL.Multilevel.Order();
-        //    if (properties.Count > 1)
-        //    {
-        //        foreach (var property in properties.GetRange(0,properties.Count - 1))
-        //        {
-        //            var instance = Activator.CreateInstance(property.PropertyType);
-        //            property.SetValue(myObject, instance);
-        //            myObject = instance;
-        //        }
-        //    }
-        //    //now set the db value on the final property
-        //    string comment = "bla";
-        //    properties.Last().SetValue(myObject, comment);
-        //}
-
-        [TestMethod]
-        public void FetchSingleNestedByID()
-        {
-            var ConnectorOrders = new Connector<OrderBooked>();
-
-            int id = 1;
-            var order = ConnectorOrders.FetchSingle(id);
-            ConnectorOrders.EnableCaching();
-
-            int run = 10;
-            while(run > 0)
-            {
-                var order2 = ConnectorOrders.FetchSingle(id);
-                run--;
-            }
-            ConnectorOrders.Save(order);
-
-            Assert.IsTrue(order?.CustomerID == order?.Booking?.CustomerID);
-        }        
-
-        [TestMethod]
-        public void FetchAllNestedByID()
-        {
-            int id = 1;
-
-            var ConnectorOrders = new Connector<OrderBooked>();
-            var filter = ConnectorOrders.CreateDataFilter();
-            filter.Add(x => x.ID, id);
-
-            var orders = ConnectorOrders.FetchAll(filter);
-
-            Console.WriteLine(orders.Count);
-        }
-
-        [TestMethod]
-        public void FetchAllNestedByID2()
-        {
-            int id = 1;
-
-            var connector = new Connector<OrderBooked2>();
-            var filter = connector.CreateDataFilter();
-            filter.Add(x => x.ID, id);
-
-            var orders = connector.FetchAll(filter);
-
-            Console.WriteLine(orders.Count);
-        }
-
-        [TestMethod]
-        public void SaveNested2()
-        {
-            int id = 1;
-
-            var connector = new Connector<OrderBooked2>();
-            var filter = connector.CreateDataFilter();
-            filter.Add(x => x.ID, id);
-
-            var orders = connector.FetchAll(filter);
-
-            Console.WriteLine(orders.Count);
-
-            var order = orders[0];
-            order.Save();
-        }
-
         [TestMethod]
         public void FetchSingleByID()
         {
@@ -235,6 +127,17 @@ namespace Sushi.MicroORM.Tests
         }
 
         [TestMethod]
+        public void FetchSingleMultilevel()
+        {
+            int productID = 1;
+            var product = Product.FetchSingle(productID);
+            
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(product, Newtonsoft.Json.Formatting.Indented));
+
+            Assert.IsTrue(product.MetaData.Identification.GUID != Guid.Empty);
+        }
+
+        [TestMethod]
         public void FetchAll()
         {
             var ConnectorOrders = new Connector<Order>();
@@ -280,6 +183,17 @@ namespace Sushi.MicroORM.Tests
             }
 
             Assert.IsTrue(orders.Count > 0);
+        }
+
+        [TestMethod]
+        public void FetchAllWithJoin()
+        {
+            int customerID = 1;
+
+            var bookings = BookedRoom.FetchAll(customerID);
+
+            Console.Write(Newtonsoft.Json.JsonConvert.SerializeObject(bookings, Newtonsoft.Json.Formatting.Indented));
+            Assert.IsTrue(bookings.Count > 0);
         }
 
         [TestMethod]

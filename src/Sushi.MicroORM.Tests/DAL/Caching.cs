@@ -21,7 +21,7 @@ public static class CacheExtension
             table.Map.OnPostFetch = Map_AfterFetch;
         }
         table.Map.OnPostSave = Map_AfterSave;
-        table.Map.OnPostSave = Map_AfterSave;
+        table.Map.OnPostDelete = Map_AfterSave;
     }
 
 

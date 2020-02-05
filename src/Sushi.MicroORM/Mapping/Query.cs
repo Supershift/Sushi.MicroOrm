@@ -19,7 +19,7 @@ namespace Sushi.MicroORM.Mapping
         /// <summary>
         /// Gets or set the select columns that are part of the sql statement.
         /// </summary>
-        public List<DataMapItem> Select { get; set; }
+        public List<DataMapItem> Select { get; }
         /// <summary>
         /// Gets or set the from clause from the sql statement.
         /// </summary>

@@ -17,9 +17,7 @@ namespace Sushi.MicroORM.Mapping
         /// The instance of the object the value should be assigned to.
         /// </summary>
         public object Instance { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
+        
         public DataMapItem DatabaseColumn { get; set; }
     }
 }

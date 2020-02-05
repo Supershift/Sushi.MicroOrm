@@ -235,9 +235,8 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 throw new Exception("No columns set for the select statement");
 
             if (string.IsNullOrWhiteSpace(sql))
-            {
-                Map.DoApplyFilter(Map, query);
-                query.Sql = $"SELECT TOP(1) {(string.Join(", ", query.Select.Select(x => x.ColumnAlias).ToArray()))} FROM {query.From} {query.Where} {query.OrderBy}";
+            {   
+                query.Sql = $"SELECT TOP(1) {(string.Join(", ", query.Select.Select(x => x.ColumnSelectListName).ToArray()))} FROM {query.From} {query.Where} {query.OrderBy}";
             }
             else
                 query.Sql = sql;
@@ -257,21 +256,22 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
         private void SetResultValuesToObject(Query query, SqlDataReader reader, object instance)
         {
-            foreach (var param in query.Select)
+            foreach (var datamapItem in query.Select)
             {
                 for (int column = 0; column < reader.FieldCount; column++)
                 {
-                    //get the name and the value of the column
+                    //get the name of the column as returned by the database
                     var columnName = reader.GetName(column);
-                    if (param.ColumnName.Equals(columnName, StringComparison.CurrentCultureIgnoreCase))
+                    //which name is expected in the result set by the mapped item
+                    string mappedName = datamapItem.Column;
+                    if (!string.IsNullOrWhiteSpace(datamapItem.Alias))
+                        mappedName = datamapItem.Alias;
+
+                    if (mappedName.Equals(columnName, StringComparison.CurrentCultureIgnoreCase))
                     {
-                        var value = reader.GetValue(column);
+                        var value = reader.GetValue(column);                        
                         
-                        if (param.HasReflection)
-                            param.DoReflection(instance, param, value);
-                        else
-                            ReflectionHelper.SetMemberValue(param.MemberInfoTree, value, instance);
-                        
+                        ReflectionHelper.SetMemberValue(datamapItem.MemberInfoTree, value, instance);                        
                     }
                 }
             }
@@ -478,10 +478,8 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                             }
                             break;
                         case ComparisonOperator.In:
-                            if (predicate.Value is IEnumerable)
+                            if (predicate.Value is IEnumerable items)
                             {
-                                var items = (IEnumerable)predicate.Value;
-
                                 //create a unique parameter for each item in the 'IN' predicate
                                 var inParams = new List<string>();
                                 int i = 0;
@@ -1095,13 +1093,11 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 rowcount = null;
             }
 
-            //create the select statement, except when the caller supplied his own sql statement
-            string sqlText;
+            //create the select statement, except when the caller supplied his own sql statement            
             if (string.IsNullOrWhiteSpace(customSql))
             {
-                Map.ValidateMappingForGeneratedQueries();
-                Map.DoApplyFilter(Map, query);
-                query.Sql = $"SELECT {rowcount} {(string.Join(", ", query.Select.Select(x => x.ColumnAlias).ToArray()))} FROM {query.From} {query.Where} {query.OrderBy} {pagingOffset}";
+                Map.ValidateMappingForGeneratedQueries();                
+                query.Sql = $"SELECT {rowcount} {(string.Join(", ", query.Select.Select(x => x.ColumnSelectListName).ToArray()))} FROM {query.From} {query.Where} {query.OrderBy} {pagingOffset}";
             }
             else
                 query.Sql = customSql;
@@ -1345,10 +1341,9 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <summary>
-        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="filter"/>.
+        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. 
         /// </summary>
-        /// <param name="sqlText"></param>
-        /// <param name="filter"></param>
+        /// <param name="sqlText"></param>        
         /// <returns></returns>
         public List<Y> ExecuteSet<Y>(string sqlText)
         {
@@ -1358,7 +1353,8 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <summary>
         /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="filter"/>.
         /// </summary>
-        /// <param name="sqlText"></param>        
+        /// <param name="sqlText"></param>     
+        /// <param name="filter"></param>
         /// <returns></returns>
         public List<Y> ExecuteSet<Y>(string sqlText, DataFilter<T> filter)
         {
@@ -1406,7 +1402,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <summary>
-        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="filter"/>.
+        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result.
         /// </summary>
         /// <param name="sqlText"></param>        
         /// <returns></returns>

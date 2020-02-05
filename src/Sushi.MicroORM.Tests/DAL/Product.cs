@@ -53,5 +53,19 @@ namespace Sushi.MicroORM.Tests.DAL
             Living = 3,
             Food = 4
         }
+
+        public static Product FetchSingle(int id)
+        {
+            var connector = new Connector<Product>();
+            var result = connector.FetchSingle(id);
+            return result;
+        }
+
+        public static async Task<Product> FetchSingleAsync(int id)
+        {
+            var connector = new Connector<Product>();
+            var result = await connector.FetchSingleAsync(id);
+            return result;
+        }
     }
 }

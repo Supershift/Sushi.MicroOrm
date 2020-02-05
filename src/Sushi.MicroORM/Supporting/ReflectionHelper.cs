@@ -194,36 +194,47 @@ namespace Sushi.MicroORM.Supporting
         /// </summary>
         /// <param name="expression"></param>
         /// <returns></returns>
-        public static List<MemberInfo> GetMemberTree(Expression expression)
+        public static List<MemberInfo> GetMemberTree<T>(Expression<Func<T, object>> expression)
         {
             if (expression == null)
                 throw new ArgumentNullException(nameof(expression));
 
-            var current = expression;
+            //get body of the expression
+            var body = expression.Body;            
+
+            var current = body;
             var result = new List<MemberInfo>();
             do
             {
                 //unwrap the expression contained by the unary expression
                 if (current is UnaryExpression unaryExpression)
                 {
-                    current = unaryExpression.Operand;                    
+                    current = unaryExpression.Operand;
                 }
 
-                if (current is MemberExpression memberExpression)
+                switch (current)
                 {
-                    result.Add(memberExpression.Member);
-                    current = ((MemberExpression)current).Expression;
+                    case MemberExpression memberExpression:
+                        result.Add(memberExpression.Member);
+                        current = ((MemberExpression)current).Expression;
+                        break;
+                    case ParameterExpression parameterExpression:
+                        //this is the root node
+                        current = null;
+                        break;
+                    default:
+                        //unsupported expression type
+                        throw new Exception($"Unsupported expression type {current.GetType()} in: {body}, only MemberExpressions are supported.");
                 }
-                else
-                    current = null;
             }
             while (current != null);
 
             //reverse the result, so it starts with the lowest level property
-            if(result.Count > 1)
+            if (result.Count > 1)
                 result.Reverse();
 
             return result;
-        }
+        }       
+        
     }
 }

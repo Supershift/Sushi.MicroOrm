@@ -126,7 +126,7 @@ namespace Sushi.MicroORM
         /// <param name="comparisonOperator"></param>
         public void Add(Expression<Func<T, object>> mappingExpression, object value, ComparisonOperator comparisonOperator)
         {
-            var members = ReflectionHelper.GetMemberTree(mappingExpression.Body);
+            var members = ReflectionHelper.GetMemberTree(mappingExpression);
 
             var dataproperty = Map.DatabaseColumns.FirstOrDefault(x => x.MemberInfoTree.SequenceEqual(members));
             if (dataproperty == null)
@@ -186,11 +186,11 @@ namespace Sushi.MicroORM
         /// <param name="sortOrder"></param>
         public void AddOrder(Expression<Func<T, object>> memberExpression, SortOrder sortOrder)
         {
-            var property = ReflectionHelper.GetMemberTree(memberExpression.Body)?.LastOrDefault(); ;
+            var members = ReflectionHelper.GetMemberTree(memberExpression);
 
-            var dataproperty = Map.DatabaseColumns.Where(x => x.MemberInfoTree.Equals(property)).FirstOrDefault();
+            var dataproperty = Map.DatabaseColumns.Where(x => x.MemberInfoTree.SequenceEqual(members)).FirstOrDefault();
             if (dataproperty == null)
-                throw new Exception($"No mapping defined for member [{property.Name}] on type {typeof(T)}");
+                throw new Exception($"Could not find member [{string.Join(".", members.Select(x => x.Name))}] for type {typeof(T)}");
 
             AddOrder(dataproperty.Column, sortOrder);
         }

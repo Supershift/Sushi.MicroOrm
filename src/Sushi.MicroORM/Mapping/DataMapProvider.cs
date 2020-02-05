@@ -11,7 +11,10 @@ namespace Sushi.MicroORM.Mapping
     /// Provides methods to map class types to DataMaps
     /// </summary>
     public class DataMapProvider
-    {        
+    {
+        /// <summary>
+        /// Gets a collection of key value pairs with default relations between <see cref="DataMap"/> classes and mapped classes.
+        /// </summary>
         protected ConcurrentDictionary<Type, Type> DataMapTypes { get; } = new ConcurrentDictionary<Type, Type>();
 
         /// <summary>
@@ -24,6 +27,11 @@ namespace Sushi.MicroORM.Mapping
             DataMapTypes[typeof(T)] = typeof(Y);            
         }
 
+        /// <summary>
+        /// Sets the type to use when resolving queries for another type.
+        /// </summary>
+        /// <param name="classToMap"></param>
+        /// <param name="dataMap"></param>
         public void AddMapping(Type classToMap, Type dataMap)
         {
             //check if class to map has a default, parameterless constructor
@@ -51,8 +59,7 @@ namespace Sushi.MicroORM.Mapping
         }
         /// <summary>
         /// Returns an instance of DataMap for <param name="type"></param> if declared. If not, null is returned
-        /// </summary>
-        /// <param name="type"></param>
+        /// </summary>        
         /// <returns></returns>
         public DataMap GetMapForType(System.Type type)
         {
@@ -65,7 +72,7 @@ namespace Sushi.MicroORM.Mapping
             if (dataMapType == null)
             {
                 //check if the mapping is declared as a DataMap attribute on T
-                dataMapType = this.RetrieveMapFromAttributeOnType(type);
+                dataMapType = RetrieveMapFromAttributeOnType(type);
                 if (dataMapType != null)
                 {
                     //add the map to collection of datamaptypes
@@ -104,7 +111,7 @@ namespace Sushi.MicroORM.Mapping
         /// Checks if type<param name="type"/> has a DataMapAttribute defining. Returns null if no attribute found
         /// </summary>
         /// <returns></returns>
-        public Type RetrieveMapFromAttributeOnType(System.Type type)
+        public static Type RetrieveMapFromAttributeOnType(System.Type type)
         {
             var dataMapAttribute = Attribute.GetCustomAttribute(type, typeof(DataMapAttribute)) as DataMapAttribute;
             if (dataMapAttribute != null)

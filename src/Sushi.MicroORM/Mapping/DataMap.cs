@@ -15,35 +15,7 @@ namespace Sushi.MicroORM.Mapping
     /// Represents the mapping between database objects and code objects.
     /// </summary>
     public class DataMap 
-    {
-        Dictionary<string, object> _Indexer;
-        /// <summary>
-        /// Add custom attributes the the datamap, usable for extention datamaps. 
-        /// </summary>
-        /// <param name="index"></param>
-        /// <returns></returns>
-        public object this[string index]
-        {
-            get
-            {
-                if (_Indexer != null && _Indexer.ContainsKey(index))
-                    return _Indexer[index];
-                return null;
-            }
-            set
-            {
-                if (_Indexer == null)
-                    _Indexer = new Dictionary<string, object>();
-                else if (_Indexer.ContainsKey(index))
-                {
-                    _Indexer[index] = value;
-                    return;
-                }
-                _Indexer.Add(index, value);
-            }
-        }
-
-        #region Callback
+    {   
         /// <summary>
         /// The callback that is triggered after the SQL DELETE statement has been executed.
         /// </summary>
@@ -79,16 +51,7 @@ namespace Sushi.MicroORM.Mapping
             if (OnBeforeFetch != null) OnBeforeFetch(new QueryData() { Map = map, Query = query });
         }
 
-        /// <summary>
-        /// The callback that is triggered before the SQL statement is created allowing for applying change to the statement.
-        /// </summary>
-        public QueryHandler OnApplyFilter { get; set; }
-        internal void DoApplyFilter(DataMap map, Query query)
-        {
-            if (OnApplyFilter != null) OnApplyFilter(new QueryData() { Map = map, Query = query });
-        }
-        #endregion Callback
-
+        
 
         /// <summary>
         /// Initializes a new instance of <see cref="DataMap"/> for a type defined by <paramref name="mappedType"/>.
@@ -171,16 +134,17 @@ namespace Sushi.MicroORM.Mapping
         /// <returns></returns>
         public DataMapItemSetter Id(Expression<Func<T, object>> memberExpression, string columnName)
         {
-            var members = ReflectionHelper.GetMemberTree(memberExpression.Body);
-
             DataMapItem dbcol = new DataMapItem
             {
                 Sender = this,
                 Column = columnName,
                 IsPrimaryKey = true,
-                IsIdentity = true,
-                MemberInfoTree = members
+                IsIdentity = true                
             };
+
+            var members = ReflectionHelper.GetMemberTree(memberExpression);
+            dbcol.MemberInfoTree.AddRange(members);
+
             var memberType = ReflectionHelper.GetMemberType(dbcol.MemberInfoTree);
             dbcol.SqlType = Utility.GetSqlDbType(memberType);
             DatabaseColumns.Add(dbcol);
@@ -195,15 +159,16 @@ namespace Sushi.MicroORM.Mapping
         /// <param name="columnName"></param>
         /// <returns></returns>
         public DataMapItemSetter Map(Expression<Func<T, object>> memberExpression, string columnName)
-        {
-            var members = ReflectionHelper.GetMemberTree(memberExpression.Body);
-            
+        { 
             DataMapItem dbcol = new DataMapItem
             {
                 Sender = this,
-                Column = columnName,
-                MemberInfoTree = members
+                Column = columnName                
             };
+
+            var members = ReflectionHelper.GetMemberTree(memberExpression);
+            dbcol.MemberInfoTree.AddRange(members);
+
             var memberType = ReflectionHelper.GetMemberType(dbcol.MemberInfoTree);
             dbcol.SqlType = Utility.GetSqlDbType(memberType);
             DatabaseColumns.Add(dbcol);

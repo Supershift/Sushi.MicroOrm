@@ -158,8 +158,16 @@ namespace Sushi.MicroORM
         public void SetParameterInput(string name, object itemvalue, SqlDbType type, int length)
         {
             this.SetParameter(name, itemvalue, type, length, ParameterDirection.Input);
-        }        
-        
+        }
+
+        /// <summary>
+        /// Set Sqlparameter as input value
+        /// </summary>
+        public void SetParameterInput(string name, object itemvalue, SqlDbType type, int length, string typeName)
+        {
+            this.SetParameter(name, itemvalue, type, length, ParameterDirection.Input, typeName);
+        }
+
         /// <summary>
         /// Set Sql parameter
         /// </summary>

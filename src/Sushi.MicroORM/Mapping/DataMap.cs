@@ -88,7 +88,7 @@ namespace Sushi.MicroORM.Mapping
         /// <summary>
         /// Gets a collection of <see cref="DataMapItem"/> objects that define the mapping between object and database.
         /// </summary>
-        public List<DataMapItem> DatabaseColumns { get; } = new List<DataMapItem>();
+        public List<DataMapItem> Items { get; } = new List<DataMapItem>();
 
         /// <summary>
         /// Gets all columns that are mapped to a primary key column.
@@ -96,7 +96,7 @@ namespace Sushi.MicroORM.Mapping
         /// <returns></returns>
         public List<DataMapItem> GetPrimaryKeyColumns()
         {
-            return DatabaseColumns.Where(x => x.IsPrimaryKey).ToList();
+            return Items.Where(x => x.IsPrimaryKey).ToList();
         }        
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace Sushi.MicroORM.Mapping
 
             var memberType = ReflectionHelper.GetMemberType(dbcol.MemberInfoTree);
             dbcol.SqlType = Utility.GetSqlDbType(memberType);
-            DatabaseColumns.Add(dbcol);
+            Items.Add(dbcol);
 
             return new DataMapItemSetter(dbcol);
         }
@@ -171,7 +171,7 @@ namespace Sushi.MicroORM.Mapping
 
             var memberType = ReflectionHelper.GetMemberType(dbcol.MemberInfoTree);
             dbcol.SqlType = Utility.GetSqlDbType(memberType);
-            DatabaseColumns.Add(dbcol);
+            Items.Add(dbcol);
 
             return new DataMapItemSetter(dbcol);
         }

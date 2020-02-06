@@ -128,7 +128,7 @@ namespace Sushi.MicroORM
         {
             var members = ReflectionHelper.GetMemberTree(mappingExpression);
 
-            var dataproperty = Map.DatabaseColumns.FirstOrDefault(x => x.MemberInfoTree.SequenceEqual(members));
+            var dataproperty = Map.Items.FirstOrDefault(x => x.MemberInfoTree.SequenceEqual(members));
             if (dataproperty == null)
                 throw new Exception($"Could not find member [{string.Join(".", members.Select(x=>x.Name))}] for type {typeof(T)}");
 
@@ -188,7 +188,7 @@ namespace Sushi.MicroORM
         {
             var members = ReflectionHelper.GetMemberTree(memberExpression);
 
-            var dataproperty = Map.DatabaseColumns.Where(x => x.MemberInfoTree.SequenceEqual(members)).FirstOrDefault();
+            var dataproperty = Map.Items.Where(x => x.MemberInfoTree.SequenceEqual(members)).FirstOrDefault();
             if (dataproperty == null)
                 throw new Exception($"Could not find member [{string.Join(".", members.Select(x => x.Name))}] for type {typeof(T)}");
 

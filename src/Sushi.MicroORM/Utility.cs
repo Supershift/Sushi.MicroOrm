@@ -69,7 +69,7 @@ namespace Sushi.MicroORM
             //create a datatable based on table
             var dataTable = new DataTable(map.TableName);
             var primaryKey = new List<DataColumn>();
-            foreach (var databaseColumn in map.DatabaseColumns)
+            foreach (var databaseColumn in map.Items)
             {
                 //create a datacolumn for each column attribute that is not read only
                 //datatable does not use the SqlDbTypes but instead uses internal mapping to map .Net types

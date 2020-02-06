@@ -57,7 +57,7 @@ namespace Sushi.MicroORM.Tests
 
             var order = ConnectorOrders.FetchSingle(id);
 
-            Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(order, Newtonsoft.Json.Formatting.Indented));
 
             Assert.IsTrue(order?.ID == id);
         }

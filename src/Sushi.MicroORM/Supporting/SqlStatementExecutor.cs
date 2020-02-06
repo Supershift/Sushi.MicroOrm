@@ -4,7 +4,8 @@ using System.Text;
 
 namespace Sushi.MicroORM.Supporting
 {
-    class QueryGenerator
+    public static class SqlStatementExecutor
     {
+
     }
 }

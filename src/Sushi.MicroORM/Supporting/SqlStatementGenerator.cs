@@ -21,56 +21,7 @@ namespace Sushi.MicroORM.Supporting
 
     
 
-    public class SqlStatement
-    {
-        /// <summary>
-        /// Creates a new instance of <see cref="SqlStatement"/>.
-        /// </summary>
-        /// <param name="dmlStatement"></param>
-        /// <param name="resultType"></param>
-        public SqlStatement(DMLStatement dmlStatement, SqlStatementResultType resultType)
-        {
-            DMLStatement = dmlStatement;
-            ResultType = resultType;
-        }
-
-        public DMLStatement DMLStatement { get; protected set; }
-
-        public SqlStatementResultType ResultType { get; protected set; }
-        
-        /// <summary>
-        /// Gets or sets the DML clause of the statement, ie. SELECT MyColumn, UPDATE MyTable SET MyColumn = @myParameter, etc.
-        /// </summary>
-        public string DmlClause { get; set; }
-        /// <summary>
-        /// Gets or sets the where clause of the statment, ie. WHERE MyColumn = @myParameter
-        /// </summary>
-        public string WhereClause { get; set; }
-
-        /// <summary>
-        /// Gets or sets the from clause of the statement, ie. FROM MyTable
-        /// </summary>
-        public string FromClause { get; set; }
-
-        /// <summary>
-        /// Gets or sets the order by clause of the statement, ie. ORDER BY MyColumn1 ASC, MyColumn2 DESC
-        /// </summary>
-        public string OrderByClause { get; set; }
-
-        /// <summary>
-        /// Gets a collection of <see cref="StatementParameter"/> objects describing the parameters used in the statement.
-        /// </summary>
-        public List<StatementParameter> Parameters { get; } = new List<StatementParameter>();
-        /// <summary>
-        /// Generates a sql statement based on the clauses.
-        /// </summary>
-        /// <returns></returns>
-        public string GenerateSqlStatement()
-        {
-            string result = $"{DmlClause}\r\n{FromClause}\r\n{WhereClause}\r\n{OrderByClause}";
-            return result;
-        }
-    }
+    
 
     public class StatementParameter
     {
@@ -94,44 +45,130 @@ namespace Sushi.MicroORM.Supporting
 
     public static class SqlStatementGenerator
     {
-        public static SqlStatement GenerateSqlStatment<T>(DMLStatement statementType, SqlStatementResultType resultType, DataMap<T> map, DataFilter<T> filter, string customQuery) where T: new()
+        public static SqlStatement GenerateSqlStatment<T>(DMLStatement statementType, SqlStatementResultType resultType, DataMap<T> map, DataFilter<T> filter, string customQuery) where T : new()
         {
+            return GenerateSqlStatment(statementType, resultType, map, filter, customQuery, default(T), false);
+        }
+
+        public static SqlStatement GenerateSqlStatment<T>(DMLStatement statementType, SqlStatementResultType resultType, DataMap<T> map, DataFilter<T> filter, string customQuery, T entity, bool isIdentityInsert) where T: new()
+        {
+            //validate if the supplied mapping has everything needed to generate queries
+            if (statementType != DMLStatement.CustomQuery)
+                map.ValidateMappingForGeneratedQueries();
+
             var result = new SqlStatement(statementType, resultType);
-            string dmlClause;
-            string orderByClause = null;
+            
             //create the DML clause and optionally the order by clause of the query            
             switch (statementType)
             {
                 case DMLStatement.Select:
-
-                    dmlClause = "SELECT ";
-                    if (resultType == SqlStatementResultType.Single)
-                        dmlClause += "TOP(1) ";
-                    //generate the column list, ie. MyColumn1, MyColumn2, MyColumn3 + MyColumn4 AS MyAlias
-                    dmlClause += string.Join(",", map.Items.Select(x => x.ColumnSelectListName));
-
-                    //set order by from filter
-                    if(filter != null)
-                        orderByClause = filter.OrderBy;
-
+                    ApplySelectToStatement(result, map, filter);
+                    break;
+                case DMLStatement.Insert:
+                    ApplyInsertToStatement(result, map, entity, isIdentityInsert);
+                    break;
+                case DMLStatement.Update:
+                    result.DmlClause = $"UPDATE {map.TableName}";
+                    //generate the set clause for all columns that are not readonly, and add the parameter to the statement
+                    var columnsToUpdate = map.Items.Where(x => x.IsReadOnly == false && x.IsIdentity == false).ToList();
+                    var setClauseColumns = new List<string>();
+                    for(int i =0;i < columnsToUpdate.Count;i++)
+                    {
+                        var column = columnsToUpdate[i];
+                        string parameterName = $"@u{i}";
+                        var value = ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity);
+                        result.Parameters.Add(new StatementParameter(parameterName, value, column.SqlType, column.Length));
+                        setClauseColumns.Add($"{column.Column} = {parameterName}");
+                    }
+                    result.UpdateSetClause = $"SET {string.Join(",", setClauseColumns)}";
+                    break;
+                case DMLStatement.Delete:
+                    result.DmlClause = "DELETE ";
+                    break;
+                case DMLStatement.CustomQuery:
+                    result.CustomSqlStatement = customQuery;
                     break;
                 default:
                     throw new NotImplementedException();
             }
-            result.DmlClause = dmlClause;
-            result.OrderByClause = orderByClause;
 
             //set the from clause
             result.FromClause = $"FROM {map.TableName}";
 
-            //add the where clause to the query 
+            //add the where clause to the sql statement 
             AddWhereClauseToStatement(result, filter);
 
             return result;
         }
-        
+
+        private static SqlStatement ApplySelectToStatement<T>(SqlStatement statement, DataMap map, DataFilter<T> filter) where T: new()
+        {
+            //set opening statement
+            statement.DmlClause = "SELECT ";
+            if (statement.ResultType == SqlStatementResultType.Single)
+                statement.DmlClause += "TOP(1) ";
+            //generate the column list, ie. MyColumn1, MyColumn2, MyColumn3 + MyColumn4 AS MyAlias
+            statement.DmlClause += string.Join(",", map.Items.Select(x => x.ColumnSelectListName));
+
+            //set order by from filter
+            if (filter != null)
+                statement.OrderByClause = filter.OrderBy;
+
+            //add offset to order by if paging is supplied
+            if (filter?.Paging != null && filter?.Paging?.NumberOfRows > 0)
+            {
+                statement.AddPagingRowCountStatement = true;
+
+                if (string.IsNullOrWhiteSpace(statement.OrderByClause))
+                {
+                    //if offset is used, it always needs an order by clause. create one if none supplied
+                    var primaryKeyColumns = map.GetPrimaryKeyColumns();
+                    if (primaryKeyColumns.Count > 0)
+                        statement.OrderByClause = "ORDER BY " + string.Join(",", primaryKeyColumns.Select(x => x.Column));
+                    else
+                        throw new Exception("Cannot apply paging to an unordered SQL SELECT statement. Add an order by clause or map a primary key.");
+                }
+                statement.OrderByClause += $" OFFSET {filter.Paging.PageIndex * filter.Paging.NumberOfRows} ROWS FETCH NEXT {filter.Paging.NumberOfRows} ROWS ONLY";
+            }
+            return statement;
+        }
+
+        private static SqlStatement ApplyInsertToStatement<T>(SqlStatement statement, DataMap<T> map, T entity, bool isIdentityInsert) where T : new()
+        {
+            //generate opening statement
+            statement.DmlClause = $"INSERT";
+            statement.InsertIntoClause = $"INTO {map.TableName}";
+            //get all columns that are not readonly or identity columns (except when this is an identityinsert)
+            var insertColumns = map.Items.Where(x => x.IsReadOnly == false && (x.IsIdentity == false || isIdentityInsert)).ToList();
+            if (insertColumns.Count == 0)
+                statement.InsertValueClause = "DEFAULT VALUES";
+            else
+            {
+                //add each column to the columns list
+                statement.InsertIntoClause += $"( {string.Join(",", insertColumns.Select(x => x.Column))} )";
+                //add a parameter for each column
+                for (int i = 0; i < insertColumns.Count; i++)
+                {
+                    var column = insertColumns[i];
+                    string parameterName = $"@i{i}";
+                    var value = ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity);
+                    statement.Parameters.Add(new StatementParameter(parameterName, value, column.SqlType, column.Length));
+                }
+                //create column list
+                statement.InsertValueClause = $"VALUES ( {string.Join(",", statement.Parameters.Select(x => x.Name))} )";
+
+                //add an output clause if we need to retrieve the identity value                        
+                if (!isIdentityInsert)
+                {
+                    var identityColumn = map.Items.FirstOrDefault(x => x.IsIdentity);
+                    if (identityColumn != null)
+                        statement.OutputClause = $"OUTPUT inserted.{identityColumn.Column}";
+                }
+            }
+            return statement;
+        }
         /// <summary>
-        /// Sets <see cref="SqlStatement.Where"/> and <see cref="SqlStatement.Parameters"/> based on values supplied in <paramref name="filter"/>.
+        /// Sets <see cref="SqlStatement.WhereClause"/> and <see cref="SqlStatement.Parameters"/> based on values supplied in <paramref name="filter"/>.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="query"></param>
@@ -285,8 +322,7 @@ namespace Sushi.MicroORM.Supporting
                     {
                         sb.Append(" OR ");
                     }
-                }
-                i++;
+                }                
             }
 
             //add last closing paranthesis

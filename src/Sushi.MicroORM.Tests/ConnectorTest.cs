@@ -369,6 +369,7 @@ WHERE Product_Key = @productID";
             var filter = new DataFilter<Product>();
             filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
             var count = ConnectorProducts.ExecuteScalar<int>(query, filter);
+            Console.WriteLine(count);
             Assert.AreEqual(1, count);            
         }
 
@@ -470,6 +471,8 @@ WHERE Product_Key > @productID";
                 Price = 12.50M,
             };
             connector.Insert(product);
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(product, Newtonsoft.Json.Formatting.Indented));
+            Assert.AreNotEqual(0, product.ID);
         }
 
         [TestMethod]
@@ -566,6 +569,35 @@ WHERE Product_Key > @productID";
             var result = connector.FetchSingle(filter);
 
             Assert.AreEqual(compositeKey.SomeValue, result.SomeValue);
+        }
+
+        [TestMethod]
+        public void Delete()
+        {
+            var connector = new Connector<Product>();
+            var product = new Product()
+            {
+                MetaData = new Product.ProductMetaData()
+                {
+                    Description = "New insert test",
+                    Name = "New insert",
+                    Identification = new Product.Identification()
+                    {
+                        ExternalID = null,
+                        BarCode = Encoding.UTF8.GetBytes("SKU-12345678")
+                    }
+                },
+                Price = 12.50M,
+            };
+            //insert
+            connector.Insert(product);
+
+            //delete
+            connector.Delete(product);
+
+            //check if really deleted
+            var deletedProduct = connector.FetchSingle(product.ID);
+            Assert.IsNull(deletedProduct);
         }
 
         [TestMethod]

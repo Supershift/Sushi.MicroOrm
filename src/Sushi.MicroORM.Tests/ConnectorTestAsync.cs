@@ -28,6 +28,35 @@ namespace Sushi.MicroORM.Tests
         }
 
         [TestMethod]
+        public async Task FetchSingleNotExistingByIDAsync()
+        {
+            var ConnectorOrders = new Connector<Order>()
+            {
+                FetchSingleMode = FetchSingleMode.ReturnDefaultWhenNotFound
+            };
+            int id = -1;
+
+            var order = await ConnectorOrders.FetchSingleAsync(id);
+
+            Assert.IsNull(order);
+        }
+
+        [TestMethod]
+        public async Task FetchSingleNotExistingByIDNewInstanceAsync()
+        {
+            var ConnectorOrders = new Connector<Order>()
+            {
+                FetchSingleMode = FetchSingleMode.ReturnNewObjectWhenNotFound
+            };
+            int id = -1;
+
+            var order = await ConnectorOrders.FetchSingleAsync(id);
+
+            Assert.IsNotNull(order);
+            Assert.AreEqual(0, order.ID);
+        }
+
+        [TestMethod]
         public async Task FetchSingleByFilterAsync()
         {
             int id = 2;
@@ -402,6 +431,54 @@ WHERE Product_Key > @productID";
             };
             await ConnectorProducts.InsertAsync(product);
         }
+
+        [TestMethod]
+        public async Task InsertOrUpdateNewRecordAsync()
+        {
+            var identifier = new Identifier()
+            {
+                GUID = Guid.NewGuid(),
+                Batch = Guid.NewGuid()
+            };
+            var connector = new Connector<Identifier>();
+            await connector.InsertOrUpdateAsync(identifier);
+
+            //check if the object exists now
+            var filter = connector.CreateDataFilter();
+            filter.Add(x => x.GUID, identifier.GUID);
+            var newIdentifier = await connector.FetchSingleAsync(filter);
+
+            Assert.IsNotNull(newIdentifier);
+            Assert.AreEqual(identifier.Batch, newIdentifier.Batch);
+        }
+
+        [TestMethod]
+        public async Task InsertOrUpdateExistingRecordAsync()
+        {
+            var identifier = new Identifier()
+            {
+                GUID = Guid.NewGuid(),
+                Batch = Guid.NewGuid()
+            };
+            var connector = new Connector<Identifier>();
+            await connector.InsertAsync(identifier);
+
+            //get the existing object
+            var filter = connector.CreateDataFilter();
+            filter.Add(x => x.GUID, identifier.GUID);
+            var newIdentifier = await connector.FetchSingleAsync(filter);
+
+            //update it
+            newIdentifier.Batch = Guid.NewGuid();
+            await connector.InsertOrUpdateAsync(newIdentifier);
+
+            //retrieve updated object
+            var updatedIdentifier = await connector.FetchSingleAsync(filter);
+
+
+            Assert.IsNotNull(updatedIdentifier);
+            Assert.AreEqual(newIdentifier.Batch, updatedIdentifier.Batch);
+        }       
 
         [TestMethod]
         public async Task InsertComposityKeyAsync()

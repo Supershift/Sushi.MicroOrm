@@ -63,6 +63,35 @@ namespace Sushi.MicroORM.Tests
         }
 
         [TestMethod]
+        public void FetchSingleNotExistingByID()
+        {
+            var ConnectorOrders = new Connector<Order>()
+            {
+                 FetchSingleMode = FetchSingleMode.ReturnDefaultWhenNotFound
+            };
+            int id = -1;
+
+            var order = ConnectorOrders.FetchSingle(id);
+
+            Assert.IsNull(order);
+        }
+
+        [TestMethod]
+        public void FetchSingleNotExistingByIDNewInstance()
+        {
+            var ConnectorOrders = new Connector<Order>()
+            {
+                FetchSingleMode = FetchSingleMode.ReturnNewObjectWhenNotFound
+            };
+            int id = -1;
+
+            var order = ConnectorOrders.FetchSingle(id);
+
+            Assert.IsNotNull(order);
+            Assert.AreEqual(0, order.ID);
+        }
+
+        [TestMethod]
         public void FetchSingleByIDWithCustomTimeout()
         {
             int id = 1;
@@ -476,31 +505,51 @@ WHERE Product_Key > @productID";
         }
 
         [TestMethod]
-        public void Upsert()
+        public void InsertOrUpdateNewRecord()
         {
-            var connector = new Connector<Product>();
-            
-            var product = new Product()
+            var identifier = new Identifier()
             {
-                MetaData = new Product.ProductMetaData()
-                {
-                    Description = "New insert test7",
-                    Name = "New insert",
-                    Identification = new Product.Identification()
-                    {
-                        ExternalID = null,
-                        BarCode = Encoding.UTF8.GetBytes("SKU-12345678")
-                    }
-                },
-                Price = 12.50M
-
+                GUID = Guid.NewGuid(),
+                Batch = Guid.NewGuid()
             };
-            var filter = connector.CreateDataFilter();
-            filter.Add(x => x.MetaData.Description, product.MetaData.Description);
-            filter.Add(x => x.Price, product.Price);
+            var connector = new Connector<Identifier>();
+            connector.InsertOrUpdate(identifier);
 
-            connector.Upsert(product, filter);
-            Console.WriteLine($"{product.ID}");
+            //check if the object exists now
+            var filter = connector.CreateDataFilter();            
+            filter.Add(x => x.GUID, identifier.GUID);
+            var newIdentifier = connector.FetchSingle(filter);
+
+            Assert.IsNotNull(newIdentifier);
+            Assert.AreEqual(identifier.Batch, newIdentifier.Batch);
+        }
+
+        [TestMethod]
+        public void InsertOrUpdateExistingRecord()
+        {
+            var identifier = new Identifier()
+            {
+                GUID = Guid.NewGuid(),
+                Batch = Guid.NewGuid()
+            };
+            var connector = new Connector<Identifier>();
+            connector.Insert(identifier);
+
+            //get the existing object
+            var filter = connector.CreateDataFilter();
+            filter.Add(x => x.GUID, identifier.GUID);
+            var newIdentifier = connector.FetchSingle(filter);
+
+            //update it
+            newIdentifier.Batch = Guid.NewGuid();
+            connector.InsertOrUpdate(newIdentifier);
+
+            //retrieve updated object
+            var updatedIdentifier = connector.FetchSingle(filter);
+
+
+            Assert.IsNotNull(updatedIdentifier);
+            Assert.AreEqual(newIdentifier.Batch, updatedIdentifier.Batch);
         }
 
         [TestMethod]

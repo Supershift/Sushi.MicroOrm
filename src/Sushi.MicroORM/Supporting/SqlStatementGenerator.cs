@@ -9,65 +9,62 @@ using System.Text;
 
 namespace Sushi.MicroORM.Supporting
 {
-    public enum DMLStatement
-    {
-        Select,
-        Update,
-        Insert,
-        Delete,
-        InsertOrUpdate,
-        CustomQuery
-    }
-
-    
-
-    
-
-    public class StatementParameter
-    {
-        public StatementParameter(string name, object value, SqlDbType type, int length) : this(name, value, type, length, null) { }        
-
-        public StatementParameter(string name, object value, SqlDbType type, int length, string typeName)
-        {
-            Name = name;
-            Value = value;
-            Type = type;
-            Length = length;
-            TypeName = typeName;
-        }
-
-        public string Name { get; set; }
-        public object Value { get; set; }
-        public SqlDbType Type { get; set; }
-        public int Length { get; set; }
-        public string TypeName { get; set; }
-    }
-
+    /// <summary>
+    /// Provides methods to generate instance of <see cref="SqlStatement{TMapped, TResult}"/>.
+    /// </summary>
     public static class SqlStatementGenerator
     {
-        public static SqlStatement GenerateSqlStatment<T>(DMLStatement statementType, SqlStatementResultType resultType, DataMap<T> map, DataFilter<T> filter, string customQuery) where T : new()
+        /// <summary>
+        /// Generates an instance of <see cref="SqlStatement{TMapped, TResult}"/>.
+        /// </summary>
+        /// <typeparam name="TMapped"></typeparam>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="statementType"></param>
+        /// <param name="resultType"></param>
+        /// <param name="map"></param>
+        /// <param name="filter"></param>
+        /// <param name="customQuery"></param>
+        /// <returns></returns>
+        public static SqlStatement<TMapped, TResult> GenerateSqlStatment<TMapped, TResult>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataFilter<TMapped> filter, string customQuery) where TMapped : new()
         {
-            return GenerateSqlStatment(statementType, resultType, map, filter, customQuery, default(T), false);
+            return GenerateSqlStatment<TMapped, TResult>(statementType, resultType, map, filter, customQuery, default(TMapped), false);
         }
 
-        public static SqlStatement GenerateSqlStatment<T>(DMLStatement statementType, SqlStatementResultType resultType, DataMap<T> map, DataFilter<T> filter, string customQuery, T entity, bool isIdentityInsert) where T: new()
+        /// <summary>
+        /// Generates an instance of <see cref="SqlStatement{TMapped, TResult}"/>. Use this overload to provide an entity to insert or update.
+        /// </summary>
+        /// <typeparam name="TMapped"></typeparam>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="statementType"></param>
+        /// <param name="resultType"></param>
+        /// <param name="map"></param>
+        /// <param name="filter"></param>
+        /// <param name="customQuery"></param>
+        /// <param name="entity"></param>
+        /// <param name="isIdentityInsert"></param>
+        /// <returns></returns>
+        public static SqlStatement<TMapped, TResult> GenerateSqlStatment<TMapped, TResult>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataFilter<TMapped> filter, string customQuery, TMapped entity, bool isIdentityInsert) where TMapped: new()
         {
             //validate if the supplied mapping has everything needed to generate queries
-            if (statementType != DMLStatement.CustomQuery)
+            if (statementType != DMLStatementType.CustomQuery)
                 map.ValidateMappingForGeneratedQueries();
 
-            var result = new SqlStatement(statementType, resultType);
+            var result = new SqlStatement<TMapped, TResult>(statementType, resultType);
             
             //create the DML clause and optionally the order by clause of the query            
             switch (statementType)
             {
-                case DMLStatement.Select:
+                case DMLStatementType.Select:
                     ApplySelectToStatement(result, map, filter);
+                    //add the where clause to the sql statement 
+                    AddWhereClauseToStatement(result, filter);
                     break;
-                case DMLStatement.Insert:
+                case DMLStatementType.Insert:
                     ApplyInsertToStatement(result, map, entity, isIdentityInsert);
+                    //add the where clause to the sql statement 
+                    AddWhereClauseToStatement(result, filter);
                     break;
-                case DMLStatement.Update:
+                case DMLStatementType.Update:
                     result.DmlClause = $"UPDATE {map.TableName}";
                     //generate the set clause for all columns that are not readonly, and add the parameter to the statement
                     var columnsToUpdate = map.Items.Where(x => x.IsReadOnly == false && x.IsIdentity == false).ToList();
@@ -77,16 +74,43 @@ namespace Sushi.MicroORM.Supporting
                         var column = columnsToUpdate[i];
                         string parameterName = $"@u{i}";
                         var value = ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity);
-                        result.Parameters.Add(new StatementParameter(parameterName, value, column.SqlType, column.Length));
+                        result.Parameters.Add(new SqlStatementParameter(parameterName, value, column.SqlType, column.Length));
                         setClauseColumns.Add($"{column.Column} = {parameterName}");
                     }
                     result.UpdateSetClause = $"SET {string.Join(",", setClauseColumns)}";
+                    //add the where clause to the sql statement 
+                    AddWhereClauseToStatement(result, filter);
                     break;
-                case DMLStatement.Delete:
+                case DMLStatementType.Delete:
                     result.DmlClause = "DELETE ";
+                    //add the where clause to the sql statement 
+                    AddWhereClauseToStatement(result, filter);
                     break;
-                case DMLStatement.CustomQuery:
+                case DMLStatementType.CustomQuery:
                     result.CustomSqlStatement = customQuery;
+                    //add the where clause to the sql statement 
+                    AddWhereClauseToStatement(result, filter);
+                    break;
+                case DMLStatementType.InsertOrUpdate:
+                    //this generates two seperate statements which need to be merged into one statement which uses an IF EXIST / ELSE
+                    //generate insert
+                    var insertStatement = GenerateSqlStatment<TMapped, int>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, map, filter, null, entity, isIdentityInsert);
+                    //generate update
+                    var updateStatement = GenerateSqlStatment<TMapped, object>(DMLStatementType.Update, SqlStatementResultCardinality.None, map, filter, null, entity, isIdentityInsert);
+
+                    //generate custom insert or update statement
+                    result.CustomSqlStatement = $@"
+IF EXISTS(SELECT * FROM {map.TableName} {updateStatement.WhereClause})
+BEGIN
+{updateStatement.GenerateSqlStatement()}
+END
+ELSE
+BEGIN
+{insertStatement.GenerateSqlStatement()}
+END";
+                    //add the parameters from update and insert statements
+                    result.Parameters.AddRange(updateStatement.Parameters);
+                    result.Parameters.AddRange(insertStatement.Parameters);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -95,17 +119,14 @@ namespace Sushi.MicroORM.Supporting
             //set the from clause
             result.FromClause = $"FROM {map.TableName}";
 
-            //add the where clause to the sql statement 
-            AddWhereClauseToStatement(result, filter);
-
             return result;
         }
 
-        private static SqlStatement ApplySelectToStatement<T>(SqlStatement statement, DataMap map, DataFilter<T> filter) where T: new()
+        private static SqlStatement<T, TResult> ApplySelectToStatement<T, TResult>(SqlStatement<T, TResult> statement, DataMap map, DataFilter<T> filter) where T: new()
         {
             //set opening statement
             statement.DmlClause = "SELECT ";
-            if (statement.ResultType == SqlStatementResultType.Single)
+            if (statement.ResultCardinality == SqlStatementResultCardinality.SingleRow)
                 statement.DmlClause += "TOP(1) ";
             //generate the column list, ie. MyColumn1, MyColumn2, MyColumn3 + MyColumn4 AS MyAlias
             statement.DmlClause += string.Join(",", map.Items.Select(x => x.ColumnSelectListName));
@@ -133,7 +154,7 @@ namespace Sushi.MicroORM.Supporting
             return statement;
         }
 
-        private static SqlStatement ApplyInsertToStatement<T>(SqlStatement statement, DataMap<T> map, T entity, bool isIdentityInsert) where T : new()
+        private static SqlStatement<T, TResult> ApplyInsertToStatement<T, TResult>(SqlStatement<T, TResult> statement, DataMap<T> map, T entity, bool isIdentityInsert) where T : new()
         {
             //generate opening statement
             statement.DmlClause = $"INSERT";
@@ -141,7 +162,7 @@ namespace Sushi.MicroORM.Supporting
             //get all columns that are not readonly or identity columns (except when this is an identityinsert)
             var insertColumns = map.Items.Where(x => x.IsReadOnly == false && (x.IsIdentity == false || isIdentityInsert)).ToList();
             if (insertColumns.Count == 0)
-                statement.InsertValueClause = "DEFAULT VALUES";
+                statement.InsertValuesClause = "DEFAULT VALUES";
             else
             {
                 //add each column to the columns list
@@ -152,10 +173,10 @@ namespace Sushi.MicroORM.Supporting
                     var column = insertColumns[i];
                     string parameterName = $"@i{i}";
                     var value = ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity);
-                    statement.Parameters.Add(new StatementParameter(parameterName, value, column.SqlType, column.Length));
+                    statement.Parameters.Add(new SqlStatementParameter(parameterName, value, column.SqlType, column.Length));
                 }
                 //create column list
-                statement.InsertValueClause = $"VALUES ( {string.Join(",", statement.Parameters.Select(x => x.Name))} )";
+                statement.InsertValuesClause = $"VALUES ( {string.Join(",", statement.Parameters.Select(x => x.Name))} )";
 
                 //add an output clause if we need to retrieve the identity value                        
                 if (!isIdentityInsert)
@@ -168,13 +189,12 @@ namespace Sushi.MicroORM.Supporting
             return statement;
         }
         /// <summary>
-        /// Sets <see cref="SqlStatement.WhereClause"/> and <see cref="SqlStatement.Parameters"/> based on values supplied in <paramref name="filter"/>.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
+        /// Sets <see cref="SqlStatement{TMapped, TResult}.WhereClause"/> and <see cref="SqlStatement{TMapped, TResult}.Parameters"/> based on values supplied in <paramref name="filter"/>.
+        /// </summary>        
         /// <param name="query"></param>
         /// <param name="filter"></param>
         /// <returns></returns>
-        private static SqlStatement AddWhereClauseToStatement<T>(SqlStatement query, DataFilter<T> filter) where T: new()
+        private static SqlStatement<T, TResult> AddWhereClauseToStatement<T, TResult>(SqlStatement<T, TResult> query, DataFilter<T> filter) where T: new()
         {
             var whereClause = filter?.WhereClause;
 
@@ -183,7 +203,7 @@ namespace Sushi.MicroORM.Supporting
             {
                 foreach (SqlParameter p in filter.SqlParameters)
                 {
-                    query.Parameters.Add(new StatementParameter(p.ParameterName, p.Value, p.SqlDbType, 0, p.TypeName));                    
+                    query.Parameters.Add(new SqlStatementParameter(p.ParameterName, p.Value, p.SqlDbType, 0, p.TypeName));                    
                 }
             }
 
@@ -236,7 +256,7 @@ namespace Sushi.MicroORM.Supporting
                             else
                             {
                                 sb.Append($"{predicate.Column} = {parameterName}");
-                                query.Parameters.Add(new StatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+                                query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                                 
                             }
                             break;
@@ -249,12 +269,12 @@ namespace Sushi.MicroORM.Supporting
                             else
                             {
                                 sb.Append($"{predicate.Column} <> {parameterName}");
-                                query.Parameters.Add(new StatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+                                query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             }
                             break;
                         case ComparisonOperator.Like:
                             sb.Append($"{predicate.Column} LIKE {parameterName}");                            
-                            query.Parameters.Add(new StatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.In:
                             if (predicate.Value is IEnumerable items)
@@ -268,7 +288,7 @@ namespace Sushi.MicroORM.Supporting
                                     {
                                         string inParam = $"{parameterName}_{j}";
 
-                                        query.Parameters.Add(new StatementParameter(inParam, item, predicate.SqlType, predicate.Length));
+                                        query.Parameters.Add(new SqlStatementParameter(inParam, item, predicate.SqlType, predicate.Length));
                                         inParams.Add(inParam);
 
                                         j++;
@@ -288,19 +308,19 @@ namespace Sushi.MicroORM.Supporting
                             break;
                         case ComparisonOperator.GreaterThan:
                             sb.Append($"{predicate.Column} > {parameterName}");                            
-                            query.Parameters.Add(new StatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                                
+                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                                
                             break;
                         case ComparisonOperator.GreaterThanOrEquals:
                             sb.Append($"{predicate.Column} >= {parameterName}");                            
-                            query.Parameters.Add(new StatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                                
+                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                                
                             break;
                         case ComparisonOperator.LessThan:
                             sb.Append($"{predicate.Column} < {parameterName}");                            
-                            query.Parameters.Add(new StatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                            
+                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                            
                             break;
                         case ComparisonOperator.LessThanOrEquals:
                             sb.Append($"{predicate.Column} <= {parameterName}");
-                            query.Parameters.Add(new StatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                                
+                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                                
                             break;
                     }
                 }

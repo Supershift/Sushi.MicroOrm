@@ -58,17 +58,17 @@ namespace Sushi.MicroORM
                 throw new ArgumentNullException(nameof(typeName), "cannot be null or whitespace");
             ConnectionStringProvider.AddConnectionString(typeName, connectionString);
         }
-
-        //TODO: Hidden and disabled for now, we first need to choose correct caching strategy
+                
         /// <summary>
         /// Gets or sets a value indicating if connetionstrings are cached for types. This is only used if multiple connection strings are provided through the AddMappedConnectionString method. Default value is true.
         /// </summary>
         internal static bool IsConnectionStringCachingEnabled { get; set; } = true;
-
+        
         /// <summary>
         /// Gets or sets the behavior for connector's FetchSingle methods in case a record is not found in the database. 
         /// Default behavior is ReturnDefaultWhenNotFound.
         /// </summary>
+        [Obsolete("Use Connector.FetchSingleMode")]
         public static FetchSingleMode FetchSingleMode { get; set; } = FetchSingleMode.ReturnDefaultWhenNotFound;
         
         /// <summary>

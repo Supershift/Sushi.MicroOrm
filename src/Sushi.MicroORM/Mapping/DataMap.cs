@@ -17,43 +17,6 @@ namespace Sushi.MicroORM.Mapping
     public class DataMap 
     {   
         /// <summary>
-        /// The callback that is triggered after the SQL DELETE statement has been executed.
-        /// </summary>
-        public AfterSaveHandler OnPostDelete { get; set; }
-        internal void DoPostDelete(DataMap map)
-        {
-            if (OnPostDelete != null) OnPostDelete(map);
-        }
-
-        /// <summary>
-        /// The callback that is triggered after the SQL INSERT or UPDATE statement has been executed.
-        /// </summary>
-        public AfterSaveHandler OnPostSave { get; set; }
-        internal void DoPostSave(DataMap map)
-        {
-            if (OnPostSave != null) OnPostSave(map);
-        }
-
-        /// <summary>
-        /// The callback that is triggered before the SQL statement is created allowing for applying change to the statement.
-        /// </summary>
-        public AfterFetchHandler OnPostFetch { get; set; }
-        internal void DoPostFetch(DataMap map, Query query)
-        {
-            if (OnPostFetch != null) OnPostFetch(new QueryData() { Map = map, Query = query });
-        }
-        /// <summary>
-        /// The callback that is triggered before the SQL statement is created allowing for applying change to the statement.
-        /// </summary>
-        public BeforeFetchHandler OnBeforeFetch { get; set; }
-        internal void DoBeforeFetch(DataMap map, Query query)
-        {
-            if (OnBeforeFetch != null) OnBeforeFetch(new QueryData() { Map = map, Query = query });
-        }
-
-        
-
-        /// <summary>
         /// Initializes a new instance of <see cref="DataMap"/> for a type defined by <paramref name="mappedType"/>.
         /// </summary>
         /// <param name="mappedType"></param>

@@ -4,20 +4,19 @@ using System.Text;
 
 namespace Sushi.MicroORM.Supporting
 {
-    public enum SqlStatementResultType
+    /// <summary>
+    /// Specifies options for the cardinality of the result set expected to be created by a SQL statement.
+    /// </summary>
+    public enum SqlStatementResultCardinality
     {
         /// <summary>
         /// The statement returns one row.
         /// </summary>
-        Single,
+        SingleRow,
         /// <summary>
         /// The statement returns multiple rows.
         /// </summary>
-        Multiple,
-        /// <summary>
-        /// The statement returns a scalar value.
-        /// </summary>
-        Scalar,
+        MultipleRows,        
         /// <summary>
         /// The statement has no return value.
         /// </summary>

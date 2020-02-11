@@ -78,6 +78,11 @@ namespace Sushi.MicroORM
         public DataMap<T> Map { get; protected set; }
 
         /// <summary>
+        /// Gets or sets the behavior for connector's FetchSingle methods in case a record is not found in the database.         
+        /// </summary>
+        public FetchSingleMode FetchSingleMode { get; set; } = DatabaseConfiguration.FetchSingleMode;
+
+        /// <summary>
         /// Creates a new instance of <see cref="DataFilter{T}"/>. Use the constructor of DataFilter for more control when creating a DataFilter.
         /// </summary>
         /// <returns></returns>
@@ -91,9 +96,9 @@ namespace Sushi.MicroORM
         /// </summary>
         /// <param name="statement"></param>
         /// <returns></returns>
-        public virtual SqlStatementResult<T> ExecuteSqlStatement(SqlStatement statement)
+        public virtual SqlStatementResult<T, TResult> ExecuteSqlStatement<TResult>(SqlStatement<T, TResult> statement) 
         {
-            SqlStatementResult<T> result;
+            SqlStatementResult<T, TResult> result;
             //perform a callback here?
             using (var sqlCommander = new SqlCommander(ConnectionString, CommandTimeout))
             {
@@ -109,29 +114,63 @@ namespace Sushi.MicroORM
                 
                 try
                 {
-                    switch(statement.ResultType)
-                    {
-                        case SqlStatementResultType.Single:
+                    switch(statement.ResultCardinality)
+                    {                        
+                        case SqlStatementResultCardinality.SingleRow:
                             //execute the command, which will return a reader
                             reader = sqlCommander.ExecReader();
-                            //map the contents of the reader to a result
-                            result = ResultMapper.MapToSingleResult(reader, Map);
+                            //if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
+                            if(typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
+                            {
+                                var singleResult = ResultMapper.MapToSingleResult(reader, Map, FetchSingleMode);
+                                result = new SqlStatementResult<T, TResult>((TResult)(object)singleResult);
+                            }
+                            else
+                            {
+                                //create a single (scalar) result
+                                var scalarResult = ResultMapper.MapToSingleResultScalar<TResult>(reader);
+                                result = new SqlStatementResult<T, TResult>(scalarResult);
+                            }
                             break;
-                        case SqlStatementResultType.Multiple:
+                        case SqlStatementResultCardinality.MultipleRows:
                             //execute the command, which will return a reader
                             reader = sqlCommander.ExecReader();
-                            //map the contents of the reader to a result
-                            result = ResultMapper.MapToMultipleResults(reader, Map);
-                            break;
-                        case SqlStatementResultType.Scalar:
-                            //execute the command, which will return a single object
-                            var scalarResult = sqlCommander.ExecScalar();
-                            result = new SqlStatementResult<T>(scalarResult);
-                            break;
-                        case SqlStatementResultType.None:
+                            //if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
+                            if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
+                            {
+                                //map the contents of the reader to a result
+                                var multipleResults = ResultMapper.MapToMultipleResults(reader, Map);
+                                //cast to TResult
+                                var castedResults = multipleResults.Select(x => (TResult)(object)x).ToList();
+
+                                //check if there is a 2nd result set with total number of rows for paging
+                                int? numberOfRows = null;
+
+                                if(reader.NextResult())
+                                {
+                                    numberOfRows = ResultMapper.MapToSingleResultScalar<int?>(reader);
+                                }
+
+                                result = new SqlStatementResult<T, TResult>(castedResults, numberOfRows);
+                            }
+                            else
+                            {
+                                var multipleResults = ResultMapper.MapToMultipleResultsScalar<TResult>(reader);
+                                //check if there is a 2nd result set with total number of rows for paging
+                                int? numberOfRows = null;
+
+                                if (reader.NextResult())
+                                {
+                                    numberOfRows = ResultMapper.MapToSingleResultScalar<int?>(reader);
+                                }
+
+                                result = new SqlStatementResult<T, TResult>(multipleResults, numberOfRows);
+                            }
+                            break;                        
+                        case SqlStatementResultCardinality.None:
                             //execute the command
                             sqlCommander.ExecNonQuery();
-                            result = new SqlStatementResult<T>();
+                            result = new SqlStatementResult<T, TResult>();
                             break;
                         default:
                             throw new NotImplementedException();
@@ -147,6 +186,100 @@ namespace Sushi.MicroORM
             return result;
         }
 
+        /// <summary>
+        /// Executes the <paramref name="statement"/> and returns the result generated by the execution.
+        /// </summary>        
+        /// <returns></returns>
+        public virtual async Task<SqlStatementResult<T, TResult>> ExecuteSqlStatementAsync<TResult>(SqlStatement<T, TResult> statement, CancellationToken cancellationToken)
+        {
+            SqlStatementResult<T, TResult> result;
+            //perform a callback here?
+            using (var sqlCommander = new SqlCommander(ConnectionString, CommandTimeout))
+            {
+                //apply sql statement to sql commander
+                sqlCommander.SqlText = statement.GenerateSqlStatement();
+
+                //add parameters
+                foreach (var parameter in statement.Parameters)
+                    sqlCommander.SetParameterInput(parameter.Name, parameter.Value, parameter.Type, parameter.Length, parameter.TypeName);
+
+                //execute the statement
+                SqlDataReader reader = null;
+
+                try
+                {
+                    switch (statement.ResultCardinality)
+                    {
+                        case SqlStatementResultCardinality.SingleRow:
+                            //execute the command, which will return a reader
+                            reader = await sqlCommander.ExecReaderAsync(cancellationToken).ConfigureAwait(false);
+                            //if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
+                            if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
+                            {
+                                var singleResult = await ResultMapperAsync.MapToSingleResultAsync(reader, Map, FetchSingleMode, cancellationToken).ConfigureAwait(false);
+                                result = new SqlStatementResult<T, TResult>((TResult)(object)singleResult);
+                            }
+                            else
+                            {
+                                //create a single (scalar) result
+                                var scalarResult = await ResultMapperAsync.MapToSingleResultScalarAsync<TResult>(reader, cancellationToken).ConfigureAwait(false);
+                                result = new SqlStatementResult<T, TResult>(scalarResult);
+                            }
+                            break;
+                        case SqlStatementResultCardinality.MultipleRows:
+                            //execute the command, which will return a reader
+                            reader = await sqlCommander.ExecReaderAsync(cancellationToken).ConfigureAwait(false);
+                            //if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
+                            if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
+                            {
+                                //map the contents of the reader to a result
+                                var multipleResults = await ResultMapperAsync.MapToMultipleResultsAsync(reader, Map, cancellationToken).ConfigureAwait(false);
+                                //cast to TResult
+                                var castedResults = multipleResults.Select(x => (TResult)(object)x).ToList();
+
+                                //check if there is a 2nd result set with total number of rows for paging
+                                int? numberOfRows = null;
+
+                                if (reader.NextResult())
+                                {
+                                    numberOfRows = await ResultMapperAsync.MapToSingleResultScalarAsync<int?>(reader, cancellationToken).ConfigureAwait(false);
+                                }
+
+                                result = new SqlStatementResult<T, TResult>(castedResults, numberOfRows);
+                            }
+                            else
+                            {
+                                var multipleResults = await ResultMapperAsync.MapToMultipleResultsScalarAsync<TResult>(reader, cancellationToken).ConfigureAwait(false);
+                                //check if there is a 2nd result set with total number of rows for paging
+                                int? numberOfRows = null;
+
+                                if (reader.NextResult())
+                                {
+                                    numberOfRows = await ResultMapperAsync.MapToSingleResultScalarAsync<int?>(reader, cancellationToken).ConfigureAwait(false);
+                                }
+
+                                result = new SqlStatementResult<T, TResult>(multipleResults, numberOfRows);
+                            }
+                            break;
+                        case SqlStatementResultCardinality.None:
+                            //execute the command
+                            await sqlCommander.ExecNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                            result = new SqlStatementResult<T, TResult>();
+                            break;
+                        default:
+                            throw new NotImplementedException();
+                    }
+                }
+                finally
+                {
+                    if (reader != null)
+                        reader.Close();
+                }
+            }
+            //perform a callback here?
+            return result;
+        }
+
         internal void AddPrimaryKeyToFilter(DataFilter<T> filter, T entity)
         {
             var primaryKeyColumns = Map.GetPrimaryKeyColumns();
@@ -154,6 +287,9 @@ namespace Sushi.MicroORM
             {
                 filter.Add(column.Column, column.SqlType, ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity));
             }
+
+            if (primaryKeyColumns.Count == 0)
+                throw new Exception("No primary key defined on mapping. Add at least on member mapped with Id().");
         }
 
         internal bool IsInsert(T entity)
@@ -266,99 +402,19 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public T FetchSingle(string sqlText, DataFilter<T> filter)
         {
-            SqlStatement statement;
+            SqlStatement<T,T> statement;
             //generate the sql statement
             if (string.IsNullOrWhiteSpace(sqlText))
-                statement = SqlStatementGenerator.GenerateSqlStatment(DMLStatement.Select, SqlStatementResultType.Single, Map, filter, sqlText);
+                statement = SqlStatementGenerator.GenerateSqlStatment<T, T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, Map, filter, sqlText);
             else
-                statement = SqlStatementGenerator.GenerateSqlStatment(DMLStatement.CustomQuery, SqlStatementResultType.Single, Map, filter, sqlText);
+                statement = SqlStatementGenerator.GenerateSqlStatment<T, T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, filter, sqlText);
 
             //execute and get response
             var statementResult = ExecuteSqlStatement(statement);
 
             //return result
             return statementResult.SingleResult;            
-        }
-
-        internal Query ApplyFilterToCommanderFetchSingle(SqlCommander dac, string sql, DataFilter<T> filter)
-        {
-            Query query = new Query();
-            query.From = Map.TableName;
-            query.OrderBy = filter?.OrderBy;
-
-            query.Where = CreateWhereClause(filter, dac, query);
-
-            ApplySelect(Map, query);
-
-            if (query.Select.Count == 0)
-                throw new Exception("No columns set for the select statement");
-
-            if (string.IsNullOrWhiteSpace(sql))
-            {   
-                query.Sql = $"SELECT TOP(1) {(string.Join(", ", query.Select.Select(x => x.ColumnSelectListName).ToArray()))} FROM {query.From} {query.Where} {query.OrderBy}";
-            }
-            else
-                query.Sql = sql;
-
-            dac.SqlText = query.Sql;
-            return query;
-        }
-
-        internal void ApplySelect(DataMap map, Query query)
-        {
-            foreach (var param in map.Items)
-            {
-                if (!string.IsNullOrWhiteSpace(param.Column))
-                    query.Select.Add(param);
-            }
-        }
-
-        private void SetResultValuesToObject(Query query, SqlDataReader reader, object instance)
-        {
-            foreach (var datamapItem in query.Select)
-            {
-                for (int column = 0; column < reader.FieldCount; column++)
-                {
-                    //get the name of the column as returned by the database
-                    var columnName = reader.GetName(column);
-                    //which name is expected in the result set by the mapped item
-                    string mappedName = datamapItem.Column;
-                    if (!string.IsNullOrWhiteSpace(datamapItem.Alias))
-                        mappedName = datamapItem.Alias;
-
-                    if (mappedName.Equals(columnName, StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        var value = reader.GetValue(column);                        
-                        
-                        ReflectionHelper.SetMemberValue(datamapItem.MemberInfoTree, value, instance);                        
-                    }
-                }
-            }
-        }
-
-        internal T CreateFetchSingleResultFromReader(Query query, SqlDataReader reader)
-        {
-            T instance = new T();
-            bool recordFound = reader.Read();
-            if (recordFound)
-            {
-                SetResultValuesToObject(query, reader, instance);                
-            }
-
-            if (!recordFound)
-            {
-                switch (DatabaseConfiguration.FetchSingleMode)
-                {
-                    case FetchSingleMode.ReturnDefaultWhenNotFound:
-                        instance = default(T);
-                        break;
-                    case FetchSingleMode.ReturnNewObjectWhenNotFound:
-                        break;
-                }
-            }
-
-            return instance;
-        }
+        }        
 
         /// <summary>
         /// Fetches a single record from the database, using <paramref name="id"/> to build a where clause on <typeparamref name="T"/>'s primary key.
@@ -412,219 +468,18 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task<T> FetchSingleAsync(string sqlText, DataFilter<T> filter, CancellationToken cancellationToken)
         {
-            using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
-            {
-                var query = ApplyFilterToCommanderFetchSingle(dac, sqlText, filter);
-                Map.DoBeforeFetch(Map, query);
-                if (query.Result != null)
-                    return (T)query.Result;
+            SqlStatement<T, T> statement;
+            //generate the sql statement
+            if (string.IsNullOrWhiteSpace(sqlText))
+                statement = SqlStatementGenerator.GenerateSqlStatment<T, T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, Map, filter, sqlText);
+            else
+                statement = SqlStatementGenerator.GenerateSqlStatment<T, T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, filter, sqlText);
 
-                SqlDataReader reader = await dac.ExecReaderAsync(cancellationToken).ConfigureAwait(false);
-                var result = CreateFetchSingleResultFromReader(query, reader);
+            //execute and get response
+            var statementResult = await ExecuteSqlStatementAsync(statement, cancellationToken).ConfigureAwait(false);
 
-                query.Result = result;
-                Map.DoPostFetch(Map, query);
-
-                return result;
-            }
-        }
-
-        string CreateWhereClause(DataFilter<T> filter, SqlCommander dac)
-        {
-            var query = new Query();
-            return CreateWhereClause(filter, dac, query);
-        }
-
-        //todo: move to where clause generator
-        private string CreateWhereClause(DataFilter<T> filter, SqlCommander dac, Query query)
-        {
-            var parameterinfo = string.Empty;
-            
-            var whereClause = filter?.WhereClause;
-            
-            if (whereClause != null)
-            {
-                var count = (from item in whereClause where item == null select item);
-                if (count.Count() > 0)
-                    whereClause = (from item in whereClause where item != null select item).ToList();
-            }            
-
-            if (filter?.SqlParameters != null)
-            {
-                foreach (SqlParameter p in filter.SqlParameters)
-                {
-                    parameterinfo += $"{p.ParameterName}={p.Value} ";
-                    dac.SetParameterInput(p.ParameterName, p.Value, p.SqlDbType, p.TypeName);
-                }
-            }
-
-            if (whereClause == null || whereClause.Count == 0) return null;
-            query.Where = "where ";
-
-            int index = 0;
-
-            bool orGroupIsSet = false;
-
-            foreach (WhereCondition predicate in whereClause)
-            {
-                string param = string.Concat("@C", index);                
-                                
-                WhereCondition nextcolumn = null;
-
-                while (nextcolumn == null)
-                {
-                    if (whereClause.Count > index + 1)
-                    {
-                        nextcolumn = whereClause[index + 1];
-
-                        if (predicate.ConnectType == WhereConditionOperator.And && nextcolumn.ConnectType == WhereConditionOperator.Or)
-                        {
-                            orGroupIsSet = true;
-                            query.Where += "(";
-                        }
-                    }
-                    else
-                        break;
-                }
-
-                //if custom sql was provided for this predicate, add that to the where clause. otherwise, build the sql for the where clause
-                if (!string.IsNullOrWhiteSpace(predicate.SqlText))
-                {
-                    query.Where += predicate.SqlText;
-                }
-                else
-                {
-                    switch (predicate.CompareType)
-                    {
-                        case ComparisonOperator.Equals:
-                            //if we need to compare to a NULL value, use an 'IS NULL' predicate
-                            if (predicate.Value == null)
-                            {
-                                query.Where += string.Concat(predicate.Column, " IS NULL");
-                            }
-                            else
-                            {
-                                query.Where += string.Concat(predicate.Column, " = ", param);
-                                if (dac != null)
-                                {
-                                    dac.SetParameterInput(param, predicate.Value, predicate.SqlType, predicate.Length);
-                                    parameterinfo += $"{param}={predicate.Value} ";
-                                }
-                            }
-                            break;
-                        case ComparisonOperator.NotEqualTo:
-                            //if we need to compare to a NULL value, use an 'IS NOT NULL' predicate
-                            if (predicate.Value == null)
-                            {
-                                query.Where += string.Concat(predicate.Column, " IS NOT NULL");
-                            }
-                            else
-                            {
-                                query.Where += string.Concat(predicate.Column, " <> ", param);
-                                if (dac != null)
-                                {
-                                    dac.SetParameterInput(param, predicate.Value, predicate.SqlType, predicate.Length);
-                                    parameterinfo += $"{param}={predicate.Value} ";
-                                }
-                            }
-                            break;
-                        case ComparisonOperator.Like:
-                            query.Where += string.Concat(predicate.Column, " LIKE ", param);
-                            if (dac != null)
-                            {
-                                dac.SetParameterInput(param, predicate.Value, predicate.SqlType, predicate.Length);
-                                parameterinfo += $"{param}={predicate.Value} ";
-                            }
-                            break;
-                        case ComparisonOperator.In:
-                            if (predicate.Value is IEnumerable items)
-                            {
-                                //create a unique parameter for each item in the 'IN' predicate
-                                var inParams = new List<string>();
-                                int i = 0;
-                                if (items != null)
-                                {
-                                    foreach (var item in items)
-                                    {
-                                        string inParam = $"{param}_{i}";
-
-                                        dac.SetParameterInput(inParam, item, predicate.SqlType, predicate.Length);
-                                        inParams.Add(inParam);
-
-                                        i++;
-                                    }
-                                }
-                                //if there are items in the collection, add a predicate to the where in clause. 
-                                //if not, add a predicate that always evaluates to false, because no row will match the empty values
-                                if (inParams.Count > 0)
-                                    query.Where += $"{predicate.Column} IN ({string.Join(",", inParams)})";
-                                else
-                                    query.Where += "1 = 0";
-                            }
-                            else
-                            {
-                                throw new Exception($"Cannot build WHERE clause. When using {nameof(ComparisonOperator.In)}, supply an IEnumerable as value.");
-                            }
-                            break;
-                        case ComparisonOperator.GreaterThan:
-                            query.Where += string.Concat(predicate.Column, " > ", param);
-                            if (dac != null)
-                            {
-                                dac.SetParameterInput(param, predicate.Value, predicate.SqlType, predicate.Length);
-                                parameterinfo += $"{param}={predicate.Value} ";
-                            }
-                            break;
-                        case ComparisonOperator.GreaterThanOrEquals:
-                            query.Where += string.Concat(predicate.Column, " >= ", param);
-                            if (dac != null)
-                            {
-                                dac.SetParameterInput(param, predicate.Value, predicate.SqlType, predicate.Length);
-                                parameterinfo += $"{param}={predicate.Value} ";
-                            }
-                            break;
-                        case ComparisonOperator.LessThan:
-                            query.Where += string.Concat(predicate.Column, " < ", param);
-                            if (dac != null)
-                            {
-                                dac.SetParameterInput(param, predicate.Value, predicate.SqlType, predicate.Length);
-                                parameterinfo += $"{param}={predicate.Value} ";
-                            }
-                            break;
-                        case ComparisonOperator.LessThanOrEquals:
-                            query.Where += string.Concat(predicate.Column, " <= ", param);
-                            if (dac != null)
-                            {
-                                dac.SetParameterInput(param, predicate.Value, predicate.SqlType, predicate.Length);
-                                parameterinfo += $"{param}={predicate.Value} ";
-                            }
-                            break;
-                    }
-                }
-                
-                if (nextcolumn != null)
-                {
-                    if (nextcolumn.ConnectType == WhereConditionOperator.And)
-                    {
-                        if (orGroupIsSet)
-                        {
-                            orGroupIsSet = false;
-                            query.Where += ") and ";
-                        }
-                        else
-                            query.Where += " and ";
-                    }
-                    else if (nextcolumn.ConnectType == WhereConditionOperator.Or || nextcolumn.ConnectType == WhereConditionOperator.OrUngrouped)
-                    {
-                        query.Where += " or ";
-                    }
-                }
-                index++;
-            }
-
-            if (orGroupIsSet) query.Where += ")";
-
-            query.ParameterInfo = parameterinfo;            
-            return query.Where;
+            //return result
+            return statementResult.SingleResult;
         }
                 
         /// <summary>
@@ -647,7 +502,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public void Update(T entity, DataFilter<T> filter)
         {
             //generate sql statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment(DMLStatement.Update, SqlStatementResultType.None, Map, filter, null, entity, false);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T, object>(DMLStatementType.Update, SqlStatementResultCardinality.None, Map, filter, null, entity, false);
 
             //execute statement
             ExecuteSqlStatement(sqlStatement);            
@@ -672,117 +527,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             var filter = new DataFilter<T>(Map);            
             AddPrimaryKeyToFilter(filter, entity);
             await UpdateAsync(entity, filter, cancellationToken).ConfigureAwait(false);
-        }
-
-        internal string ApplyUpsertToSqlCommander(SqlCommander dac, T entity, DataFilter<T> filter, bool isIdentityInsert = false)
-        {
-            string updateColumns = " ";
-            string whereClause = "";
-            string insertColumns = " ";
-            string valuesColumns = "";
-            string primaryParameter = null;
-            string returnCall = null;
-            DataMapItem primaryDataColumn = null;
-
-            foreach (var param in Map.Items)
-            {
-                if (param.IsReadOnly) continue;
-
-                //  Insert
-                if (!isIdentityInsert && param.IsIdentity && param.Column != null)
-                {
-                    primaryDataColumn = param;
-                    returnCall = string.Format("SET @{0} = SCOPE_IDENTITY()", param.Column);
-                    primaryParameter = "@" + param.Column;
-                    dac.SetParameterOutput(primaryParameter, param.SqlType, param.Length);
-                }
-                else
-                {
-                    if (insertColumns.Contains(string.Concat(" ", param.Column, ", ")))
-                        continue;
-
-                    insertColumns += string.Concat(param.Column, ", ");
-                    valuesColumns += string.Concat("@", param.Column, ", ");
-                }
-
-                //  Update
-                if (param.IsPrimaryKey && param.IsIdentity) continue;
-                //  Double check
-                if (updateColumns.Contains(string.Concat(" ", param.Column, "= ")))
-                    continue;
-
-                updateColumns += string.Concat(param.Column, "= ", "@", param.Column, ", ");
-                dac.SetParameterInput(string.Concat("@", param.Column), ReflectionHelper.GetMemberValue(param.MemberInfoTree, entity), param.SqlType, param.Length);
-            }
-
-            if (filter?.SqlParameters != null)
-            {
-                foreach (SqlParameter p in filter.SqlParameters)
-                {
-                    updateColumns += string.Concat(p.ParameterName, "= ", "@", p.ParameterName, ", ");
-                    dac.SetParameterInput(string.Concat("@", p.ParameterName), p.Value, p.SqlDbType);
-                }
-            }
-
-            if (updateColumns.Length == 0) 
-                return null;
-
-            whereClause = CreateWhereClause(filter, dac);
-
-            string sqlText = string.Format(@"IF EXISTS(select * from {0} {5}) BEGIN update {0} set {1} {5} END ELSE BEGIN insert into {0} ({2}) values ({3}) {4} END",
-                Map.TableName,
-                updateColumns.Substring(0, updateColumns.Length - 2),
-                insertColumns.Substring(0, insertColumns.Length - 2),
-                valuesColumns.Substring(0, valuesColumns.Length - 2),
-                returnCall,
-                whereClause);
-
-            dac.SqlText = sqlText;
-            return primaryParameter;
-        }
-
-        internal void ApplyUpdateToSqlCommander(SqlCommander dac, T entity, DataFilter<T> filter)
-        {
-            string updateColumns = " ";
-            string whereClause = "";
-
-            foreach (var param in Map.Items)
-            {
-                if (param.IsPrimaryKey && param.IsIdentity) continue;
-                if (param.IsReadOnly) continue;
-                //  Double check
-                if (updateColumns.Contains(string.Concat(" ", param.Column, "= ")))
-                    continue;
-
-                updateColumns += string.Concat(param.Column, "= ", "@", param.Column, ", ");
-                dac.SetParameterInput(string.Concat("@", param.Column), ReflectionHelper.GetMemberValue(param.MemberInfoTree, entity), param.SqlType, param.Length);
-
-            }
-
-            if (filter?.SqlParameters != null)
-            {
-                foreach (SqlParameter p in filter.SqlParameters)
-                {
-                    updateColumns += string.Concat(p.ParameterName, "= ", "@", p.ParameterName, ", ");
-                    dac.SetParameterInput(string.Concat("@", p.ParameterName), p.Value, p.SqlDbType);
-                }
-            }
-
-            if (updateColumns.Length == 0) return;
-
-            whereClause = CreateWhereClause(filter, dac);
-
-            string sqlText = string.Format("update {0} set {1} {2}",
-                Map.TableName,
-                updateColumns.Substring(0, updateColumns.Length - 2),
-                whereClause);
-
-
-            dac.SqlText = sqlText;
-        }
-
-        
-
+        }        
 
         /// <summary>
         /// Updates records in the database for <paramref name="filter"/> using the values on <paramref name="entity"/>.
@@ -792,71 +537,11 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="cancellationToken"></param>
         public async Task UpdateAsync(T entity, DataFilter<T> filter, CancellationToken cancellationToken)
         {
-            using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
-            {
-                ApplyUpdateToSqlCommander(dac, entity, filter);
-                await dac.ExecNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            }
-            Map.DoPostSave(Map);
-        }
+            //generate sql statement
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T, object>(DMLStatementType.Update, SqlStatementResultCardinality.None, Map, filter, null, entity, false);
 
-        /// <summary>
-        /// Applies all settings to an instance of <see cref="SqlCommander"/> to perform an insert for <typeparamref name="T"/>.
-        /// If <typeparamref name="T"/> has an IdentityColumn, the output parameter name with the newly inserted identity is returned.
-        /// </summary>
-        /// <param name="dac"></param>
-        /// <param name="entity"></param>
-        /// <param name="identityInsert"></param>
-        /// <returns></returns>
-        internal string ApplyInsertToSqlCommander(SqlCommander dac, T entity, bool identityInsert)
-        {
-            string insertColumns = " ";
-            string valuesColumns = "";
-            string primaryParameter = null;
-            string returnCall = null;
-            DataMapItem primaryDataColumn = null;
-
-            foreach (var databaseColumn in Map.Items)
-            {
-                if (!identityInsert && databaseColumn.IsIdentity && databaseColumn.Column != null)
-                {
-                    primaryDataColumn = databaseColumn;
-                    returnCall = string.Format("SET @{0} = SCOPE_IDENTITY()", databaseColumn.Column);
-                    primaryParameter = "@" + databaseColumn.Column;
-                    dac.SetParameterOutput(primaryParameter, databaseColumn.SqlType, databaseColumn.Length);
-                }
-                else
-                {
-                    if (databaseColumn.IsReadOnly) continue;
-
-                    //  Double check
-                    if (insertColumns.Contains(string.Concat(" ", databaseColumn.Column, ", ")))
-                        continue;
-
-                    insertColumns += string.Concat(databaseColumn.Column, ", ");
-                    valuesColumns += string.Concat("@", databaseColumn.Column, ", ");
-                    dac.SetParameterInput(string.Concat("@", databaseColumn.Column), ReflectionHelper.GetMemberValue(databaseColumn.MemberInfoTree, entity), databaseColumn.SqlType, databaseColumn.Length);
-                }
-            }
-
-            string sqlText;
-
-            if (insertColumns.Length == 0)
-            {
-                sqlText = string.Format("insert into {0} DEFAULT VALUES", Map.TableName);
-            }
-            else
-            {
-                sqlText = string.Format("insert into {0} ({1}) values ({2}) {3}",
-                    Map.TableName,
-                    insertColumns.Substring(0, insertColumns.Length - 2),
-                    valuesColumns.Substring(0, valuesColumns.Length - 2),
-                    returnCall);
-            }
-
-            dac.SqlText = sqlText;
-
-            return primaryParameter;
+            //execute statement
+            await ExecuteSqlStatementAsync(sqlStatement, cancellationToken).ConfigureAwait(false);
         }
 
         internal void ApplyIdentityColumnToEntity(T entity, int identityValue)
@@ -866,18 +551,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 if (identityValue > 0 && identityColumn != null)
                     ReflectionHelper.SetMemberValue(identityColumn.MemberInfoTree, identityValue, entity);
             
-        }
-
-        internal void ApplyIdentityColumnToEntity(T entity, SqlCommander dac, string identityOutputParameter)
-        {
-            if (!string.IsNullOrWhiteSpace(identityOutputParameter))
-            {
-                var identityColumn = Map.Items.FirstOrDefault(x => x.IsIdentity);
-                var id = dac.GetParamInt(identityOutputParameter);
-                if (id > 0 && identityColumn != null)
-                    ReflectionHelper.SetMemberValue(identityColumn.MemberInfoTree, id, entity);
-            }
-        }
+        }        
 
         /// <summary>
         /// Inserts <typeparamref name="T"/> in the database.
@@ -896,35 +570,76 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public void Insert(T entity, bool isIdentityInsert)
         {
             //generate insert statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment(DMLStatement.Insert, SqlStatementResultType.Scalar, Map, null, null, entity, false);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T, int>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, Map, null, null, entity, isIdentityInsert);
 
             //execute and get response
             var response = ExecuteSqlStatement(sqlStatement);
 
             //if response contains a value map it to the idenity column
-            if(response.ScalarResult != null && response.ScalarResult is int)
+            if(response.SingleResult > 0)
             {
-                ApplyIdentityColumnToEntity(entity, (int)response.ScalarResult);
+                ApplyIdentityColumnToEntity(entity, response.SingleResult);
             }           
         }
 
         /// <summary>
-        /// Updates or inserts <typeparamref name="T"/> in the database.
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="filter"></param>
-        /// <param name="isIdentityInsert"></param>
-        public void Upsert(T entity, DataFilter<T> filter, bool isIdentityInsert = false)
+        /// Inserts a new record for <typeparamref name="T"/> in the database if no record exists for the same primary key. Else the existing record is updated.
+        /// </summary>        
+        public void InsertOrUpdate(T entity)
         {
-            using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
+            InsertOrUpdate(entity, false);
+        }
+
+        /// <summary>
+        /// Inserts a new record for <typeparamref name="T"/> in the database if no record exists for the same primary key. Else the existing record is updated.
+        /// </summary>        
+        public void InsertOrUpdate(T entity, bool isIdentityInsert)
+        {
+            var filter = new DataFilter<T>();
+            //generate filter condition for primary key
+            AddPrimaryKeyToFilter(filter, entity);
+
+            //generate sql statement
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T, int>(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.SingleRow, Map, filter, null, entity, isIdentityInsert);
+
+            //execute
+            var response = ExecuteSqlStatement(statement);
+
+            //if response contains a value map it to the idenity column
+            if (response.SingleResult > 0)
             {
-                string identityParameter = ApplyUpsertToSqlCommander(dac, entity, filter, isIdentityInsert);
-                dac.ExecNonQuery();
-                
-                if (!string.IsNullOrWhiteSpace(identityParameter))
-                    ApplyIdentityColumnToEntity(entity, dac, identityParameter);
-            }
-            Map.DoPostSave(Map);
+                ApplyIdentityColumnToEntity(entity, response.SingleResult);
+            }            
+        }
+
+        /// <summary>
+        /// Inserts a new record for <typeparamref name="T"/> in the database if no record exists for the same primary key. Else the existing record is updated.
+        /// </summary>        
+        public async Task InsertOrUpdateAsync(T entity)
+        {
+            await InsertOrUpdateAsync(entity, false, CancellationToken.None).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Inserts a new record for <typeparamref name="T"/> in the database if no record exists for the same primary key. Else the existing record is updated.
+        /// </summary>        
+        public async Task InsertOrUpdateAsync(T entity, bool isIdentityInsert, CancellationToken cancellationToken)
+        {
+            var filter = new DataFilter<T>();
+            //generate filter condition for primary key
+            AddPrimaryKeyToFilter(filter, entity);
+
+            //generate sql statement
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T, int>(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.SingleRow, Map, filter, null, entity, isIdentityInsert);
+
+            //execute
+            var response = await ExecuteSqlStatementAsync(statement, cancellationToken).ConfigureAwait(false);
+
+            //if response contains a value map it to the idenity column
+            if (response.SingleResult > 0)
+            {
+                ApplyIdentityColumnToEntity(entity, response.SingleResult);
+            }            
         }
 
 
@@ -958,15 +673,17 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task InsertAsync(T entity, bool isIdentityInsert, CancellationToken cancellationToken)
         {
-            using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
+            //generate insert statement
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T, int>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, Map, null, null, entity, isIdentityInsert);
+
+            //execute and get response
+            var response = await ExecuteSqlStatementAsync(sqlStatement, cancellationToken).ConfigureAwait(false);
+
+            //if response contains a value map it to the idenity column
+            if (response.SingleResult > 0)
             {
-                string identityParameter = ApplyInsertToSqlCommander(dac, entity, isIdentityInsert);
-
-                await dac.ExecNonQueryAsync(cancellationToken).ConfigureAwait(false);
-
-                ApplyIdentityColumnToEntity(entity, dac, identityParameter);
+                ApplyIdentityColumnToEntity(entity, response.SingleResult);
             }
-            Map.DoPostSave(Map);
         }
 
         /// <summary>
@@ -998,11 +715,11 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public List<T> FetchAll(string sqlText, DataFilter<T> filter)
         {
             //generate the sql statement
-            SqlStatement statement;
+            SqlStatement<T, T> statement;
             if (string.IsNullOrWhiteSpace(sqlText))
-                statement = SqlStatementGenerator.GenerateSqlStatment(DMLStatement.Select, SqlStatementResultType.Multiple, Map, filter, sqlText);
+                statement = SqlStatementGenerator.GenerateSqlStatment<T, T>(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows, Map, filter, sqlText);
             else
-                statement = SqlStatementGenerator.GenerateSqlStatment(DMLStatement.CustomQuery, SqlStatementResultType.Multiple, Map, filter, sqlText);
+                statement = SqlStatementGenerator.GenerateSqlStatment<T, T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, Map, filter, sqlText);
 
             //execute and get response
             var statementResult = ExecuteSqlStatement(statement);
@@ -1072,112 +789,25 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task<List<T>> FetchAllAsync(string sqlText, DataFilter<T> filter, CancellationToken cancellationToken)
         {
-            using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
-            {
-                var query = ApplyFilterToCommanderFetchAll(dac, filter, sqlText);
-                Map.DoBeforeFetch(Map, query);
-                if (query.Result != null)
-                    return (List<T>)query.Result;
-
-                using (SqlDataReader reader = await dac.ExecReaderAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    var result = new List<T>();
-
-                    //read the first result set
-                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                    {
-                        T entity = new T();
-                        SetResultValuesToObject(query, reader, entity);
-                        result.Add(entity);
-                    }
-
-                    //if we have a second result set, it is the filter's paging
-                    if (await reader.NextResultAsync(cancellationToken).ConfigureAwait(false) && filter != null && filter.Paging != null)
-                    {
-                        if (await reader.ReadAsync().ConfigureAwait(false))
-                        {
-                            var candidate = reader.GetValue(0);
-                            if (candidate != null && candidate is int)
-                                filter.Paging.TotalNumberOfRows = (int)candidate;
-                        }
-                    }
-
-                    query.Result = result;
-                    Map.DoPostFetch(Map, query);
-
-                    return result;
-                }
-            }
-        }
-
-        internal Query ApplyFilterToCommanderFetchAll(SqlCommander dac, DataFilter<T> filter, string customSql)
-        {
-            Query query = new Query();
-            query.From = Map.TableName;
-            query.OrderBy = filter?.OrderBy;
-            query.Where = CreateWhereClause(filter, dac, query);
-
-            ApplySelect(Map, query);
-
-            if (query.Select.Count == 0) return query;
-
-            string rowcount = null;
-            if (filter?.MaxResults != null) rowcount = $"TOP({filter.MaxResults.Value})";
-
-            //apply paging if supplied on data request
-            //a count query is run first, then a query to retrieve the data from the page 
-            //todo: make both queries run in one roundtrip
-            string pagingOffset = null;
-            string pagingCountQuery = null;
-            if (filter?.Paging != null && filter?.Paging?.NumberOfRows > 0)
-            {                
-                //create count query
-                pagingCountQuery = $"\n\rSELECT COUNT(*) FROM {query.From} {query.Where}";
-
-                //create offset query text 
-                //TODO: use parameters for this
-                pagingOffset = $"OFFSET {filter.Paging.PageIndex * filter.Paging.NumberOfRows} ROWS FETCH NEXT {filter.Paging.NumberOfRows} ROWS ONLY";
-
-                //if offset is used, it always needs an order by clause. create one if none supplied
-                if (string.IsNullOrWhiteSpace(filter.OrderBy))
-                {
-                    var primaryKeyColumns = Map.GetPrimaryKeyColumns();
-                    if (primaryKeyColumns.Count > 0)
-                        query.OrderBy = "ORDER BY " + string.Join(",", primaryKeyColumns.Select(x => x.Column));
-                }
-                //if paging is applied, the offset/fetch next method is used. no need to apply TOP() in this case                    
-                rowcount = null;
-            }
-
-            //create the select statement, except when the caller supplied his own sql statement            
-            if (string.IsNullOrWhiteSpace(customSql))
-            {
-                Map.ValidateMappingForGeneratedQueries();                
-                query.Sql = $"SELECT {rowcount} {(string.Join(", ", query.Select.Select(x => x.ColumnSelectListName).ToArray()))} FROM {query.From} {query.Where} {query.OrderBy} {pagingOffset}";
-            }
+            //generate the sql statement
+            SqlStatement<T, T> statement;
+            if (string.IsNullOrWhiteSpace(sqlText))
+                statement = SqlStatementGenerator.GenerateSqlStatment<T, T>(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows, Map, filter, sqlText);
             else
-                query.Sql = customSql;
+                statement = SqlStatementGenerator.GenerateSqlStatment<T, T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, Map, filter, sqlText);
 
-            //append paging's count query if we have one
-            if(pagingCountQuery != null)
-                query.Sql += pagingCountQuery;
+            //execute and get response
+            var statementResult = await ExecuteSqlStatementAsync(statement, cancellationToken).ConfigureAwait(false);
 
-            dac.SqlText = query.Sql;
-            return query;
+            //if total number of rows is set apply it to the filter's paging object
+            if (filter?.Paging != null && statementResult.TotalNumberOfRows.HasValue)
+                filter.Paging.TotalNumberOfRows = statementResult.TotalNumberOfRows;
+
+            //return result
+            return statementResult.MultipleResults;
         }
 
-        internal void ApplyDeleteToSqlCommander(SqlCommander dac, DataFilter<T> filter)
-        {
-            string whereClause = "";
-            whereClause = CreateWhereClause(filter, dac);
-            if (whereClause.Length == 0) return;
-
-            string sqlText = string.Format("delete from {0} {1}",
-                Map.TableName,
-                whereClause);
-
-            dac.SqlText = sqlText;            
-        }
+        
 
         /// <summary>
         /// Deletes <paramref name="entity"/> from the database
@@ -1197,8 +827,8 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public void Delete(DataFilter<T> filter)
         {
-            //genere delete statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment(DMLStatement.Delete, SqlStatementResultType.None, Map, filter, null);
+            //generate delete statement
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T, object>(DMLStatementType.Delete, SqlStatementResultCardinality.None, Map, filter, null);
 
             //execute
             var result = ExecuteSqlStatement(sqlStatement);
@@ -1243,12 +873,11 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task DeleteAsync(DataFilter<T> filter, CancellationToken cancellationToken)
         {
-            using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
-            {
-                ApplyDeleteToSqlCommander(dac, filter);
-                await dac.ExecNonQueryAsync(cancellationToken).ConfigureAwait(false);                
-            }
-            Map.DoPostDelete(Map);
+            //generate delete statement
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T, object>(DMLStatementType.Delete, SqlStatementResultCardinality.None, Map, filter, null);
+
+            //execute
+            var result = await ExecuteSqlStatementAsync(sqlStatement, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -1288,8 +917,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="filter"></param>
         public async Task ExecuteNonQueryAsync(string sqlText, DataFilter<T> filter)
         {
-            await ExecuteNonQueryAsync(sqlText, filter, CancellationToken.None).ConfigureAwait(false);
-            Map.DoPostSave(Map);
+            await ExecuteNonQueryAsync(sqlText, filter, CancellationToken.None).ConfigureAwait(false);            
         }
 
         /// <summary>
@@ -1324,15 +952,13 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public TScalar ExecuteScalar<TScalar>(string sqlText, DataFilter<T> filter)
         {
             //generate the sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment(DMLStatement.CustomQuery, SqlStatementResultType.Scalar, Map, filter, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T, TScalar>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, filter, sqlText);
 
             //execute and get response
             var statementResult = ExecuteSqlStatement(statement);
 
             //return result
-            if (statementResult.ScalarResult is TScalar)
-                return (TScalar)statementResult.ScalarResult;
-            return default(TScalar);            
+            return statementResult.SingleResult;
         }
 
         
@@ -1367,17 +993,14 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task<TScalar> ExecuteScalarAsync<TScalar>(string sqlText, DataFilter<T> filter, CancellationToken cancellationToken)
         {
-            using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
-            {
-                if(filter != null)
-                    CreateWhereClause(filter, dac);//this will set the parameters on the DAC
-                dac.SqlText = sqlText;
+            //generate the sql statement
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T, TScalar>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, filter, sqlText);
 
-                var result = await dac.ExecScalarAsync(cancellationToken).ConfigureAwait(false);
-                if (result != null && result is TScalar)
-                    return (TScalar)result;
-                return default(TScalar);
-            }
+            //execute and get response
+            var statementResult = await ExecuteSqlStatementAsync(statement, cancellationToken).ConfigureAwait(false);
+
+            //return result
+            return statementResult.SingleResult;
         }
 
         
@@ -1387,9 +1010,9 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="sqlText"></param>        
         /// <returns></returns>
-        public List<Y> ExecuteSet<Y>(string sqlText)
+        public List<TResult> ExecuteSet<TResult>(string sqlText)
         {
-            return ExecuteSet<Y>(sqlText, null);
+            return ExecuteSet<TResult>(sqlText, null);
         }
 
         /// <summary>
@@ -1398,49 +1021,15 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="sqlText"></param>     
         /// <param name="filter"></param>
         /// <returns></returns>
-        public List<Y> ExecuteSet<Y>(string sqlText, DataFilter<T> filter)
+        public List<TResult> ExecuteSet<TResult>(string sqlText, DataFilter<T> filter)
         {
-            var result = new List<Y>();
+            //generate statement
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T, TResult>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, Map, filter, sqlText);
 
-            using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
-            {
-                dac.SqlText = sqlText;
+            //execute statement and map response
+            var result = ExecuteSqlStatement(statement);
 
-                if (filter != null)
-                    CreateWhereClause(filter, dac);//this will set the parameters on the DAC
-
-                //call database
-                using (SqlDataReader reader = dac.ExecReader())
-                {
-                    var type = typeof(Y);
-
-                    //read the first result set
-                    while (reader.Read())
-                    {
-                        //get the first column of each row and add its value to the result
-                        if (reader.FieldCount > 0)
-                        {
-                            var value = reader.GetValue(0);
-
-                            Y castedValue;
-                            //convert to a value we can use
-                            if (value == DBNull.Value)
-                            {
-                                castedValue = default(Y);
-                            }
-                            else
-                            {                                
-                                value = ReflectionHelper.ConvertValueToEnum(value, type);
-                                castedValue = (Y)value;
-                            }
-                            
-                            result.Add(castedValue);
-                        }
-                    }
-
-                    return result;
-                }
-            }
+            return result.MultipleResults;
         }
 
         /// <summary>
@@ -1448,9 +1037,9 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="sqlText"></param>        
         /// <returns></returns>
-        public async Task<List<Y>> ExecuteSetAsync<Y>(string sqlText)
+        public async Task<List<TResult>> ExecuteSetAsync<TResult>(string sqlText)
         {
-            return await ExecuteSetAsync<Y>(sqlText, null).ConfigureAwait(false);
+            return await ExecuteSetAsync<TResult>(sqlText, null).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -1460,9 +1049,9 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="filter"></param>
         
         /// <returns></returns>
-        public async Task<List<Y>> ExecuteSetAsync<Y>(string sqlText, DataFilter<T> filter)
+        public async Task<List<TResult>> ExecuteSetAsync<TResult>(string sqlText, DataFilter<T> filter)
         {
-            return await ExecuteSetAsync<Y>(sqlText, filter, CancellationToken.None).ConfigureAwait(false);
+            return await ExecuteSetAsync<TResult>(sqlText, filter, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -1472,49 +1061,15 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="filter"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<List<Y>> ExecuteSetAsync<Y>(string sqlText, DataFilter<T> filter, CancellationToken cancellationToken)
+        public async Task<List<TResult>> ExecuteSetAsync<TResult>(string sqlText, DataFilter<T> filter, CancellationToken cancellationToken)
         {
-            var result = new List<Y>();
+            //generate statement
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T, TResult>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, Map, filter, sqlText);
 
-            using (SqlCommander dac = new SqlCommander(ConnectionString, CommandTimeout))
-            {
-                dac.SqlText = sqlText;
+            //execute statement and map response
+            var result = await ExecuteSqlStatementAsync(statement, cancellationToken).ConfigureAwait(false);
 
-                if (filter != null)
-                    CreateWhereClause(filter, dac);//this will set the parameters on the DAC
-
-                //call database
-                using (SqlDataReader reader = await dac.ExecReaderAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    var type = typeof(Y);
-
-                    //read the first result set
-                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                    {
-                        //get the first column of each row and add its value to the result
-                        if (reader.FieldCount > 0)
-                        {
-                            var value = reader.GetValue(0);
-
-                            Y castedValue;
-                            //convert to a value we can use
-                            if (value == DBNull.Value)
-                            {
-                                castedValue = default(Y);
-                            }
-                            else
-                            {
-                                value = ReflectionHelper.ConvertValueToEnum(value, type);
-                                castedValue = (Y)value;
-                            }
-
-                            result.Add(castedValue);
-                        }
-                    }
-
-                    return result;
-                }
-            }
+            return result.MultipleResults;
         }
 
 

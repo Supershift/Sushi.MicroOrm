@@ -9,4 +9,6 @@
 /src/Sushi.MicroORM.Tests/obj
 /src/Sushi.MicroORM.Tests/appsettings.json
 /src/Sushi.MicroORM.Samples/appsettings.json
+/src/Sushi.MicroORM.Samples/obj
+/src/Sushi.MicroORM.Tests/bin
 /src/.vs

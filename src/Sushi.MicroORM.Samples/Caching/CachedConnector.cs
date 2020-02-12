@@ -12,9 +12,9 @@ namespace Sushi.MicroORM.Samples.Caching
     /// <typeparam name="T"></typeparam>
     public class CachedConnector<T> : Connector<T> where T : new()
     {
-        public override SqlStatementResult<T, TResult> ExecuteSqlStatement<TResult>(SqlStatement<T, TResult> statement)
+        public override SqlStatementResult<TResult> ExecuteSqlStatement<TResult>(SqlStatement<T, TResult> statement)
         {            
-            SqlStatementResult<T, TResult> result = null;
+            SqlStatementResult<TResult> result = null;
 
             //does this operation interact with the cache?
             switch (statement.DMLStatement)
@@ -38,8 +38,8 @@ namespace Sushi.MicroORM.Samples.Caching
                     string key = GenerateKey(statement);
                     if(Cache.Instance.TryGetValue(key, out object cachedValue))
                     {
-                        if (cachedValue is SqlStatementResult<T, TResult>)
-                            result = (SqlStatementResult<T, TResult>)cachedValue;
+                        if (cachedValue is SqlStatementResult<TResult>)
+                            result = (SqlStatementResult<TResult>)cachedValue;
                     }
 
                     //if not, perform the query and cache result

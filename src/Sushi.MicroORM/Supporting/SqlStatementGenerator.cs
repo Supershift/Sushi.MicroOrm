@@ -25,9 +25,9 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="filter"></param>
         /// <param name="customQuery"></param>
         /// <returns></returns>
-        public static SqlStatement<TMapped, TResult> GenerateSqlStatment<TMapped, TResult>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataFilter<TMapped> filter, string customQuery) where TMapped : new()
+        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataFilter<TMapped> filter, string customQuery) where TMapped : new()
         {
-            return GenerateSqlStatment<TMapped, TResult>(statementType, resultType, map, filter, customQuery, default(TMapped), false);
+            return GenerateSqlStatment<TMapped>(statementType, resultType, map, filter, customQuery, default(TMapped), false);
         }
 
         /// <summary>
@@ -43,25 +43,23 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="entity"></param>
         /// <param name="isIdentityInsert"></param>
         /// <returns></returns>
-        public static SqlStatement<TMapped, TResult> GenerateSqlStatment<TMapped, TResult>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataFilter<TMapped> filter, string customQuery, TMapped entity, bool isIdentityInsert) where TMapped: new()
+        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataFilter<TMapped> filter, string customQuery, TMapped entity, bool isIdentityInsert) where TMapped: new()
         {
             //validate if the supplied mapping has everything needed to generate queries
             if (statementType != DMLStatementType.CustomQuery)
                 map.ValidateMappingForGeneratedQueries();
 
-            var result = new SqlStatement<TMapped, TResult>(statementType, resultType);
+            var result = new SqlStatement<TMapped>(statementType, resultType) { CustomSqlStatement = customQuery };
             
             //create the DML clause and optionally the order by clause of the query            
             switch (statementType)
             {
                 case DMLStatementType.Select:
-                    ApplySelectToStatement(result, map, filter);
-                    //add the where clause to the sql statement 
+                    ApplySelectToStatement(result, map, filter);                    
                     AddWhereClauseToStatement(result, filter);
                     break;
                 case DMLStatementType.Insert:
-                    ApplyInsertToStatement(result, map, entity, isIdentityInsert);
-                    //add the where clause to the sql statement 
+                    ApplyInsertToStatement(result, map, entity, isIdentityInsert);                    
                     AddWhereClauseToStatement(result, filter);
                     break;
                 case DMLStatementType.Update:
@@ -77,26 +75,22 @@ namespace Sushi.MicroORM.Supporting
                         result.Parameters.Add(new SqlStatementParameter(parameterName, value, column.SqlType, column.Length));
                         setClauseColumns.Add($"{column.Column} = {parameterName}");
                     }
-                    result.UpdateSetClause = $"SET {string.Join(",", setClauseColumns)}";
-                    //add the where clause to the sql statement 
+                    result.UpdateSetClause = $"SET {string.Join(",", setClauseColumns)}";                    
                     AddWhereClauseToStatement(result, filter);
                     break;
                 case DMLStatementType.Delete:
-                    result.DmlClause = "DELETE ";
-                    //add the where clause to the sql statement 
+                    result.DmlClause = "DELETE ";                    
                     AddWhereClauseToStatement(result, filter);
                     break;
-                case DMLStatementType.CustomQuery:
-                    result.CustomSqlStatement = customQuery;
-                    //add the where clause to the sql statement 
+                case DMLStatementType.CustomQuery:                                        
                     AddWhereClauseToStatement(result, filter);
                     break;
                 case DMLStatementType.InsertOrUpdate:
                     //this generates two seperate statements which need to be merged into one statement which uses an IF EXIST / ELSE
                     //generate insert
-                    var insertStatement = GenerateSqlStatment<TMapped, int>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, map, filter, null, entity, isIdentityInsert);
+                    var insertStatement = GenerateSqlStatment<TMapped>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, map, filter, null, entity, isIdentityInsert);
                     //generate update
-                    var updateStatement = GenerateSqlStatment<TMapped, object>(DMLStatementType.Update, SqlStatementResultCardinality.None, map, filter, null, entity, isIdentityInsert);
+                    var updateStatement = GenerateSqlStatment<TMapped>(DMLStatementType.Update, SqlStatementResultCardinality.None, map, filter, null, entity, isIdentityInsert);
 
                     //generate custom insert or update statement
                     result.CustomSqlStatement = $@"
@@ -122,7 +116,7 @@ END";
             return result;
         }
 
-        private static SqlStatement<T, TResult> ApplySelectToStatement<T, TResult>(SqlStatement<T, TResult> statement, DataMap map, DataFilter<T> filter) where T: new()
+        private static SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataFilter<T> filter) where T: new()
         {
             //set opening statement
             statement.DmlClause = "SELECT ";
@@ -154,7 +148,7 @@ END";
             return statement;
         }
 
-        private static SqlStatement<T, TResult> ApplyInsertToStatement<T, TResult>(SqlStatement<T, TResult> statement, DataMap<T> map, T entity, bool isIdentityInsert) where T : new()
+        private static SqlStatement<T> ApplyInsertToStatement<T>(SqlStatement<T> statement, DataMap<T> map, T entity, bool isIdentityInsert) where T : new()
         {
             //generate opening statement
             statement.DmlClause = $"INSERT";
@@ -189,12 +183,12 @@ END";
             return statement;
         }
         /// <summary>
-        /// Sets <see cref="SqlStatement{TMapped, TResult}.WhereClause"/> and <see cref="SqlStatement{TMapped, TResult}.Parameters"/> based on values supplied in <paramref name="filter"/>.
+        /// Sets <see cref="SqlStatement{TMapped}.WhereClause"/> and <see cref="SqlStatement{TMapped}.Parameters"/> based on values supplied in <paramref name="filter"/>.
         /// </summary>        
         /// <param name="query"></param>
         /// <param name="filter"></param>
         /// <returns></returns>
-        private static SqlStatement<T, TResult> AddWhereClauseToStatement<T, TResult>(SqlStatement<T, TResult> query, DataFilter<T> filter) where T: new()
+        private static SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> query, DataFilter<T> filter) where T: new()
         {
             var whereClause = filter?.WhereClause;
 

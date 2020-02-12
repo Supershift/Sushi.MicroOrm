@@ -7,12 +7,11 @@ namespace Sushi.MicroORM.Supporting
     /// <summary>
     /// Represents a SQL statement to be executed against a database.
     /// </summary>
-    /// <typeparam name="TMapped">The mapped type that was used to generate the statement.</typeparam>
-    /// <typeparam name="TResult">The expected result type to map the response to.</typeparam>
-    public class SqlStatement<TMapped, TResult>
-    {
+    /// <typeparam name="TMapped">The mapped type that was used to generate the statement.</typeparam>    
+    public class SqlStatement<TMapped>
+    {        
         /// <summary>
-        /// Creates a new instance of <see cref="SqlStatement{TMapped, TResult}"/>.
+        /// Creates a new instance of <see cref="SqlStatement{TMapped}"/>.
         /// </summary>
         /// <param name="dmlStatement"></param>
         /// <param name="resultCardinality"></param>
@@ -53,7 +52,6 @@ namespace Sushi.MicroORM.Supporting
         /// Gets or sets the output clause of the statement, ie. OUTPUT Inserted.MyColumn.
         /// </summary>
         public string OutputClause { get; set; }
-
 
         /// <summary>
         /// Gets or sets the where clause of the statment, ie. WHERE MyColumn = @myParameter.

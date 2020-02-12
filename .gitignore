@@ -8,7 +8,8 @@
 /src/Sushi.MicroORM.Tests/bin/Debug/netcoreapp2.0
 /src/Sushi.MicroORM.Tests/obj
 /src/Sushi.MicroORM.Tests/appsettings.json
-/src/Sushi.MicroORM.Samples/appsettings.json
-/src/Sushi.MicroORM.Samples/obj
 /src/Sushi.MicroORM.Tests/bin
 /src/.vs
+[Bb]in/
+[Oo]bj/
+appsettings.json

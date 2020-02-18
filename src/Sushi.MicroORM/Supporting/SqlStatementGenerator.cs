@@ -122,6 +122,9 @@ END";
             statement.DmlClause = "SELECT ";
             if (statement.ResultCardinality == SqlStatementResultCardinality.SingleRow)
                 statement.DmlClause += "TOP(1) ";
+            else if (filter?.MaxResults != null)
+                statement.DmlClause += $"TOP({filter.MaxResults}) ";
+
             //generate the column list, ie. MyColumn1, MyColumn2, MyColumn3 + MyColumn4 AS MyAlias
             statement.DmlClause += string.Join(",", map.Items.Select(x => x.ColumnSelectListName));
 

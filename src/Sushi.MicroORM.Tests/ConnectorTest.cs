@@ -181,7 +181,18 @@ namespace Sushi.MicroORM.Tests
             Assert.IsTrue(orders.Count > 0);            
         }
 
-        
+        [TestMethod]
+        public void FetchAllMaxResults()
+        {
+            int maxResults = 2;
+
+            var connector = new Connector<Order>();            
+            var filter = connector.CreateDataFilter();
+            filter.MaxResults = maxResults;
+            var orders = connector.FetchAll(filter);
+
+            Assert.AreEqual(maxResults, orders.Count);
+        }
 
         [TestMethod]
         public void FetchAllInvalidMap()

@@ -127,6 +127,19 @@ namespace Sushi.MicroORM.Tests
         }
 
         [TestMethod]
+        public async Task FetchAllMaxResults()
+        {
+            int maxResults = 2;
+
+            var connector = new Connector<Order>();
+            var filter = connector.CreateDataFilter();
+            filter.MaxResults = maxResults;
+            var orders = await connector.FetchAllAsync(filter);
+
+            Assert.AreEqual(maxResults, orders.Count);
+        }
+
+        [TestMethod]
         public async Task TestCancellation()
         {
             var cts = new CancellationTokenSource();

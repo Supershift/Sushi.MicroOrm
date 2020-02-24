@@ -42,10 +42,9 @@ namespace Sushi.MicroORM.Mapping
         /// Sets the name of the table in the database to which class T is mapped
         /// </summary>
         /// <param name="tableName"></param>
-        public TableSetter Table(string tableName)
+        public void Table(string tableName)
         {
-            TableName = tableName;
-            return new TableSetter() { Map = this };
+            TableName = tableName;            
         }
 
         /// <summary>

@@ -237,6 +237,25 @@ namespace Sushi.MicroORM.Tests
         }
 
         [TestMethod]
+        public void FetchAllOrderedBy()
+        {
+            var ConnectorOrders = new Connector<Order>();
+
+            var filter = new DataFilter<Order>();
+            filter.AddOrder(x => x.ID, SortOrder.DESC);
+            filter.MaxResults = 2;
+            var orders = ConnectorOrders.FetchAll(filter);
+            
+            foreach (var order in orders)
+            {
+                Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
+            }
+
+            Assert.AreEqual(2, orders.Count);
+            Assert.IsTrue(orders[0].ID > orders[1].ID);
+        }
+
+        [TestMethod]
         public void FetchPaging()
         {
             var ConnectorOrders = new Connector<Order>();
@@ -462,7 +481,9 @@ WHERE Product_Key > @productID";
                 CustomerID = 1,
                 Created = DateTime.UtcNow,
                 DeliveryTime = new TimeSpan(3, 20, 35),
-                DeliveryTime2 = DateTime.UtcNow.TimeOfDay
+                DeliveryTime2 = DateTime.UtcNow.TimeOfDay,
+                Amount = 15.97M,
+                Measurement = 100.46
             };
             ConnectorOrders.Save(order);
 

@@ -220,6 +220,25 @@ namespace Sushi.MicroORM.Tests
         }
 
         [TestMethod]
+        public async Task FetchAllOrderedBy()
+        {
+            var ConnectorOrders = new Connector<Order>();
+
+            var filter = new DataFilter<Order>();
+            filter.AddOrder(x => x.ID, SortOrder.DESC);
+            filter.MaxResults = 2;
+            var orders = await ConnectorOrders.FetchAllAsync(filter);
+
+            foreach (var order in orders)
+            {
+                Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
+            }
+
+            Assert.AreEqual(2, orders.Count);
+            Assert.IsTrue(orders[0].ID > orders[1].ID);
+        }
+
+        [TestMethod]
         public async Task FetchWhereInIntAsync()
         {
 

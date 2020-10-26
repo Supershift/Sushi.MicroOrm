@@ -677,6 +677,15 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <summary>
+        /// Fetches all records from the database.
+        /// </summary>        
+        /// <returns></returns>
+        public List<T> FetchAll()
+        {
+            return FetchAll(null, null);
+        }
+
+        /// <summary>
         /// Fetches all records from the database for <paramref name="sqlText"/>.
         /// </summary>
         /// <param name="sqlText"></param>        
@@ -705,8 +714,10 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public List<T> FetchAll(string sqlText, DataFilter<T> filter)
         {
             //generate the sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows, Map, filter, sqlText);
-            
+            var statementType = DMLStatementType.Select;
+            if (!string.IsNullOrWhiteSpace(sqlText))
+                statementType = DMLStatementType.CustomQuery;
+            var statement = SqlStatementGenerator.GenerateSqlStatment(statementType, SqlStatementResultCardinality.MultipleRows, Map, filter, sqlText);
 
             //execute and get response
             var statementResult = ExecuteSqlStatement<T>(statement);
@@ -717,6 +728,24 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
             //return result
             return statementResult.MultipleResults;
+        }
+
+        /// <summary>
+        /// Fetches all records from the database.
+        /// </summary>        
+        /// <returns></returns>
+        public async Task<List<T>> FetchAllAsync()
+        {
+            return await FetchAllAsync(CancellationToken.None).ConfigureAwait(false); 
+        }
+
+        /// <summary>
+        /// Fetches all records from the database.
+        /// </summary>        
+        /// <returns></returns>
+        public async Task<List<T>> FetchAllAsync(CancellationToken cancellationToken)
+        {
+            return await FetchAllAsync(null, null, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -776,8 +805,11 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task<List<T>> FetchAllAsync(string sqlText, DataFilter<T> filter, CancellationToken cancellationToken)
         {
-            //generate the sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows, Map, filter, sqlText);
+            //generate the sql statement            
+            var statementType = DMLStatementType.Select;
+            if (!string.IsNullOrWhiteSpace(sqlText))
+                statementType = DMLStatementType.CustomQuery;
+            var statement = SqlStatementGenerator.GenerateSqlStatment(statementType, SqlStatementResultCardinality.MultipleRows, Map, filter, sqlText);
             
             //execute and get response
             var statementResult = await ExecuteSqlStatementAsync<T>(statement, cancellationToken).ConfigureAwait(false);
@@ -935,7 +967,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public TScalar ExecuteScalar<TScalar>(string sqlText, DataFilter<T> filter)
         {
             //generate the sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, filter, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, filter, sqlText);
 
             //execute and get response
             var statementResult = ExecuteSqlStatement<TScalar>(statement);

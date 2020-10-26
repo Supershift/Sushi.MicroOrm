@@ -10,12 +10,12 @@ using System.Text;
 namespace Sushi.MicroORM.Supporting
 {
     /// <summary>
-    /// Provides methods to generate instance of <see cref="SqlStatement{TMapped, TResult}"/>.
+    /// Provides methods to generate instance of <see cref="SqlStatement{TMapped}"/>.
     /// </summary>
     public static class SqlStatementGenerator
     {
         /// <summary>
-        /// Generates an instance of <see cref="SqlStatement{TMapped, TResult}"/>.
+        /// Generates an instance of <see cref="SqlStatement{TMapped}"/>.
         /// </summary>
         /// <typeparam name="TMapped"></typeparam>
         /// <typeparam name="TResult"></typeparam>
@@ -27,11 +27,11 @@ namespace Sushi.MicroORM.Supporting
         /// <returns></returns>
         public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataFilter<TMapped> filter, string customQuery) where TMapped : new()
         {
-            return GenerateSqlStatment<TMapped>(statementType, resultType, map, filter, customQuery, default(TMapped), false);
+            return GenerateSqlStatment(statementType, resultType, map, filter, customQuery, default, false);
         }
 
         /// <summary>
-        /// Generates an instance of <see cref="SqlStatement{TMapped, TResult}"/>. Use this overload to provide an entity to insert or update.
+        /// Generates an instance of <see cref="SqlStatement{TMapped}"/>. Use this overload to provide an entity to insert or update.
         /// </summary>
         /// <typeparam name="TMapped"></typeparam>
         /// <typeparam name="TResult"></typeparam>

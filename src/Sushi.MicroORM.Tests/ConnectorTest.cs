@@ -170,9 +170,8 @@ namespace Sushi.MicroORM.Tests
         public void FetchAll()
         {
             var ConnectorOrders = new Connector<Order>();
-
-            var request = new DataFilter<Order>();
-            var orders = ConnectorOrders.FetchAll(request);
+            
+            var orders = ConnectorOrders.FetchAll();
             foreach(var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");

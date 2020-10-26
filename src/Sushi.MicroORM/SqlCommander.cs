@@ -23,16 +23,16 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlCommander"/> class.
         /// </summary>
-        /// <param name="connection">The connection.</param>                
+        /// <param name="connectionString">The connection.</param>                
         /// <param name="commandTimeout">The wait time before terminating the attempt to execute a command and generating an error.</param>
-        public SqlCommander(string connection, int? commandTimeout)
+        public SqlCommander(string connectionString, int? commandTimeout)
         {
-            if (string.IsNullOrWhiteSpace(connection))
-                throw new ArgumentNullException(nameof(connection));
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new ArgumentNullException(nameof(connectionString));
 
             this.Parameterlist = string.Empty;            
             this.Commandtype = CommandType.Text;
-            this.ConnectionString = connection;
+            this.ConnectionString = connectionString;
             this.CommandTimeout = commandTimeout;
 
             //create sql connection

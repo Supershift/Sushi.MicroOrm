@@ -116,8 +116,8 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchAllAsync()
         {
-            var request = new DataFilter<Order>();
-            var orders = await ConnectorOrders.FetchAllAsync(request);
+            
+            var orders = await ConnectorOrders.FetchAllAsync();
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");

@@ -62,7 +62,7 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Gets or sets a value indicating if connetionstrings are cached for types. This is only used if multiple connection strings are provided through the AddMappedConnectionString method. Default value is true.
         /// </summary>
-        internal static bool IsConnectionStringCachingEnabled { get; set; } = true;
+        public static bool IsConnectionStringCachingEnabled { get; set; } = true;
         
         /// <summary>
         /// Gets or sets the behavior for connector's FetchSingle methods in case a record is not found in the database. 

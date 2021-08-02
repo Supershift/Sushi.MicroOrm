@@ -33,5 +33,20 @@ namespace Sushi.MicroORM.Tests
             connector = new Connector<DAL.Customers.Address>();
             address = connector.FetchSingle(1);
         }
+
+        [TestMethod]
+        public void ReplaceConnectionString()
+        {
+            var provider = new ConnectionStringProvider();
+            
+            provider.AddConnectionString(typeof(object).ToString(), "a");
+            var resultA = provider.GetConnectionString(typeof(object));
+
+            provider.AddConnectionString(typeof(object).ToString(), "b");
+            var resultB = provider.GetConnectionString(typeof(object));
+
+            Assert.AreNotEqual(resultA, resultB);
+            Assert.AreEqual("b", resultB);
+        }
     }
 }

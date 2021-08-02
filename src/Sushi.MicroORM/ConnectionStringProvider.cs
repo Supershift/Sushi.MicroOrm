@@ -9,15 +9,47 @@ namespace Sushi.MicroORM
     /// <summary>
     /// Provides and manages database connectionstrings
     /// </summary>
-    internal class ConnectionStringProvider
+    public class ConnectionStringProvider
     {
-        public string DefaultConnectionString { get; set; }
+        private string _defaultConnectionString;
+        /// <summary>
+        /// Gets or sets the default connection string which will be used if no type specific connection string is found.
+        /// </summary>
+        public string DefaultConnectionString
+        {
+            get
+            {
+                return _defaultConnectionString;
+            }
+            set
+            {
+                _defaultConnectionString = value;
+                CachedConnectionStrings.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Gets a collection of connection strings per typename.
+        /// </summary>
         protected ConcurrentDictionary<string, string> MappedConnectionStrings { get; } = new ConcurrentDictionary<string, string>();
+        
+        /// <summary>
+        /// Gets a collection of connection strings per resolved typename.
+        /// </summary>
         protected ConcurrentDictionary<Type, string> CachedConnectionStrings { get; } = new ConcurrentDictionary<Type, string>();
 
+        /// <summary>
+        /// Adds or updates the connection string for the specified typename.
+        /// </summary>
+        /// <param name="typeName"></param>
+        /// <param name="connectionString"></param>
         public void AddConnectionString(string typeName, string connectionString)
         {
+            // add the connection string to the backing store            
             MappedConnectionStrings[typeName] = connectionString;
+
+            // clear cache 
+            CachedConnectionStrings.Clear();
         }
 
         /// <summary>

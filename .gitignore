@@ -10,6 +10,7 @@
 /src/Sushi.MicroORM.Tests/appsettings.json
 /src/Sushi.MicroORM.Tests/bin
 /src/.vs
+/.vs
 [Bb]in/
 [Oo]bj/
 appsettings.json

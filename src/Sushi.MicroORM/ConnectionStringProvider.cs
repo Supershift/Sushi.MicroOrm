@@ -65,8 +65,8 @@ namespace Sushi.MicroORM
                 //check if we already cached a connection string for this type
                 if (useCaching)
                 {
-                    if (CachedConnectionStrings.ContainsKey(type))
-                        return CachedConnectionStrings[type];
+                    if (CachedConnectionStrings.TryGetValue(type, out var cachedConnectionString))
+                        return cachedConnectionString;                    
                 }
 
                 string typeName = type.ToString();

@@ -35,6 +35,18 @@ namespace Sushi.MicroORM.Tests
         }
 
         [TestMethod]
+        public void GetCachedConnectionString()
+        {
+            var provider = new ConnectionStringProvider();
+
+            provider.AddConnectionString(typeof(object).ToString(), "a");
+            var resultA1 = provider.GetConnectionString(typeof(object));
+            var resultA2 = provider.GetConnectionString(typeof(object));
+
+            Assert.AreSame(resultA1, resultA2);
+        }
+
+        [TestMethod]
         public void ReplaceConnectionString()
         {
             var provider = new ConnectionStringProvider();

@@ -10,7 +10,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>1.6.0</Version>
+    <Version>1.6.1</Version>
     <Authors>Marc Molenwijk, Mark de Vries</Authors>
     <Company>Supershift B.V.</Company>    
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>    

@@ -340,8 +340,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <summary>
-        /// Creates an instance of <see cref="DataFilter{T}" /> that can be used with <see cref="FetchSingle(int)"/> and <see cref="FetchSingleAsync(int)"/>. 
-        /// Throws an exception if mapping for <see cref="Map"/> does not have one and only one primary key column which is mapped to <see cref="int"/>.
+        /// Creates an instance of <see cref="DataFilter{T}" /> that can be used with <see cref="FetchSingle(int)"/> and <see cref="FetchSingleAsync(int)"/>.         
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -350,11 +349,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             var primaryKeyColumns = Map.GetPrimaryKeyColumns();
             if (primaryKeyColumns.Count != 1)
                 throw new Exception("Mapping does not have one and only one primary key column.");
-            var primaryKeyColumn = primaryKeyColumns[0];
-
-            var primaryKeyType = ReflectionHelper.GetMemberType(primaryKeyColumn.MemberInfoTree);
-            if (primaryKeyType != typeof(int))
-                throw new Exception("Primary key column is not mapped to a property of type 'Int32'.");
+            var primaryKeyColumn = primaryKeyColumns[0];            
 
             var filter = new DataFilter<T>(Map);
             filter.Add(primaryKeyColumn.Column, SqlDbType.Int, id);

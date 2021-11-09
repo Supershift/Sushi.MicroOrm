@@ -63,6 +63,19 @@ namespace Sushi.MicroORM.Tests
         }
 
         [TestMethod]
+        public void FetchSingleByObjectID()
+        {
+            var ConnectorOrders = new Connector<OrderObjectAsPk>();
+            int id = 1;
+
+            var order = ConnectorOrders.FetchSingle(id);
+
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(order, Newtonsoft.Json.Formatting.Indented));
+
+            Assert.IsTrue((int)order?.ID == id);
+        }
+
+        [TestMethod]
         public void FetchSingleNotExistingByID()
         {
             var ConnectorOrders = new Connector<Order>()

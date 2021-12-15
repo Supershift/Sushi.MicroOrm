@@ -30,6 +30,7 @@ namespace Sushi.MicroORM.Tests
             var connectionString3 = configuration.GetConnectionString("Addresses");
             DatabaseConfiguration.AddMappedConnectionString(typeof(DAL.Customers.Address), connectionString3);
 
+            
         }
 
         [TestMethod]

@@ -30,7 +30,7 @@ namespace Sushi.MicroORM.Supporting
         }
 
         /// <summary>
-        /// Creates a new instance of <see cref="SqlStatementResult{TMapped, TResult}"/> with type <see cref="SqlStatementResultCardinality.MultipleRows"/>.
+        /// Creates a new instance of <see cref="SqlStatementResult{TResult}"/> with type <see cref="SqlStatementResultCardinality.MultipleRows"/>.
         /// </summary>        
         public SqlStatementResult(List<TResult> results, int? totalNumberOfRows) : this(results)
         {
@@ -38,7 +38,7 @@ namespace Sushi.MicroORM.Supporting
         }
 
         /// <summary>
-        /// Creates a new instance of <see cref="SqlStatementResult{TMapped, TResult}"/> with type set to <see cref="SqlStatementResultCardinality.SingleRow"/>.
+        /// Creates a new instance of <see cref="SqlStatementResult{TResult}"/> with type set to <see cref="SqlStatementResultCardinality.SingleRow"/>.
         /// </summary>                
         public SqlStatementResult(TResult result)
         {

@@ -16,8 +16,7 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Generates an instance of <see cref="SqlStatement{TMapped}"/>.
         /// </summary>
-        /// <typeparam name="TMapped"></typeparam>
-        /// <typeparam name="TResult"></typeparam>
+        /// <typeparam name="TMapped"></typeparam>        
         /// <param name="statementType"></param>
         /// <param name="resultType"></param>
         /// <param name="map"></param>
@@ -32,8 +31,7 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Generates an instance of <see cref="SqlStatement{TMapped}"/>. Use this overload to provide an entity to insert or update.
         /// </summary>
-        /// <typeparam name="TMapped"></typeparam>
-        /// <typeparam name="TResult"></typeparam>
+        /// <typeparam name="TMapped"></typeparam>        
         /// <param name="statementType"></param>
         /// <param name="resultType"></param>
         /// <param name="map"></param>

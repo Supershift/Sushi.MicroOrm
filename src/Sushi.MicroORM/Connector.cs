@@ -80,7 +80,7 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Gets or sets the behavior for connector's FetchSingle methods in case a record is not found in the database.         
         /// </summary>
-        public FetchSingleMode FetchSingleMode { get; set; } = DatabaseConfiguration.FetchSingleMode;
+        public FetchSingleMode FetchSingleMode { get; set; } = FetchSingleMode.ReturnDefaultWhenNotFound;
 
         /// <summary>
         /// Creates a new instance of <see cref="DataFilter{T}"/>. Use the constructor of DataFilter for more control when creating a DataFilter.

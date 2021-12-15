@@ -16,37 +16,19 @@ namespace Sushi.MicroORM.Tests
         [AssemblyInitialize]
         public static void Init(TestContext context)
         {
-            string settingsFile = System.IO.Directory.GetCurrentDirectory() + "\\appsettings.json";
+            var configuration = new ConfigurationBuilder()
+            .AddUserSecrets(Assembly.GetExecutingAssembly(), optional: true)
+            .Build();
 
-            if (System.IO.File.Exists(settingsFile))
-            {
-                //configure using appsettings.json (local testing)
-                IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddJsonFile(settingsFile);
+            string connectionString = configuration.GetConnectionString("TestDatabase");
+            DatabaseConfiguration.SetDefaultConnectionString(connectionString);
 
-                var configuration = configurationBuilder.Build();
+            var connectionString2 = configuration.GetConnectionString("Customers");
+            DatabaseConfiguration.AddMappedConnectionString("Sushi.MicroORM.Tests.DAL.Customers", connectionString2);
 
-                string connectionString = configuration.GetConnectionString("TestDatabase");                
-                DatabaseConfiguration.SetDefaultConnectionString(connectionString);
+            var connectionString3 = configuration.GetConnectionString("Addresses");
+            DatabaseConfiguration.AddMappedConnectionString(typeof(DAL.Customers.Address), connectionString3);
 
-
-                var connectionString2 = configuration.GetConnectionString("Customers");
-                DatabaseConfiguration.AddMappedConnectionString("Sushi.MicroORM.Tests.DAL.Customers", connectionString2);
-
-                var connectionString3 = configuration.GetConnectionString("Addresses");
-                DatabaseConfiguration.AddMappedConnectionString(typeof(DAL.Customers.Address), connectionString3);
-            }
-            else
-            {
-                //configure using environment variables (build pipeline)
-                string connectionString = Environment.GetEnvironmentVariable("TestDatabase");
-                DatabaseConfiguration.SetDefaultConnectionString(connectionString);
-
-                var connectionString2 = Environment.GetEnvironmentVariable("Customers");
-                DatabaseConfiguration.AddMappedConnectionString("Sushi.MicroORM.Tests.DAL.Customers", connectionString2);
-
-                var connectionString3 = Environment.GetEnvironmentVariable("Addresses");
-                DatabaseConfiguration.AddMappedConnectionString(typeof(DAL.Customers.Address), connectionString3);
-            }
         }
 
         [TestMethod]

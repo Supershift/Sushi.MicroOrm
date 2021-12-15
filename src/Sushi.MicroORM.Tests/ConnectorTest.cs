@@ -15,9 +15,10 @@ namespace Sushi.MicroORM.Tests
     {
         [AssemblyInitialize]
         public static void Init(TestContext context)
-        {
+        {   
             var configuration = new ConfigurationBuilder()
             .AddUserSecrets(Assembly.GetExecutingAssembly(), optional: true)
+            .AddEnvironmentVariables()
             .Build();
 
             string connectionString = configuration.GetConnectionString("TestDatabase");

@@ -3,10 +3,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Data;
-using System.Data.SqlTypes;
-using System.Data.SqlClient;
+
 using System.Threading.Tasks;
 using System.Threading;
+using Microsoft.Data.SqlClient;
 
 namespace Sushi.MicroORM
 {

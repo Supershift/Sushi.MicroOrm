@@ -1,9 +1,9 @@
-﻿using Sushi.MicroORM.Mapping;
+﻿using Microsoft.Data.SqlClient;
+using Sushi.MicroORM.Mapping;
 using Sushi.MicroORM.Supporting;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;

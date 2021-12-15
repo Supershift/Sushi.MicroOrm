@@ -3,7 +3,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 
@@ -17,8 +16,7 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Generates an instance of <see cref="SqlStatement{TMapped}"/>.
         /// </summary>
-        /// <typeparam name="TMapped"></typeparam>
-        /// <typeparam name="TResult"></typeparam>
+        /// <typeparam name="TMapped"></typeparam>        
         /// <param name="statementType"></param>
         /// <param name="resultType"></param>
         /// <param name="map"></param>
@@ -33,8 +31,7 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Generates an instance of <see cref="SqlStatement{TMapped}"/>. Use this overload to provide an entity to insert or update.
         /// </summary>
-        /// <typeparam name="TMapped"></typeparam>
-        /// <typeparam name="TResult"></typeparam>
+        /// <typeparam name="TMapped"></typeparam>        
         /// <param name="statementType"></param>
         /// <param name="resultType"></param>
         /// <param name="map"></param>
@@ -198,7 +195,7 @@ END";
             //get custom sql parameters from filter and add to result
             if (filter?.SqlParameters != null)
             {
-                foreach (SqlParameter p in filter.SqlParameters)
+                foreach (var p in filter.SqlParameters)
                 {
                     query.Parameters.Add(new SqlStatementParameter(p.ParameterName, p.Value, p.SqlDbType, 0, p.TypeName));                    
                 }

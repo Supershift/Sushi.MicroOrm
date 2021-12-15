@@ -23,7 +23,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="filter"></param>
         /// <param name="customQuery"></param>
         /// <returns></returns>
-        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataFilter<TMapped> filter, string customQuery) where TMapped : new()
+        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> filter, string customQuery) where TMapped : new()
         {
             return GenerateSqlStatment(statementType, resultType, map, filter, customQuery, default, false);
         }
@@ -40,7 +40,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="entity"></param>
         /// <param name="isIdentityInsert"></param>
         /// <returns></returns>
-        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataFilter<TMapped> filter, string customQuery, TMapped entity, bool isIdentityInsert) where TMapped: new()
+        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> filter, string customQuery, TMapped entity, bool isIdentityInsert) where TMapped: new()
         {
             //validate if the supplied mapping has everything needed to generate queries
             if (statementType != DMLStatementType.CustomQuery)
@@ -113,7 +113,7 @@ END";
             return result;
         }
 
-        private static SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataFilter<T> filter) where T: new()
+        private static SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> filter) where T: new()
         {
             //set opening statement
             statement.DmlClause = "SELECT ";
@@ -188,7 +188,7 @@ END";
         /// <param name="query"></param>
         /// <param name="filter"></param>
         /// <returns></returns>
-        private static SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> query, DataFilter<T> filter) where T: new()
+        private static SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> query, DataQuery<T> filter) where T: new()
         {
             var whereClause = filter?.WhereClause;
 

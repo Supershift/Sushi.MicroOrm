@@ -16,17 +16,17 @@ namespace Sushi.MicroORM
     /// Provides methods to build a SQL statement for use with <see cref="Connector{T}"/>.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class DataFilter<T> where T : new()
+    public class DataQuery<T> where T : new()
     {
         /// <summary>
-        /// Creates an instance of <see cref="DataFilter{T}"/>.
+        /// Creates an instance of <see cref="DataQuery{T}"/>.
         /// </summary>
-        public DataFilter() : this(null) { }
+        public DataQuery() : this(null) { }
 
         /// <summary>
-        /// Creates an instance of <see cref="DataFilter{T}"/> using the specified mapping.
+        /// Creates an instance of <see cref="DataQuery{T}"/> using the specified mapping.
         /// </summary>
-        public DataFilter(DataMap map)
+        public DataQuery(DataMap map)
         {
             //try to get the mapping declared for type T if no map provided
             if (map == null)                

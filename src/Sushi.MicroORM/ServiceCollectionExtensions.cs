@@ -16,7 +16,7 @@ namespace Sushi.MicroORM
         /// Adds a default implementation for the <see cref="Connector{T}"/> service.
         /// </summary>        
         /// <returns></returns>
-        public static IServiceCollection AddMessageLoggerFilter(this IServiceCollection services, string defaultConnectionString) 
+        public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString) 
         {
             // todo: use options or builder pattern for configuration
             DatabaseConfiguration.SetDefaultConnectionString(defaultConnectionString);

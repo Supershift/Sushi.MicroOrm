@@ -107,10 +107,10 @@ namespace Sushi.MicroORM.Tests
             int id = 2;
 
             var ConnectorOrders = new Connector<Order>();
-            var filter = ConnectorOrders.CreateDataFilter();
-            filter.Add(x => x.ID, id);
+            var query = ConnectorOrders.CreateQuery();
+            query.Add(x => x.ID, id);
 
-            var order = ConnectorOrders.FetchSingle(filter);
+            var order = ConnectorOrders.FetchSingle(query);
 
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -142,10 +142,10 @@ namespace Sushi.MicroORM.Tests
             string sql = $"SELECT * FROM cat_Orders WHERE Order_Key = @orderID"; //this is BAD PRACTICE! always use parameters
 
             var ConnectorOrders = new Connector<Order>();
-            var filter = ConnectorOrders.CreateDataFilter();
-            filter.AddParameter("@orderID", id);
+            var query = ConnectorOrders.CreateQuery();
+            query.AddParameter("@orderID", id);
 
-            var order = ConnectorOrders.FetchSingle(sql, filter);
+            var order = ConnectorOrders.FetchSingle(sql, query);
 
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -183,9 +183,9 @@ namespace Sushi.MicroORM.Tests
             int maxResults = 2;
 
             var connector = new Connector<Order>();            
-            var filter = connector.CreateDataFilter();
-            filter.MaxResults = maxResults;
-            var orders = connector.FetchAll(filter);
+            var query = connector.CreateQuery();
+            query.MaxResults = maxResults;
+            var orders = connector.FetchAll(query);
 
             Assert.AreEqual(maxResults, orders.Count);
         }
@@ -194,7 +194,7 @@ namespace Sushi.MicroORM.Tests
         public void FetchAllInvalidMap()
         {
             var connector = new Connector<Order>(new Order.InvalidOrderMap());
-            var request = connector.CreateDataFilter();
+            var request = connector.CreateQuery();
             try
             {
                 var orders = connector.FetchAll(request);
@@ -237,10 +237,10 @@ namespace Sushi.MicroORM.Tests
         {
             var ConnectorOrders = new Connector<Order>();
 
-            var filter = new DataFilter<Order>();
-            filter.AddOrder(x => x.ID, SortOrder.DESC);
-            filter.MaxResults = 2;
-            var orders = ConnectorOrders.FetchAll(filter);
+            var query = new DataQuery<Order>();
+            query.AddOrder(x => x.ID, SortOrder.DESC);
+            query.MaxResults = 2;
+            var orders = ConnectorOrders.FetchAll(query);
             
             foreach (var order in orders)
             {
@@ -256,7 +256,7 @@ namespace Sushi.MicroORM.Tests
         {
             var ConnectorOrders = new Connector<Order>();
 
-            var request = new DataFilter<Order>();
+            var request = new DataQuery<Order>();
             request.Paging = new PagingData()
             {
                 NumberOfRows = 5,
@@ -277,7 +277,7 @@ namespace Sushi.MicroORM.Tests
         public void FetchWhereInInt()
         {
             var ConnectorOrders = new Connector<Order>();
-            var request = new DataFilter<Order>();
+            var request = new DataQuery<Order>();
             //request.WhereClause.Add(new DatabaseDataValueColumn("Order_Key", System.Data.SqlDbType.Int, new int[] { 1, 2,3 }, ComparisonOperator.In));
             request.Add(x => x.ID, new int[] { 1, 2, 3 }, ComparisonOperator.In);
             var orders = ConnectorOrders.FetchAll(request);
@@ -293,7 +293,7 @@ namespace Sushi.MicroORM.Tests
         public void FetchWhereInEmptyEnumerable()
         {
             var ConnectorOrders = new Connector<Order>();
-            var request = new DataFilter<Order>();
+            var request = new DataQuery<Order>();
             //request.WhereClause.Add(new DatabaseDataValueColumn("Order_Key", System.Data.SqlDbType.Int, new int[] { 1, 2,3 }, ComparisonOperator.In));
             request.Add(x => x.ID, new int[] { }, ComparisonOperator.In);
             var orders = ConnectorOrders.FetchAll(request);
@@ -310,7 +310,7 @@ namespace Sushi.MicroORM.Tests
         {
             var ConnectorProducts = new Connector<Product>();
 
-            var request = new DataFilter<Product>();
+            var request = new DataQuery<Product>();
             var names = new string[]
             {
                 "TV",
@@ -333,11 +333,11 @@ namespace Sushi.MicroORM.Tests
         {
             var ConnectorProducts = new Connector<Product>();
 
-            var filter = ConnectorProducts.CreateDataFilter();
+            var query = ConnectorProducts.CreateQuery();
 
 
-            filter.Add(x => x.MetaData.Description, "", ComparisonOperator.GreaterThan);
-            var products = ConnectorProducts.FetchAll(filter);
+            query.Add(x => x.MetaData.Description, "", ComparisonOperator.GreaterThan);
+            var products = ConnectorProducts.FetchAll(query);
             foreach (var product in products)
             {
                 Console.WriteLine($"{product.ID} - {product.MetaData.Name} - {product.MetaData.ProductTypeID}");
@@ -351,11 +351,11 @@ namespace Sushi.MicroORM.Tests
         {
             var connector = new Connector<Product>();
 
-            var filter = connector.CreateDataFilter();
-            filter.AddSql("LEN(Product_Name) > @length");            
-            filter.AddParameter("@length", 12);
-            filter.Add(x => x.Price, 1, ComparisonOperator.GreaterThanOrEquals);
-            var products = connector.FetchAll(filter);
+            var query = connector.CreateQuery();
+            query.AddSql("LEN(Product_Name) > @length");            
+            query.AddParameter("@length", 12);
+            query.Add(x => x.Price, 1, ComparisonOperator.GreaterThanOrEquals);
+            var products = connector.FetchAll(query);
             foreach (var product in products)
             {
                 Console.WriteLine($"{product.ID} - {product.MetaData.Name} - {product.Price}");
@@ -368,12 +368,12 @@ namespace Sushi.MicroORM.Tests
         {
             var connector = new Connector<Product>();
 
-            var filter = connector.CreateDataFilter();
-            filter.AddSql("Product_ProductTypeID = @productTypeID");
+            var query = connector.CreateQuery();
+            query.AddSql("Product_ProductTypeID = @productTypeID");
             int? productTypeID = null;
-            filter.AddParameter("@productTypeID", productTypeID);
+            query.AddParameter("@productTypeID", productTypeID);
             
-            var products = connector.FetchAll(filter);
+            var products = connector.FetchAll(query);
             foreach (var product in products)
             {
                 Console.WriteLine($"{product.ID} - {product.MetaData.Name} - {product.Price}");
@@ -396,15 +396,15 @@ namespace Sushi.MicroORM.Tests
 
             string name = DateTime.UtcNow.Ticks.ToString();
             int productID = 1;
-            var query = @"
+            var sqlText = @"
 UPDATE cat_Products
 SET Product_Name = @name
 WHERE Product_Key = @productID";
-            var filter = new DataFilter<Product>();
-            filter.AddParameter(@"name", System.Data.SqlDbType.VarChar, name);
-            filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
+            var query = new DataQuery<Product>();
+            query.AddParameter(@"name", System.Data.SqlDbType.VarChar, name);
+            query.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
             ConnectorProducts.CommandTimeout = 1;
-            ConnectorProducts.ExecuteNonQuery(query, filter);
+            ConnectorProducts.ExecuteNonQuery(sqlText, query);
 
             //check if name was updated
             var product = ConnectorProducts.FetchSingle(productID);
@@ -417,13 +417,13 @@ WHERE Product_Key = @productID";
             var ConnectorProducts = new Connector<Product>();
             string name = DateTime.UtcNow.Ticks.ToString();
             int productID = 1;
-            var query = @"
+            var sqlText = @"
 SELECT COUNT(*)
 FROM cat_Products
 WHERE Product_Key = @productID";
-            var filter = new DataFilter<Product>();
-            filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
-            var count = ConnectorProducts.ExecuteScalar<int>(query, filter);
+            var query = new DataQuery<Product>();
+            query.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
+            var count = ConnectorProducts.ExecuteScalar<int>(sqlText, query);
             Console.WriteLine(count);
             Assert.AreEqual(1, count);            
         }
@@ -453,13 +453,13 @@ FROM cat_Products";
             var ConnectorProducts = new Connector<Product>();
             string name = DateTime.UtcNow.Ticks.ToString();
             int productID = 1;
-            var query = @"
+            var sqlText = @"
 SELECT DISTINCT(Product_ProductTypeID)
 FROM cat_Products
 WHERE Product_Key > @productID";
-            var filter = new DataFilter<Product>();
-            filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
-            var productTypes = ConnectorProducts.ExecuteSet<Product.ProducType?>(query, filter);
+            var query = new DataQuery<Product>();
+            query.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
+            var productTypes = ConnectorProducts.ExecuteSet<Product.ProducType?>(sqlText, query);
             
             foreach(var productType in productTypes)
             {
@@ -544,9 +544,9 @@ WHERE Product_Key > @productID";
             connector.InsertOrUpdate(identifier);
 
             //check if the object exists now
-            var filter = connector.CreateDataFilter();            
-            filter.Add(x => x.GUID, identifier.GUID);
-            var newIdentifier = connector.FetchSingle(filter);
+            var query = connector.CreateQuery();            
+            query.Add(x => x.GUID, identifier.GUID);
+            var newIdentifier = connector.FetchSingle(query);
 
             Assert.IsNotNull(newIdentifier);
             Assert.AreEqual(identifier.Batch, newIdentifier.Batch);
@@ -564,16 +564,16 @@ WHERE Product_Key > @productID";
             connector.Insert(identifier);
 
             //get the existing object
-            var filter = connector.CreateDataFilter();
-            filter.Add(x => x.GUID, identifier.GUID);
-            var newIdentifier = connector.FetchSingle(filter);
+            var query = connector.CreateQuery();
+            query.Add(x => x.GUID, identifier.GUID);
+            var newIdentifier = connector.FetchSingle(query);
 
             //update it
             newIdentifier.Batch = Guid.NewGuid();
             connector.InsertOrUpdate(newIdentifier);
 
             //retrieve updated object
-            var updatedIdentifier = connector.FetchSingle(filter);
+            var updatedIdentifier = connector.FetchSingle(query);
 
 
             Assert.IsNotNull(updatedIdentifier);
@@ -640,10 +640,10 @@ WHERE Product_Key > @productID";
             var connector = new Connector<CompositeKey>();
             connector.Update(compositeKey);
 
-            var filter = connector.CreateDataFilter();
-            filter.Add(x => x.FirstID, 1);
-            filter.Add(x => x.SecondID, 1);
-            var result = connector.FetchSingle(filter);
+            var query = connector.CreateQuery();
+            query.Add(x => x.FirstID, 1);
+            query.Add(x => x.SecondID, 1);
+            var result = connector.FetchSingle(query);
 
             Assert.AreEqual(compositeKey.SomeValue, result.SomeValue);
         }
@@ -704,9 +704,9 @@ WHERE Product_Key > @productID";
             ConnectorOrders.BulkInsert(orders);
 
             //retrieve orders
-            var filter = ConnectorOrders.CreateDataFilter();
-            filter.Add(x => x.Comments, uniqueID);
-            var retrievedOrders = ConnectorOrders.FetchAll(filter);
+            var query = ConnectorOrders.CreateQuery();
+            query.Add(x => x.Comments, uniqueID);
+            var retrievedOrders = ConnectorOrders.FetchAll(query);
             Assert.AreEqual(numberOfRows, retrievedOrders.Count);
         }
 
@@ -733,9 +733,9 @@ WHERE Product_Key > @productID";
             connector.BulkInsert(identifiers, true);
 
             //retrieve 
-            var filter = connector.CreateDataFilter();
-            filter.Add(x => x.Batch, uniqueID);
-            var retrievedRows = connector.FetchAll(filter);
+            var query = connector.CreateQuery();
+            query.Add(x => x.Batch, uniqueID);
+            var retrievedRows = connector.FetchAll(query);
             Assert.AreEqual(numberOfRows, retrievedRows.Count);
         }
 
@@ -773,9 +773,9 @@ WHERE Product_Key > @productID";
             customerTable.Rows.Add(99);
 
             var connector = new Connector<Order>();
-            var filter = connector.CreateDataFilter();
-            filter.AddParameter("@customerIDs", customerTable, "cat_CustomerTableType");
-            var orders = connector.FetchAll(sproc, filter);
+            var query = connector.CreateQuery();
+            query.AddParameter("@customerIDs", customerTable, "cat_CustomerTableType");
+            var orders = connector.FetchAll(sproc, query);
 
             var count98 = orders.Count(x => x.CustomerID == 98);
             var count99 = orders.Count(x => x.CustomerID == 99);
@@ -787,10 +787,10 @@ WHERE Product_Key > @productID";
         public void FetchFromTableValuedFunction()
         {
             var connector = new Connector<AvailableRoom>();
-            var filter = connector.CreateDataFilter();
-            filter.AddParameter("@startDate", new DateTime(2019, 1, 1));
-            filter.AddParameter("@endDate", new DateTime(2019, 1, 12));
-            var rooms = connector.FetchAll(filter);
+            var query = connector.CreateQuery();
+            query.AddParameter("@startDate", new DateTime(2019, 1, 1));
+            query.AddParameter("@endDate", new DateTime(2019, 1, 12));
+            var rooms = connector.FetchAll(query);
 
             foreach (var room in rooms)
             {
@@ -804,11 +804,11 @@ WHERE Product_Key > @productID";
         public void FetchFromTableValuedFunctionWithCondition()
         {
             var connector = new Connector<AvailableRoom>();
-            var filter = connector.CreateDataFilter();
-            filter.AddParameter("@startDate", new DateTime(2019, 1, 1));
-            filter.AddParameter("@endDate", new DateTime(2019, 1, 12));
-            filter.Add(x => x.Type, 2);
-            var rooms = connector.FetchAll(filter);
+            var query = connector.CreateQuery();
+            query.AddParameter("@startDate", new DateTime(2019, 1, 1));
+            query.AddParameter("@endDate", new DateTime(2019, 1, 12));
+            query.Add(x => x.Type, 2);
+            var rooms = connector.FetchAll(query);
 
             foreach (var room in rooms)
             {

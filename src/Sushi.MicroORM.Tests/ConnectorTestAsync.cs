@@ -143,7 +143,7 @@ namespace Sushi.MicroORM.Tests
         public async Task TestCancellation()
         {
             var cts = new CancellationTokenSource();
-            var filter = new DataFilter<Order>();
+            var filter = new DataQuery<Order>();
             cts.Cancel();
             try
             {
@@ -202,7 +202,7 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchPagingAsync()
         {
-            var request = new DataFilter<Order>();
+            var request = new DataQuery<Order>();
             request.Paging = new PagingData()
             {
                 NumberOfRows = 5,
@@ -224,7 +224,7 @@ namespace Sushi.MicroORM.Tests
         {
             var ConnectorOrders = new Connector<Order>();
 
-            var filter = new DataFilter<Order>();
+            var filter = new DataQuery<Order>();
             filter.AddOrder(x => x.ID, SortOrder.DESC);
             filter.MaxResults = 2;
             var orders = await ConnectorOrders.FetchAllAsync(filter);
@@ -242,7 +242,7 @@ namespace Sushi.MicroORM.Tests
         public async Task FetchWhereInIntAsync()
         {
 
-            var request = new DataFilter<Order>();
+            var request = new DataQuery<Order>();
             //request.WhereClause.Add(new DatabaseDataValueColumn("Order_Key", System.Data.SqlDbType.Int, new int[] { 1, 2,3 }, ComparisonOperator.In));
             request.Add(x => x.ID, new int[] { 1, 2, 3 }, ComparisonOperator.In);
             var orders = await ConnectorOrders.FetchAllAsync(request);
@@ -257,7 +257,7 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchWhereInEmptyEnumerableAsync()
         {
-            var request = new DataFilter<Order>();
+            var request = new DataQuery<Order>();
             
             request.Add(x => x.ID, new int[] { }, ComparisonOperator.In);
             var orders = await ConnectorOrders.FetchAllAsync(request);
@@ -272,7 +272,7 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchWhereInStringAsync()
         {
-            var request = new DataFilter<Product>();
+            var request = new DataQuery<Product>();
             var names = new string[]
             {
                 "TV",
@@ -320,7 +320,7 @@ namespace Sushi.MicroORM.Tests
 UPDATE cat_Products
 SET Product_Name = @name
 WHERE Product_Key = @productID";
-            var filter = new DataFilter<Product>();
+            var filter = new DataQuery<Product>();
             filter.AddParameter(@"name", System.Data.SqlDbType.VarChar, name);
             filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
             await ConnectorProducts.ExecuteNonQueryAsync(query, filter);
@@ -339,7 +339,7 @@ WHERE Product_Key = @productID";
 SELECT COUNT(*)
 FROM cat_Products
 WHERE Product_Key = @productID";
-            var filter = new DataFilter<Product>();
+            var filter = new DataQuery<Product>();
             filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
             var count = await ConnectorProducts.ExecuteScalarAsync<int>(query, filter);
             Assert.AreEqual(1, count);
@@ -375,7 +375,7 @@ FROM cat_Products";
 SELECT DISTINCT(Product_ProductTypeID)
 FROM cat_Products
 WHERE Product_Key > @productID";
-            var filter = new DataFilter<Product>();
+            var filter = new DataQuery<Product>();
             filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
             var productTypes = await ConnectorProducts.ExecuteSetAsync<Product.ProducType?>(query, filter);
 

@@ -10,18 +10,25 @@ namespace Sushi.MicroORM
     /// Represents all fields necessary to perform paging.
     /// </summary>
     public class PagingData
-    {
+    {   
         /// <summary>
         /// Maximum number of records to retrieve per database call.
-        /// </summary>
+        /// </summary>        
         public int NumberOfRows { get; set; }
+        
         /// <summary>
         /// Zero based page index, used as offset.
         /// </summary>
         public int PageIndex { get; set; }
+        
         /// <summary>
         /// After a query is performed the total number of rows for the supplied where clause is set here.
         /// </summary>
         public int? TotalNumberOfRows { get; set; }
+
+        /// <summary>
+        /// After a query is performed the total number of pages based on the supplied maximum number of rows is set here.
+        /// </summary>
+        public int? TotalNumberOfPages { get; set; }
     }
 }

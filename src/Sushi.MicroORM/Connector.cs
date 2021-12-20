@@ -729,8 +729,13 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
             //if total number of rows is set apply it to the query's paging object
             if (query?.Paging != null && statementResult.TotalNumberOfRows.HasValue)
+            {
                 query.Paging.TotalNumberOfRows = statementResult.TotalNumberOfRows;
-
+                if (query.Paging.NumberOfRows > 0)
+                {
+                    query.Paging.TotalNumberOfPages = (int)Math.Ceiling((double)query.Paging.TotalNumberOfRows.Value / query.Paging.NumberOfRows);
+                }
+            }
             //return result
             return statementResult.MultipleResults;
         }
@@ -821,7 +826,13 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
             //if total number of rows is set apply it to the query's paging object
             if (query?.Paging != null && statementResult.TotalNumberOfRows.HasValue)
+            {
                 query.Paging.TotalNumberOfRows = statementResult.TotalNumberOfRows;
+                if (query.Paging.NumberOfRows > 0)
+                {
+                    query.Paging.TotalNumberOfPages = (int)Math.Ceiling((double)query.Paging.TotalNumberOfRows.Value / query.Paging.NumberOfRows);
+                }
+            }
 
             //return result
             return statementResult.MultipleResults;

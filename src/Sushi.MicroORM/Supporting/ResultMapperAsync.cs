@@ -66,9 +66,9 @@ namespace Sushi.MicroORM.Supporting
         /// If <paramref name="reader"/> contains a second resultset, it is expected to contain a scalar value that will be used to set <see cref="PagingData.NumberOfRows"/>.
         /// </summary>
         /// <typeparam name="T"></typeparam>             
-        public static async Task<List<T>> MapToMultipleResultsAsync<T>(SqlDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new()
+        public static async Task<QueryListResult<T>> MapToMultipleResultsAsync<T>(SqlDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new()
         {
-            var result = new List<T>();
+            var result = new QueryListResult<T>();
             //read all rows from the first resultset
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
@@ -83,9 +83,9 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Converts the first column of all rows found in <paramref name="reader"/> to an object of type <typeparamref name="TResult"/>
         /// </summary>                  
-        public static async Task<List<TResult>> MapToMultipleResultsScalarAsync<TResult>(SqlDataReader reader, CancellationToken cancellationToken)
+        public static async Task<QueryListResult<TResult>> MapToMultipleResultsScalarAsync<TResult>(SqlDataReader reader, CancellationToken cancellationToken)
         {
-            var result = new List<TResult>();
+            var result = new QueryListResult<TResult>();
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 //read the first column of the first row

@@ -24,11 +24,7 @@ namespace Sushi.MicroORM
         /// <summary>
         /// After a query is performed the total number of rows for the supplied where clause is set here.
         /// </summary>
-        public int? TotalNumberOfRows { get; set; }
-
-        /// <summary>
-        /// After a query is performed the total number of pages based on the supplied maximum number of rows is set here.
-        /// </summary>
-        public int? TotalNumberOfPages { get; set; }
+        [Obsolete("Use QueryListResult.TotalNumberOfRows instead")]
+        public int? TotalNumberOfRows { get; set; }        
     }
 }

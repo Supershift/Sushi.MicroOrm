@@ -85,9 +85,9 @@ namespace Sushi.MicroORM.Supporting
         /// Converts the first column of all rows found in <paramref name="reader"/> to an object of type <typeparamref name="TResult"/>
         /// </summary>          
         /// <param name="reader"></param>        
-        public static List<TResult> MapToMultipleResultsScalar<TResult>(SqlDataReader reader)
+        public static QueryListResult<TResult> MapToMultipleResultsScalar<TResult>(SqlDataReader reader)
         {
-            var result = new List<TResult>();
+            var result = new QueryListResult<TResult>();
             while (reader.Read())
             {
                 //read the first column of the first row

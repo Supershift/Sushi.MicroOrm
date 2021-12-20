@@ -151,7 +151,11 @@ namespace Sushi.MicroORM
                                 //map the contents of the reader to a result
                                 var multipleResults = ResultMapper.MapToMultipleResults(reader, Map);
                                 //cast to TResult
-                                var castedResults = multipleResults.Select(x => (TResult)(object)x).ToList();
+                                var castedResults = new QueryListResult<TResult>();
+                                foreach(var singleResult in multipleResults)
+                                {
+                                    castedResults.Add((TResult)(object)singleResult);
+                                }
 
                                 //check if there is a 2nd result set with total number of rows for paging
                                 int? numberOfRows = null;
@@ -239,13 +243,18 @@ namespace Sushi.MicroORM
                         case SqlStatementResultCardinality.MultipleRows:
                             //execute the command, which will return a reader
                             reader = await sqlCommander.ExecReaderAsync(cancellationToken).ConfigureAwait(false);
+                            
                             //if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
                             if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
                             {
                                 //map the contents of the reader to a result
                                 var multipleResults = await ResultMapperAsync.MapToMultipleResultsAsync(reader, Map, cancellationToken).ConfigureAwait(false);
                                 //cast to TResult
-                                var castedResults = multipleResults.Select(x => (TResult)(object)x).ToList();
+                                var castedResults = new QueryListResult<TResult>();
+                                foreach(var singleResult in multipleResults)
+                                {
+                                    castedResults.Add((TResult)(object)singleResult);
+                                }   
 
                                 //check if there is a 2nd result set with total number of rows for paging
                                 int? numberOfRows = null;
@@ -729,8 +738,14 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
             //if total number of rows is set apply it to the query's paging object
             if (query?.Paging != null && statementResult.TotalNumberOfRows.HasValue)
+            {
                 query.Paging.TotalNumberOfRows = statementResult.TotalNumberOfRows;
-
+                statementResult.MultipleResults.TotalNumberOfRows = statementResult.TotalNumberOfRows;
+                if (query.Paging.NumberOfRows > 0)
+                {
+                    statementResult.MultipleResults.TotalNumberOfPages = (int)Math.Ceiling((double)statementResult.MultipleResults.TotalNumberOfRows.Value / query.Paging.NumberOfRows);
+                }
+            }
             //return result
             return statementResult.MultipleResults;
         }
@@ -739,7 +754,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// Fetches all records from the database.
         /// </summary>        
         /// <returns></returns>
-        public async Task<List<T>> FetchAllAsync()
+        public async Task<QueryListResult<T>> FetchAllAsync()
         {
             return await FetchAllAsync(CancellationToken.None).ConfigureAwait(false); 
         }
@@ -748,7 +763,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// Fetches all records from the database.
         /// </summary>        
         /// <returns></returns>
-        public async Task<List<T>> FetchAllAsync(CancellationToken cancellationToken)
+        public async Task<QueryListResult<T>> FetchAllAsync(CancellationToken cancellationToken)
         {
             return await FetchAllAsync(null, null, cancellationToken).ConfigureAwait(false);
         }
@@ -757,7 +772,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// Fetches all records from the database for <paramref name="sqlText"/>.
         /// </summary>        
         /// <returns></returns>
-        public async Task<List<T>> FetchAllAsync(string sqlText)
+        public async Task<QueryListResult<T>> FetchAllAsync(string sqlText)
         {
             return await FetchAllAsync(sqlText, null, CancellationToken.None).ConfigureAwait(false);
         }
@@ -766,7 +781,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// Fetches all records from the database for <paramref name="sqlText"/>.
         /// </summary>        
         /// <returns></returns>
-        public async Task<List<T>> FetchAllAsync(string sqlText, CancellationToken cancellationToken)
+        public async Task<QueryListResult<T>> FetchAllAsync(string sqlText, CancellationToken cancellationToken)
         {
             return await FetchAllAsync(sqlText, null, cancellationToken).ConfigureAwait(false);
         }
@@ -776,7 +791,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        public async Task<List<T>> FetchAllAsync(DataQuery<T> query)
+        public async Task<QueryListResult<T>> FetchAllAsync(DataQuery<T> query)
         {
             return await FetchAllAsync(null, query, CancellationToken.None).ConfigureAwait(false);
         }
@@ -785,7 +800,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// Fetches all records from the database, using <paramref name="query"/> to build a where clause
         /// </summary>        
         /// <returns></returns>
-        public async Task<List<T>> FetchAllAsync(DataQuery<T> query, CancellationToken cancellationToken)
+        public async Task<QueryListResult<T>> FetchAllAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
             return await FetchAllAsync(null, query, cancellationToken).ConfigureAwait(false);
         }
@@ -796,7 +811,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="sqlText"></param>
         /// <param name="query"></param>
         /// <returns></returns>
-        public async Task<List<T>> FetchAllAsync(string sqlText, DataQuery<T> query)
+        public async Task<QueryListResult<T>> FetchAllAsync(string sqlText, DataQuery<T> query)
         {
             return await FetchAllAsync(sqlText, query, CancellationToken.None).ConfigureAwait(false);
         }
@@ -808,7 +823,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="query"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<List<T>> FetchAllAsync(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
+        public async Task<QueryListResult<T>> FetchAllAsync(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
         {
             //generate the sql statement            
             var statementType = DMLStatementType.Select;
@@ -821,7 +836,14 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
             //if total number of rows is set apply it to the query's paging object
             if (query?.Paging != null && statementResult.TotalNumberOfRows.HasValue)
+            {
                 query.Paging.TotalNumberOfRows = statementResult.TotalNumberOfRows;
+                statementResult.MultipleResults.TotalNumberOfRows = statementResult.TotalNumberOfRows;
+                if (query.Paging.NumberOfRows > 0)
+                {
+                    statementResult.MultipleResults.TotalNumberOfPages = (int)Math.Ceiling((double)statementResult.MultipleResults.TotalNumberOfRows.Value / query.Paging.NumberOfRows);
+                }
+            }
 
             //return result
             return statementResult.MultipleResults;

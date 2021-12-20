@@ -213,10 +213,14 @@ namespace Sushi.MicroORM.Tests
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
             }
-            Console.WriteLine("Total number of rows: " + request.Paging.TotalNumberOfRows);
+            
+            Console.WriteLine("Total number of rows: " + orders.TotalNumberOfRows);
+            Console.WriteLine("Total number of pages: " + orders.TotalNumberOfPages);
 
             Assert.IsTrue(orders.Count == request.Paging.NumberOfRows);
             Assert.IsTrue(request.Paging.TotalNumberOfRows.HasValue);
+            Assert.IsTrue(orders.TotalNumberOfPages.HasValue);
+            Assert.IsTrue(orders.TotalNumberOfRows.HasValue);
         }
 
         [TestMethod]

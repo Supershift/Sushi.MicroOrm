@@ -29,6 +29,18 @@ namespace Sushi.MicroORM.Supporting
             Type = type;
             Length = length;
             TypeName = typeName;
+
+            // convert value if type is not supported by SqlDataClient
+            switch(Value)
+            {
+                case DateOnly dateOnly:
+                    Value = dateOnly.ToDateTime(TimeOnly.MinValue);
+                    break;
+                case TimeOnly timeOnly:
+                    Value = timeOnly.ToTimeSpan();
+                    break;
+            }
+            
         }
 
         /// <summary>

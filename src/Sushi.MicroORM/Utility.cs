@@ -54,12 +54,15 @@ namespace Sushi.MicroORM
                 sqlDbType = SqlDbType.DateTime;
             else if (type == typeof(DateTimeOffset))
                 sqlDbType = SqlDbType.DateTimeOffset;
+            else if (type == typeof(DateOnly))
+                sqlDbType = SqlDbType.Date;
             else if (type == typeof(decimal) || type == typeof(double) || type == typeof(float))
                 sqlDbType = SqlDbType.Decimal;
-            else if (type == typeof(TimeSpan))
+            else if (type == typeof(TimeSpan) || type == typeof(TimeOnly))
                 sqlDbType = SqlDbType.Time;
             else if (type == typeof(byte[]))
                 sqlDbType = SqlDbType.VarBinary;
+            
 
             return sqlDbType;
         }

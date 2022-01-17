@@ -24,6 +24,8 @@ namespace Sushi.MicroORM.Tests.DAL
                 Map(x => x.Created2, "Order_Created").ReadOnly();
                 Map(x => x.Amount, "Order_Amount");
                 Map(x => x.Measurement, "Order_Measurement");
+                Map(x => x.DeliveryDate, "Order_DeliveryDate");
+                Map(x => x.DeliveryTime3, "Order_DeliveryTime3");
             }
         }
 
@@ -40,6 +42,7 @@ namespace Sushi.MicroORM.Tests.DAL
                 Map(x => x.DeliveryTime2, "Order_DeliveryTime2");
                 Map(x => x.Amount, "Order_Amount");
                 Map(x => x.Measurement, "Order_Measurement");
+                
             }
         }        
 
@@ -52,7 +55,9 @@ namespace Sushi.MicroORM.Tests.DAL
         public TimeSpan DeliveryTime2 { get; set; }
         public decimal? Amount { get; set; }
         public double? Measurement { get; set; }
-        
+        public DateOnly? DeliveryDate { get; set; }
+        public TimeOnly? DeliveryTime3 { get; set; }
+
         public static List<Order> FetchAll(int customerID)
         {
             var connector = new Connector<Order>();

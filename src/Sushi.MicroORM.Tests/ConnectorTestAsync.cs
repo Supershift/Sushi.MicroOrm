@@ -61,7 +61,7 @@ namespace Sushi.MicroORM.Tests
         {
             int id = 2;
 
-            var filter = ConnectorOrders.CreateDataFilter();
+            var filter = ConnectorOrders.CreateQuery();
             filter.Add(x => x.ID, id);
 
             var order = await ConnectorOrders.FetchSingleAsync(filter);
@@ -92,7 +92,7 @@ namespace Sushi.MicroORM.Tests
 
             string sql = $"SELECT * FROM cat_Orders WHERE Order_Key = @orderID"; //this is BAD PRACTICE! always use parameters
 
-            var filter = ConnectorOrders.CreateDataFilter();
+            var filter = ConnectorOrders.CreateQuery();
             filter.AddParameter("@orderID", id);
 
             var order = await ConnectorOrders.FetchSingleAsync(sql, filter);
@@ -132,11 +132,24 @@ namespace Sushi.MicroORM.Tests
             int maxResults = 2;
 
             var connector = new Connector<Order>();
-            var filter = connector.CreateDataFilter();
+            var filter = connector.CreateQuery();
             filter.MaxResults = maxResults;
             var orders = await connector.FetchAllAsync(filter);
 
             Assert.AreEqual(maxResults, orders.Count);
+        }
+
+        [TestMethod]
+        public async Task FetchAllByDateOnly()
+        {
+            int maxResults = 2;
+
+            var connector = new Connector<Order>();
+            var query = connector.CreateQuery();
+            query.Add(x => x.DeliveryDate, new DateOnly(2000, 1, 1), ComparisonOperator.GreaterThanOrEquals);
+            var orders = await connector.FetchAllAsync(query);
+
+            Assert.IsTrue(orders.Count > 0);
         }
 
         [TestMethod]
@@ -162,7 +175,7 @@ namespace Sushi.MicroORM.Tests
         public async Task FetchAllInvalidMapAsync()
         {
             var connector = new Connector<Order>(new Order.InvalidOrderMap());
-            var request = connector.CreateDataFilter();
+            var request = connector.CreateQuery();
             try
             {
                 var orders = await connector.FetchAllAsync(request);
@@ -294,7 +307,7 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchWhereGreaterThanStringAsync()
         {
-            var filter = ConnectorProducts.CreateDataFilter();
+            var filter = ConnectorProducts.CreateQuery();
 
             filter.Add(x => x.MetaData.Description, "", ComparisonOperator.GreaterThan);
             var products = await ConnectorProducts.FetchAllAsync(filter);
@@ -434,7 +447,7 @@ WHERE Product_Key > @productID";
             customerTable.Rows.Add(99);
 
             var connector = new Connector<Order>();
-            var filter = connector.CreateDataFilter();
+            var filter = connector.CreateQuery();
             filter.AddParameter("@customerIDs", customerTable, "cat_CustomerTableType");
             var orders = await connector.FetchAllAsync(sproc, filter);
 
@@ -477,7 +490,7 @@ WHERE Product_Key > @productID";
             await connector.InsertOrUpdateAsync(identifier);
 
             //check if the object exists now
-            var filter = connector.CreateDataFilter();
+            var filter = connector.CreateQuery();
             filter.Add(x => x.GUID, identifier.GUID);
             var newIdentifier = await connector.FetchSingleAsync(filter);
 
@@ -497,7 +510,7 @@ WHERE Product_Key > @productID";
             await connector.InsertAsync(identifier);
 
             //get the existing object
-            var filter = connector.CreateDataFilter();
+            var filter = connector.CreateQuery();
             filter.Add(x => x.GUID, identifier.GUID);
             var newIdentifier = await connector.FetchSingleAsync(filter);
 
@@ -538,7 +551,7 @@ WHERE Product_Key > @productID";
             var connector = new Connector<CompositeKey>();
             await connector.UpdateAsync(compositeKey);
 
-            var filter = connector.CreateDataFilter();
+            var filter = connector.CreateQuery();
             filter.Add(x => x.FirstID, 1);
             filter.Add(x => x.SecondID, 1);
             var result = await connector.FetchSingleAsync(filter);

@@ -203,11 +203,8 @@ namespace Sushi.MicroORM.Tests
         public async Task FetchPagingAsync()
         {
             var request = new DataQuery<Order>();
-            request.Paging = new PagingData()
-            {
-                NumberOfRows = 5,
-                PageIndex = 2
-            };
+            request.AddPaging(5, 2);
+                
             var orders = await ConnectorOrders.FetchAllAsync(request);
             foreach (var order in orders)
             {

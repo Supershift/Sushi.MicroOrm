@@ -97,16 +97,43 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="value"></param>
         /// <param name="entity"></param>
         public static void SetMemberValue(MemberInfo memberInfo, object value, object entity)
-        {   
+        {
+            // if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)            
+            var type = GetMemberType(memberInfo);
+            var underlyingType = Nullable.GetUnderlyingType(type);
+            if(underlyingType != null)
+            {
+                type = underlyingType;
+            }
+
             if (value == DBNull.Value)
             {
                 value = null;
             }
             else
-            {
-                var type = GetMemberType(memberInfo);
+            {                
                 value = ConvertValueToEnum(value, type);
             }
+
+            // custom support for converting to DateOnly and TimeOnly
+            if(type == typeof(DateOnly) && value is DateTime dt1)
+            {
+                value = DateOnly.FromDateTime(dt1);
+            }
+            else if(type == typeof(TimeOnly))
+            {
+                switch(value)
+                {
+                    case DateTime dt2:
+                        value = TimeOnly.FromDateTime(dt2);
+                        break;
+                    case TimeSpan ts:
+                        value = TimeOnly.FromTimeSpan(ts);
+                        break;
+                }
+                
+            }
+
             try
             {
                 switch (memberInfo.MemberType)
@@ -174,12 +201,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="type"></param>
         /// <returns></returns>
         public static object ConvertValueToEnum(object value, Type type)
-        {
-            //if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)            
-            var underlyingType = Nullable.GetUnderlyingType(type);
-            if (underlyingType != null)
-                type = underlyingType;
-
+        {   
             //if the type is an enum, we need to convert the value to the enum's type
             if (type.IsEnum)
             {

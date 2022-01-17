@@ -211,5 +211,15 @@ namespace Sushi.MicroORM
             else
                 OrderBy += $", {column} {sortOrderValue}";
         }
+
+        /// <summary>
+        /// Adds paging using OFFSET, ROWS FETCH NEXT.
+        /// </summary>
+        /// <param name="numberOfRows"></param>
+        /// <param name="pageIndex"></param>
+        public void AddPaging(int numberOfRows, int pageIndex)
+        {
+            Paging = new PagingData(numberOfRows, pageIndex);
+        }
     }
 }

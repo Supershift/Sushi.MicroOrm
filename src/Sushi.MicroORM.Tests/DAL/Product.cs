@@ -44,7 +44,6 @@ namespace Sushi.MicroORM.Tests.DAL
         public int ID { get; set; }        
         public decimal Price { get; set; }
         public ProductMetaData MetaData { get; set; }
-        
 
         public enum ProducType
         {

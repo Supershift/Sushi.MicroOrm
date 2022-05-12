@@ -106,6 +106,7 @@ namespace Sushi.MicroORM
         /// </summary>
         /// <param name="statement"></param>
         /// <returns></returns>
+        [Obsolete("Use ExecuteSqlStatementAsync<TResult>(SqlStatement<T> statement, CancellationToken cancellationToken) instead")]
         public virtual SqlStatementResult<TResult> ExecuteSqlStatement<TResult>(SqlStatement<T> statement) 
         {
             SqlStatementResult<TResult> result;
@@ -326,6 +327,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// Inserts or updates <paramref name="entity"/> in the database, based on primary key for <typeparamref name="T"/>. If the primary key is 0 or less, an insert is performed. Otherwise an update is performed.
         /// </summary>
         /// <param name="entity"></param>
+        [Obsolete("Use SaveAsync(T entity) instead")]
         public void Save(T entity)
         {            
             if (IsInsert(entity))
@@ -381,6 +383,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
+        [Obsolete("Use FetchSingleAsync(int id) instead")]
         public T FetchSingle(int id)
         {
             var query = CreateFetchSinglequery(id);
@@ -393,6 +396,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>        
         /// <param name="sqlText"></param>
         /// <returns></returns>
+        [Obsolete("Use FetchSingleAsync(string sqlText) instead")]
         public T FetchSingle(string sqlText)
         {
             return FetchSingle(sqlText, null);
@@ -403,6 +407,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
+        [Obsolete("Use FetchSingleAsync(DataQuery<T> query) instead")]
         public T FetchSingle(DataQuery<T> query)
         {
             return FetchSingle(null, query);
@@ -414,9 +419,16 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="query"></param>
         /// <param name="sqlText"></param>
         /// <returns></returns>
+        [Obsolete("Use FetchSingleAsync(string sqlText, DataQuery<T> query) instead")]
         public T FetchSingle(string sqlText, DataQuery<T> query)
         {
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, Map, query, sqlText);            
+            if (query == null)
+            {
+                query = new DataQuery<T>();
+            }
+
+            query.SqlText = sqlText;
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, Map, query);            
 
             //execute and get response
             var statementResult = ExecuteSqlStatement<T>(statement);
@@ -430,7 +442,18 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
+        [Obsolete("Use GetSingleAsync(int id) instead")]
         public async Task<T> FetchSingleAsync(int id)
+        {
+            return await GetSingleAsync(id);
+        }
+
+        /// <summary>
+        /// Fetches a single record from the database, using <paramref name="id"/> to build a where clause on <typeparamref name="T"/>'s primary key.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task<T> GetSingleAsync(int id)
         {
             var query = CreateFetchSinglequery(id);
 
@@ -442,7 +465,18 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
+        [Obsolete("Use GetSingleAsync(DataQuery<T> query) instead")]
         public async Task<T> FetchSingleAsync(DataQuery<T> query)
+        {
+            return await GetSingleAsync(query);
+        }
+
+        /// <summary>
+        /// Fetches a single record from the database, using <paramref name="query"/> to build a where clause for <typeparamref name="T"/>.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public async Task<T> GetSingleAsync(DataQuery<T> query)
         {
             return await FetchSingleAsync(null, query).ConfigureAwait(false);
         }
@@ -452,7 +486,18 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>        
         /// <param name="sqlText"></param>
         /// <returns></returns>
+        [Obsolete("Use GetSingleAsync(string sqlText) instead")]
         public async Task<T> FetchSingleAsync(string sqlText)
+        {
+            return await GetSingleAsync(sqlText);
+        }
+
+        /// <summary>
+        /// Fetches a single record from the database, using the query provided by <paramref name="sqlText"/>. 
+        /// </summary>        
+        /// <param name="sqlText"></param>
+        /// <returns></returns>
+        public async Task<T> GetSingleAsync(string sqlText)
         {
             return await FetchSingleAsync(sqlText, null).ConfigureAwait(false);
         }
@@ -463,7 +508,19 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="query"></param>
         /// <param name="sqlText"></param>
         /// <returns></returns>
+        [Obsolete("Use GetSingleAsync(string sqlText, DataQuery<T> query) instead")]
         public async Task<T> FetchSingleAsync(string sqlText, DataQuery<T> query)
+        {
+            return await GetSingleAsync(sqlText, query);
+        }
+
+        /// <summary>
+        /// Fetches a single record from the database, using the query provided by <paramref name="sqlText"/>. Parameters used in <paramref name="sqlText"/> can be set on <paramref name="query"/>.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="sqlText"></param>
+        /// <returns></returns>
+        public async Task<T> GetSingleAsync(string sqlText, DataQuery<T> query)
         {
             return await FetchSingleAsync(sqlText, query, CancellationToken.None).ConfigureAwait(false);
         }
@@ -475,9 +532,28 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="sqlText"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
+        [Obsolete("Use GetSingleAsync(string sqlText, DataQuery<T> query, CancellationToken cancellationToken) instead")]
         public async Task<T> FetchSingleAsync(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
         {
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, Map, query, sqlText);            
+            return await GetSingleAsync(sqlText, query, cancellationToken);
+        }
+
+        /// <summary>
+        /// Fetches a single record from the database, using the query provided by <paramref name="sqlText"/>. Parameters used in <paramref name="sqlText"/> can be set on <paramref name="query"/>.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="sqlText"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [Obsolete("Use GetSingleAsync(DataQuery<T> query, CancellationToken cancellationToken) instead")]
+        public async Task<T> GetSingleAsync(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
+        {
+            if (query == null)
+            {
+                query = new DataQuery<T>();
+            }
+            query.SqlText = sqlText;
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, Map, query);
 
             //execute and get response
             var statementResult = await ExecuteSqlStatementAsync<T>(statement, cancellationToken).ConfigureAwait(false);
@@ -485,11 +561,30 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             //return result
             return statementResult.SingleResult;
         }
-                
+
+        /// <summary>
+        /// Fetches a single record from the database, using the query provided by <paramref name="sqlText"/>. Parameters used in <paramref name="sqlText"/> can be set on <paramref name="query"/>.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="sqlText"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<T> GetSingleAsync(DataQuery<T> query, CancellationToken cancellationToken)
+        {
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, Map, query);
+
+            //execute and get response
+            var statementResult = await ExecuteSqlStatementAsync<T>(statement, cancellationToken).ConfigureAwait(false);
+
+            //return result
+            return statementResult.SingleResult;
+        }
+
         /// <summary>
         /// Updates the record <paramref name="entity"/> in the database.
         /// </summary>
         /// <returns></returns>
+        [Obsolete("Use UpdateAsync(T entity) instead")]
         public void Update(T entity)
         {
             List<WhereCondition> whereColumns = new List<WhereCondition>();
@@ -503,10 +598,11 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="query"></param>
+        [Obsolete("Use UpdateAsync(T entity, DataQuery<T> query) instead")]
         public void Update(T entity, DataQuery<T> query)
         {
             //generate sql statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Update, SqlStatementResultCardinality.None, Map, query, null, entity, false);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Update, SqlStatementResultCardinality.None, Map, query, entity, false);
 
             //execute statement
             ExecuteSqlStatement<object>(sqlStatement);            
@@ -531,7 +627,17 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             var query = new DataQuery<T>(Map);            
             AddPrimaryKeyToquery(query, entity);
             await UpdateAsync(entity, query, cancellationToken).ConfigureAwait(false);
-        }        
+        }
+
+        /// <summary>
+        /// Updates records in the database for <paramref name="query"/> using the values on <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="query"></param>
+        public async Task UpdateAsync(T entity, DataQuery<T> query)
+        {
+            await UpdateAsync(entity, query, CancellationToken.None).ConfigureAwait(false);
+        }
 
         /// <summary>
         /// Updates records in the database for <paramref name="query"/> using the values on <paramref name="entity"/>.
@@ -542,7 +648,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public async Task UpdateAsync(T entity, DataQuery<T> query, CancellationToken cancellationToken)
         {
             //generate sql statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Update, SqlStatementResultCardinality.None, Map, query, null, entity, false);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Update, SqlStatementResultCardinality.None, Map, query, entity, false);
 
             //execute statement
             await ExecuteSqlStatementAsync<object>(sqlStatement, cancellationToken).ConfigureAwait(false);
@@ -560,6 +666,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <summary>
         /// Inserts <typeparamref name="T"/> in the database.
         /// </summary>        
+        [Obsolete("Use InsertAsync(T entity) instead")]
         public void Insert(T entity)
         {
             Insert(entity, false);
@@ -571,10 +678,11 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="entity"></param>
         /// <param name="isIdentityInsert">When false, the primary key is set by the database. If true, an identity insert is performed</param>
         /// <returns></returns>
+        [Obsolete("Use InsertAsync(T entity, bool isIdentityInsert) instead")]
         public void Insert(T entity, bool isIdentityInsert)
         {
             //generate insert statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, Map, null, null, entity, isIdentityInsert);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, Map, null, entity, isIdentityInsert);
 
             //execute and get response
             var response = ExecuteSqlStatement<int>(sqlStatement);
@@ -589,6 +697,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <summary>
         /// Inserts a new record for <typeparamref name="T"/> in the database if no record exists for the same primary key. Else the existing record is updated.
         /// </summary>        
+        [Obsolete("Use InsertOrUpdateAsync(T entity) instead")]
         public void InsertOrUpdate(T entity)
         {
             InsertOrUpdate(entity, false);
@@ -597,6 +706,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <summary>
         /// Inserts a new record for <typeparamref name="T"/> in the database if no record exists for the same primary key. Else the existing record is updated.
         /// </summary>        
+        [Obsolete("Use InsertOrUpdateAsync(T entity, bool isIdentityInsert) instead")]
         public void InsertOrUpdate(T entity, bool isIdentityInsert)
         {
             var query = new DataQuery<T>();
@@ -604,7 +714,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             AddPrimaryKeyToquery(query, entity);
 
             //generate sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.SingleRow, Map, query, null, entity, isIdentityInsert);
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.SingleRow, Map, query, entity, isIdentityInsert);
 
             //execute
             var response = ExecuteSqlStatement<int>(statement);
@@ -627,6 +737,14 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <summary>
         /// Inserts a new record for <typeparamref name="T"/> in the database if no record exists for the same primary key. Else the existing record is updated.
         /// </summary>        
+        public async Task InsertOrUpdateAsync(T entity, bool isIdentityInsert)
+        {
+           await InsertOrUpdateAsync(entity, isIdentityInsert, CancellationToken.None).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Inserts a new record for <typeparamref name="T"/> in the database if no record exists for the same primary key. Else the existing record is updated.
+        /// </summary>        
         public async Task InsertOrUpdateAsync(T entity, bool isIdentityInsert, CancellationToken cancellationToken)
         {
             var query = new DataQuery<T>();
@@ -634,7 +752,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             AddPrimaryKeyToquery(query, entity);
 
             //generate sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.SingleRow, Map, query, null, entity, isIdentityInsert);
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.SingleRow, Map, query, entity, isIdentityInsert);
 
             //execute
             var response = await ExecuteSqlStatementAsync<int>(statement, cancellationToken).ConfigureAwait(false);
@@ -643,7 +761,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             if (response.SingleResult > 0)
             {
                 ApplyIdentityColumnToEntity(entity, response.SingleResult);
-            }            
+            }
         }
 
 
@@ -678,7 +796,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public async Task InsertAsync(T entity, bool isIdentityInsert, CancellationToken cancellationToken)
         {
             //generate insert statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, Map, null, null, entity, isIdentityInsert);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, Map, null, entity, isIdentityInsert);
 
             //execute and get response
             var response = await ExecuteSqlStatementAsync<int>(sqlStatement, cancellationToken).ConfigureAwait(false);
@@ -694,6 +812,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// Fetches all records from the database.
         /// </summary>        
         /// <returns></returns>
+        [Obsolete("Use FetchAllAsync() instead")]
         public List<T> FetchAll()
         {
             return FetchAll(null, null);
@@ -704,6 +823,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="sqlText"></param>        
         /// <returns></returns>
+        [Obsolete("Use FetchAllAsync(string sqlText) instead")]
         public List<T> FetchAll(string sqlText)
         {
             return FetchAll(sqlText, null);
@@ -714,6 +834,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
+        [Obsolete("Use FetchAllAsync(DataQuery<T> query) instead")]
         public List<T> FetchAll(DataQuery<T> query)
         {
             return FetchAll(null, query);
@@ -725,13 +846,20 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="sqlText"></param>
         /// <param name="query"></param>
         /// <returns></returns>
+        [Obsolete("Use FetchAllAsync(string sqlText, DataQuery<T> query) instead")]
         public List<T> FetchAll(string sqlText, DataQuery<T> query)
         {
+            if (query == null)
+            {
+                query = new DataQuery<T>();
+            }
+
+            query.SqlText = sqlText;
             //generate the sql statement
             var statementType = DMLStatementType.Select;
             if (!string.IsNullOrWhiteSpace(sqlText))
                 statementType = DMLStatementType.CustomQuery;
-            var statement = SqlStatementGenerator.GenerateSqlStatment(statementType, SqlStatementResultCardinality.MultipleRows, Map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment(statementType, SqlStatementResultCardinality.MultipleRows, Map, query);
 
             //execute and get response
             var statementResult = ExecuteSqlStatement<T>(statement);
@@ -754,16 +882,36 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// Fetches all records from the database.
         /// </summary>        
         /// <returns></returns>
+        [Obsolete("Use GetAllAsync() instead")]
         public async Task<QueryListResult<T>> FetchAllAsync()
         {
-            return await FetchAllAsync(CancellationToken.None).ConfigureAwait(false); 
+            return await GetAllAsync();
         }
 
         /// <summary>
         /// Fetches all records from the database.
         /// </summary>        
         /// <returns></returns>
+        public async Task<QueryListResult<T>> GetAllAsync()
+        {
+            return await FetchAllAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Fetches all records from the database.
+        /// </summary>        
+        /// <returns></returns>
+        [Obsolete("Use GetAllAsync(CancellationToken cancellationToken) instead")]
         public async Task<QueryListResult<T>> FetchAllAsync(CancellationToken cancellationToken)
+        {
+            return await GetAllAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Fetches all records from the database.
+        /// </summary>        
+        /// <returns></returns>
+        public async Task<QueryListResult<T>> GetAllAsync(CancellationToken cancellationToken)
         {
             return await FetchAllAsync(null, null, cancellationToken).ConfigureAwait(false);
         }
@@ -772,7 +920,18 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// Fetches all records from the database for <paramref name="sqlText"/>.
         /// </summary>        
         /// <returns></returns>
+        [Obsolete("Use GetAllAsync(string sqlText) isntead")]
         public async Task<QueryListResult<T>> FetchAllAsync(string sqlText)
+        {
+            return await GetAllAsync(sqlText);
+        }
+
+        /// <summary>
+        /// Fetches all records from the database for <paramref name="sqlText"/>.
+        /// </summary>        
+        /// <returns></returns>
+        [Obsolete("Use GetSingleAsync(DataQuery<T> query) instead")]
+        public async Task<QueryListResult<T>> GetAllAsync(string sqlText)
         {
             return await FetchAllAsync(sqlText, null, CancellationToken.None).ConfigureAwait(false);
         }
@@ -781,9 +940,19 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// Fetches all records from the database for <paramref name="sqlText"/>.
         /// </summary>        
         /// <returns></returns>
+        [Obsolete("Use GetAllAsync(string sqlText, CancellationToken cancellationToken) isntead")]
         public async Task<QueryListResult<T>> FetchAllAsync(string sqlText, CancellationToken cancellationToken)
         {
-            return await FetchAllAsync(sqlText, null, cancellationToken).ConfigureAwait(false);
+            return await GetAllAsync(sqlText, cancellationToken);
+        }
+
+        /// <summary>
+        /// Fetches all records from the database for <paramref name="sqlText"/>.
+        /// </summary>        
+        /// <returns></returns>
+        public async Task<QueryListResult<T>> GetAllAsync(string sqlText, CancellationToken cancellationToken)
+        {
+            return await FetchAllAsync(sqlText, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -791,7 +960,18 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
+        [Obsolete("Use GetAllAsync(DataQuery<T> query) instead")]
         public async Task<QueryListResult<T>> FetchAllAsync(DataQuery<T> query)
+        {
+            return await GetAllAsync(query);
+        }
+
+        /// <summary>
+        /// Fetches all records from the database, using <paramref name="query"/> to build a where clause
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public async Task<QueryListResult<T>> GetAllAsync(DataQuery<T> query)
         {
             return await FetchAllAsync(null, query, CancellationToken.None).ConfigureAwait(false);
         }
@@ -800,10 +980,21 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// Fetches all records from the database, using <paramref name="query"/> to build a where clause
         /// </summary>        
         /// <returns></returns>
+        [Obsolete("Use GetAllAsync(DataQuery<T> query, CancellationToken cancellationToken) instead")]
         public async Task<QueryListResult<T>> FetchAllAsync(DataQuery<T> query, CancellationToken cancellationToken)
+        {
+            return await GetAllAsync(query, cancellationToken);
+        }
+
+        /// <summary>
+        /// Fetches all records from the database, using <paramref name="query"/> to build a where clause
+        /// </summary>        
+        /// <returns></returns>
+        public async Task<QueryListResult<T>> GetAllAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
             return await FetchAllAsync(null, query, cancellationToken).ConfigureAwait(false);
         }
+
 
         /// <summary>
         /// Fetches all records from the database for <paramref name="sqlText"/>, using parameters set on <paramref name="query"/>
@@ -811,7 +1002,20 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="sqlText"></param>
         /// <param name="query"></param>
         /// <returns></returns>
+        [Obsolete("Use GetAllAsync(string sqlText, DataQuery<T> query) instead")]
         public async Task<QueryListResult<T>> FetchAllAsync(string sqlText, DataQuery<T> query)
+        {
+            return await GetAllAsync(sqlText, query);
+        }
+
+
+        /// <summary>
+        /// Fetches all records from the database for <paramref name="sqlText"/>, using parameters set on <paramref name="query"/>
+        /// </summary>
+        /// <param name="sqlText"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public async Task<QueryListResult<T>> GetAllAsync(string sqlText, DataQuery<T> query)
         {
             return await FetchAllAsync(sqlText, query, CancellationToken.None).ConfigureAwait(false);
         }
@@ -823,14 +1027,33 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="query"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
+        [Obsolete("Use GetAllAsync(string sqlText, DataQuery<T> query, CancellationToken cancellationToken) instead")]
         public async Task<QueryListResult<T>> FetchAllAsync(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
         {
+            return await GetAllAsync(sqlText,query, cancellationToken);
+        }
+
+        /// <summary>
+        /// Fetches all records from the database for <paramref name="sqlText"/>, using parameters set on <paramref name="query"/>
+        /// </summary>
+        /// <param name="sqlText"></param>
+        /// <param name="query"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [Obsolete("Use GetAllAsync(DataQuery<T> query, CancellationToken cancellationToken) instead")]
+        public async Task<QueryListResult<T>> GetAllAsync(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
+        {
+            if (query == null)
+            {
+                query = new DataQuery<T>();
+            }
+            query.SqlText = sqlText;
             //generate the sql statement            
             var statementType = DMLStatementType.Select;
             if (!string.IsNullOrWhiteSpace(sqlText))
                 statementType = DMLStatementType.CustomQuery;
-            var statement = SqlStatementGenerator.GenerateSqlStatment(statementType, SqlStatementResultCardinality.MultipleRows, Map, query, sqlText);
-            
+            var statement = SqlStatementGenerator.GenerateSqlStatment(statementType, SqlStatementResultCardinality.MultipleRows, Map, query);
+
             //execute and get response
             var statementResult = await ExecuteSqlStatementAsync<T>(statement, cancellationToken).ConfigureAwait(false);
 
@@ -849,12 +1072,13 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             return statementResult.MultipleResults;
         }
 
-        
+
 
         /// <summary>
         /// Deletes <paramref name="entity"/> from the database
         /// </summary>
         /// <returns></returns>
+        [Obsolete("Use DeleteAsync(T entity) instead")]
         public void Delete(T entity)
         {
             var query = new DataQuery<T>(Map);            
@@ -867,10 +1091,11 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
+        [Obsolete("Use DeleteAsync(DataQuery<T> query) instead")]
         public void Delete(DataQuery<T> query)
         {
             //generate delete statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Delete, SqlStatementResultCardinality.None, Map, query, null);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Delete, SqlStatementResultCardinality.None, Map, query);
 
             //execute
             var result = ExecuteSqlStatement<object>(sqlStatement);
@@ -916,7 +1141,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public async Task DeleteAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
             //generate delete statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Delete, SqlStatementResultCardinality.None, Map, query, null);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Delete, SqlStatementResultCardinality.None, Map, query);
 
             //execute
             var result = await ExecuteSqlStatementAsync<object>(sqlStatement, cancellationToken).ConfigureAwait(false);
@@ -927,6 +1152,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="sqlText">The SQL text.</param>
         /// <returns></returns>
+        [Obsolete("Use ExecuteNonQueryAsync instead")]
         public void ExecuteNonQuery(string sqlText)
         {
             ExecuteScalar<int>(sqlText);
@@ -947,6 +1173,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="sqlText"></param>
         /// <param name="query"></param>
+        [Obsolete("Use ExecuteNonQueryAsync(string sqlText, DataQuery<T> query) instead")]
         public void ExecuteNonQuery(string sqlText, DataQuery<T> query)
         {
             ExecuteScalar<int>(sqlText, query);
@@ -979,6 +1206,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>
         /// <param name="sqlText">The SQL text.</param>
         /// <returns></returns>
+        [Obsolete("Use ExecuteScalarAsync<TScalar>(string sqlText) instead")]
         public TScalar ExecuteScalar<TScalar>(string sqlText)
         {
             return ExecuteScalar<TScalar>(sqlText, null);
@@ -991,10 +1219,13 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="sqlText">The SQL text.</param>        
         /// <param name="query"></param>
         /// <returns></returns>
+        [Obsolete("Use ExecuteScalarAsync<TScalar>(string sqlText, DataQuery<T> query) instead")]
         public TScalar ExecuteScalar<TScalar>(string sqlText, DataQuery<T> query)
         {
+            query.SqlText = sqlText;
+
             //generate the sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, query);
 
             //execute and get response
             var statementResult = ExecuteSqlStatement<TScalar>(statement);
@@ -1033,10 +1264,13 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="query"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
+        [Obsolete("USe ExecuteScalarAsync<TScalar>(DataQuery<T> query, CancellationToken cancellationToken) instead")]
         public async Task<TScalar> ExecuteScalarAsync<TScalar>(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
         {
+            query.SqlText = sqlText;
+
             //generate the sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, query);
 
             //execute and get response
             var statementResult = await ExecuteSqlStatementAsync<TScalar>(statement, cancellationToken).ConfigureAwait(false);
@@ -1045,13 +1279,33 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             return statementResult.SingleResult;
         }
 
-        
+        /// <summary>
+        /// Executes a custom SQL statement defined by <paramref name="sqlText"/> with a return value of <typeparamref name="TScalar"/>. Parameters can be defined on <paramref name="query"/>.
+        /// </summary>
+        /// <param name="sqlText">The SQL text.</param>        
+        /// <param name="query"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<TScalar> ExecuteScalarAsync<TScalar>(DataQuery<T> query, CancellationToken cancellationToken)
+        {
+            //generate the sql statement
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, query);
+
+            //execute and get response
+            var statementResult = await ExecuteSqlStatementAsync<TScalar>(statement, cancellationToken).ConfigureAwait(false);
+
+            //return result
+            return statementResult.SingleResult;
+        }
+
+
 
         /// <summary>
         /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. 
         /// </summary>
         /// <param name="sqlText"></param>        
         /// <returns></returns>
+        [Obsolete("Use ExecuteSetAsync<TResult>(string sqlText) instead")]
         public List<TResult> ExecuteSet<TResult>(string sqlText)
         {
             return ExecuteSet<TResult>(sqlText, null);
@@ -1063,10 +1317,18 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="sqlText"></param>     
         /// <param name="query"></param>
         /// <returns></returns>
+        [Obsolete("Use ExecuteSetAsync<TResult>(string sqlText, DataQuery<T> query) instead")]
         public List<TResult> ExecuteSet<TResult>(string sqlText, DataQuery<T> query)
         {
+            if (query == null)
+            {
+                query = new DataQuery<T>();
+            }
+
+            query.SqlText = sqlText;
+
             //generate statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, Map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, Map, query);
 
             //execute statement and map response
             var result = ExecuteSqlStatement<TResult>(statement);
@@ -1103,10 +1365,36 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="query"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
+        [Obsolete("Use ExecuteSetAsync<TResult>(DataQuery<T> query, CancellationToken cancellationToken) instead")]
         public async Task<List<TResult>> ExecuteSetAsync<TResult>(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
         {
+            if (query == null)
+            {
+                query = new DataQuery<T>();
+            }
+
+            query.SqlText = sqlText;
+
             //generate statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, Map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, Map, query);
+
+            //execute statement and map response
+            var result = await ExecuteSqlStatementAsync<TResult>(statement, cancellationToken).ConfigureAwait(false);
+
+            return result.MultipleResults;
+        }
+
+        /// <summary>
+        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="query"/>.
+        /// </summary>
+        /// <param name="sqlText"></param>
+        /// <param name="query"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<List<TResult>> ExecuteSetAsync<TResult>(DataQuery<T> query, CancellationToken cancellationToken)
+        {
+            //generate statement
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, Map, query);
 
             //execute statement and map response
             var result = await ExecuteSqlStatementAsync<TResult>(statement, cancellationToken).ConfigureAwait(false);

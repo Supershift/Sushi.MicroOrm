@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.Tests
 {
@@ -10,10 +11,10 @@ namespace Sushi.MicroORM.Tests
     public class ConnectionStringTest
     {        
         [TestMethod]
-        public void FetchMappedByPartOfName()
+        public async Task FetchMappedByPartOfName()
         {
             var connector = new Connector<DAL.Customers.Customer>();
-            var customer = connector.FetchSingle(1);
+            var customer = await connector.GetSingleAsync(1);
 
             Console.WriteLine($"{customer.ID} - {customer.Name}");
 
@@ -21,17 +22,17 @@ namespace Sushi.MicroORM.Tests
         }
 
         [TestMethod]
-        public void FetchMappedByType()
+        public async Task FetchMappedByType()
         {
             var connector = new Connector<DAL.Customers.Address>();
-            var address = connector.FetchSingle(1);
+            var address = await connector.GetSingleAsync(1);
 
             Console.WriteLine($"{address.ID} - {address.Street} {address.Number}, {address.Street}");
 
             Assert.IsTrue(address?.ID > 0);
 
             connector = new Connector<DAL.Customers.Address>();
-            address = connector.FetchSingle(1);
+            address = await connector.GetSingleAsync(1);
         }
 
         [TestMethod]

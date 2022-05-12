@@ -40,7 +40,9 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Gets an object representing the mapping between class T and database
         /// </summary>
-        public DataMap Map { get; protected set; }        
+        public DataMap Map { get; protected set; }
+
+        public string SqlText { get; set; }
         
         /// <summary>
         /// Gets or sets the maximum number of returned rows.

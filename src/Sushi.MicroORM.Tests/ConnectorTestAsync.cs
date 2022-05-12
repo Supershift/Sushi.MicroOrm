@@ -20,7 +20,7 @@ namespace Sushi.MicroORM.Tests
         public async Task FetchSingleByIDAsync()
         {
             int id = 1;
-            var order = await ConnectorOrders.FetchSingleAsync(id);
+            var order = await ConnectorOrders.GetSingleAsync(id);
 
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -36,7 +36,7 @@ namespace Sushi.MicroORM.Tests
             };
             int id = -1;
 
-            var order = await ConnectorOrders.FetchSingleAsync(id);
+            var order = await ConnectorOrders.GetSingleAsync(id);
 
             Assert.IsNull(order);
         }
@@ -50,7 +50,7 @@ namespace Sushi.MicroORM.Tests
             };
             int id = -1;
 
-            var order = await ConnectorOrders.FetchSingleAsync(id);
+            var order = await ConnectorOrders.GetSingleAsync(id);
 
             Assert.IsNotNull(order);
             Assert.AreEqual(0, order.ID);
@@ -64,7 +64,7 @@ namespace Sushi.MicroORM.Tests
             var filter = ConnectorOrders.CreateQuery();
             filter.Add(x => x.ID, id);
 
-            var order = await ConnectorOrders.FetchSingleAsync(filter);
+            var order = await ConnectorOrders.GetSingleAsync(filter);
 
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -78,7 +78,7 @@ namespace Sushi.MicroORM.Tests
 
             string sql = $"SELECT * FROM cat_Orders WHERE Order_Key = {id}"; //this is BAD PRACTICE! always use parameters
 
-            var order = await ConnectorOrders.FetchSingleAsync(sql);
+            var order = await ConnectorOrders.GetSingleAsync(sql);
 
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -95,7 +95,7 @@ namespace Sushi.MicroORM.Tests
             var filter = ConnectorOrders.CreateQuery();
             filter.AddParameter("@orderID", id);
 
-            var order = await ConnectorOrders.FetchSingleAsync(sql, filter);
+            var order = await ConnectorOrders.GetSingleAsync(sql, filter);
             
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -117,7 +117,7 @@ namespace Sushi.MicroORM.Tests
         public async Task FetchAllAsync()
         {
             
-            var orders = await ConnectorOrders.FetchAllAsync();
+            var orders = await ConnectorOrders.GetAllAsync();
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -134,7 +134,7 @@ namespace Sushi.MicroORM.Tests
             var connector = new Connector<Order>();
             var filter = connector.CreateQuery();
             filter.MaxResults = maxResults;
-            var orders = await connector.FetchAllAsync(filter);
+            var orders = await connector.GetAllAsync(filter);
 
             Assert.AreEqual(maxResults, orders.Count);
         }
@@ -147,7 +147,7 @@ namespace Sushi.MicroORM.Tests
             var connector = new Connector<Order>();
             var query = connector.CreateQuery();
             query.Add(x => x.DeliveryDate, new DateOnly(2000, 1, 1), ComparisonOperator.GreaterThanOrEquals);
-            var orders = await connector.FetchAllAsync(query);
+            var orders = await connector.GetAllAsync(query);
 
             Assert.IsTrue(orders.Count > 0);
         }
@@ -160,7 +160,7 @@ namespace Sushi.MicroORM.Tests
             cts.Cancel();
             try
             {
-                var orders = await ConnectorOrders.FetchAllAsync(filter, cts.Token);
+                var orders = await ConnectorOrders.GetAllAsync(filter, cts.Token);
                 Assert.Fail();
             }
             catch(TaskCanceledException)
@@ -178,7 +178,7 @@ namespace Sushi.MicroORM.Tests
             var request = connector.CreateQuery();
             try
             {
-                var orders = await connector.FetchAllAsync(request);
+                var orders = await connector.GetAllAsync(request);
                 Assert.Fail();
             }
             catch (Exception ex)
@@ -192,7 +192,7 @@ namespace Sushi.MicroORM.Tests
         public async Task FetchAllBySqlAsync()
         {
             string sql = "SELECT TOP(3) * FROM cat_Orders";
-            var orders = await ConnectorOrders.FetchAllAsync(sql);
+            var orders = await ConnectorOrders.GetAllAsync(sql);
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -218,7 +218,7 @@ namespace Sushi.MicroORM.Tests
             var request = new DataQuery<Order>();
             request.AddPaging(5, 2);
                 
-            var orders = await ConnectorOrders.FetchAllAsync(request);
+            var orders = await ConnectorOrders.GetAllAsync(request);
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -241,7 +241,7 @@ namespace Sushi.MicroORM.Tests
             var filter = new DataQuery<Order>();
             filter.AddOrder(x => x.ID, SortOrder.DESC);
             filter.MaxResults = 2;
-            var orders = await ConnectorOrders.FetchAllAsync(filter);
+            var orders = await ConnectorOrders.GetAllAsync(filter);
 
             foreach (var order in orders)
             {
@@ -259,7 +259,7 @@ namespace Sushi.MicroORM.Tests
             var request = new DataQuery<Order>();
             //request.WhereClause.Add(new DatabaseDataValueColumn("Order_Key", System.Data.SqlDbType.Int, new int[] { 1, 2,3 }, ComparisonOperator.In));
             request.Add(x => x.ID, new int[] { 1, 2, 3 }, ComparisonOperator.In);
-            var orders = await ConnectorOrders.FetchAllAsync(request);
+            var orders = await ConnectorOrders.GetAllAsync(request);
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -274,7 +274,7 @@ namespace Sushi.MicroORM.Tests
             var request = new DataQuery<Order>();
             
             request.Add(x => x.ID, new int[] { }, ComparisonOperator.In);
-            var orders = await ConnectorOrders.FetchAllAsync(request);
+            var orders = await ConnectorOrders.GetAllAsync(request);
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -295,7 +295,7 @@ namespace Sushi.MicroORM.Tests
             };
 
             request.Add(x => x.MetaData.Name, names, ComparisonOperator.In);
-            var products = await ConnectorProducts.FetchAllAsync(request);
+            var products = await ConnectorProducts.GetAllAsync(request);
             foreach (var product in products)
             {
                 Console.WriteLine($"{product.ID} - {product.MetaData.Name}");
@@ -310,7 +310,7 @@ namespace Sushi.MicroORM.Tests
             var filter = ConnectorProducts.CreateQuery();
 
             filter.Add(x => x.MetaData.Description, "", ComparisonOperator.GreaterThan);
-            var products = await ConnectorProducts.FetchAllAsync(filter);
+            var products = await ConnectorProducts.GetAllAsync(filter);
             foreach (var product in products)
             {
                 Console.WriteLine($"{product.ID} - {product.MetaData.Name}");
@@ -322,7 +322,7 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchNotExistingAsync()
         {
-            var order = await ConnectorOrders.FetchSingleAsync(-1);
+            var order = await ConnectorOrders.GetSingleAsync(-1);
             Assert.IsTrue(order == null);
         }
         [TestMethod]
@@ -340,7 +340,7 @@ WHERE Product_Key = @productID";
             await ConnectorProducts.ExecuteNonQueryAsync(query, filter);
 
             //check if name was updated
-            var product = await ConnectorProducts.FetchSingleAsync(productID);
+            var product = await ConnectorProducts.GetSingleAsync(productID);
             Assert.AreEqual(name, product.MetaData.Name);
         }
 
@@ -419,7 +419,7 @@ WHERE Product_Key > @productID";
         public async Task SaveExistingAsync()
         {
             //save the order
-            var order = ConnectorOrders.FetchSingle(20);
+            var order = await ConnectorOrders.GetSingleAsync(20);
 
 
             string newComments = DateTime.UtcNow.ToString();
@@ -427,10 +427,10 @@ WHERE Product_Key > @productID";
             order.Comments = newComments;
             order.DeliveryTime = null;
             order.DeliveryTime2 = DateTime.UtcNow.TimeOfDay;
-            ConnectorOrders.Save(order);
+            ConnectorOrders.SaveAsync(order);
 
             //retrieve order again from database
-            order = await ConnectorOrders.FetchSingleAsync(20);
+            order = await ConnectorOrders.GetSingleAsync(20);
 
 
             Assert.AreEqual(newComments, order.Comments);
@@ -449,7 +449,7 @@ WHERE Product_Key > @productID";
             var connector = new Connector<Order>();
             var filter = connector.CreateQuery();
             filter.AddParameter("@customerIDs", customerTable, "cat_CustomerTableType");
-            var orders = await connector.FetchAllAsync(sproc, filter);
+            var orders = await connector.GetAllAsync(sproc, filter);
 
             var count98 = orders.Count(x => x.CustomerID == 98);
             var count99 = orders.Count(x => x.CustomerID == 99);
@@ -492,7 +492,7 @@ WHERE Product_Key > @productID";
             //check if the object exists now
             var filter = connector.CreateQuery();
             filter.Add(x => x.GUID, identifier.GUID);
-            var newIdentifier = await connector.FetchSingleAsync(filter);
+            var newIdentifier = await connector.GetSingleAsync(filter);
 
             Assert.IsNotNull(newIdentifier);
             Assert.AreEqual(identifier.Batch, newIdentifier.Batch);
@@ -512,14 +512,14 @@ WHERE Product_Key > @productID";
             //get the existing object
             var filter = connector.CreateQuery();
             filter.Add(x => x.GUID, identifier.GUID);
-            var newIdentifier = await connector.FetchSingleAsync(filter);
+            var newIdentifier = await connector.GetSingleAsync(filter);
 
             //update it
             newIdentifier.Batch = Guid.NewGuid();
             await connector.InsertOrUpdateAsync(newIdentifier);
 
             //retrieve updated object
-            var updatedIdentifier = await connector.FetchSingleAsync(filter);
+            var updatedIdentifier = await connector.GetSingleAsync(filter);
 
 
             Assert.IsNotNull(updatedIdentifier);
@@ -554,7 +554,7 @@ WHERE Product_Key > @productID";
             var filter = connector.CreateQuery();
             filter.Add(x => x.FirstID, 1);
             filter.Add(x => x.SecondID, 1);
-            var result = await connector.FetchSingleAsync(filter);
+            var result = await connector.GetSingleAsync(filter);
 
             Assert.AreEqual(compositeKey.SomeValue, result.SomeValue);
         }

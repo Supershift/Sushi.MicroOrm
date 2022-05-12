@@ -23,9 +23,9 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="filter"></param>
         /// <param name="customQuery"></param>
         /// <returns></returns>
-        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> filter, string customQuery) where TMapped : new()
+        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> filter) where TMapped : new()
         {
-            return GenerateSqlStatment(statementType, resultType, map, filter, customQuery, default, false);
+            return GenerateSqlStatment(statementType, resultType, map, filter, default, false);
         }
 
         /// <summary>
@@ -40,13 +40,13 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="entity"></param>
         /// <param name="isIdentityInsert"></param>
         /// <returns></returns>
-        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> filter, string customQuery, TMapped entity, bool isIdentityInsert) where TMapped: new()
+        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> filter, TMapped entity, bool isIdentityInsert) where TMapped: new()
         {
             //validate if the supplied mapping has everything needed to generate queries
             if (statementType != DMLStatementType.CustomQuery)
                 map.ValidateMappingForGeneratedQueries();
 
-            var result = new SqlStatement<TMapped>(statementType, resultType) { CustomSqlStatement = customQuery };
+            var result = new SqlStatement<TMapped>(statementType, resultType) { CustomSqlStatement = filter?.SqlText };
             
             //create the DML clause and optionally the order by clause of the query            
             switch (statementType)
@@ -85,9 +85,9 @@ namespace Sushi.MicroORM.Supporting
                 case DMLStatementType.InsertOrUpdate:
                     //this generates two seperate statements which need to be merged into one statement which uses an IF EXIST / ELSE
                     //generate insert
-                    var insertStatement = GenerateSqlStatment<TMapped>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, map, filter, null, entity, isIdentityInsert);
+                    var insertStatement = GenerateSqlStatment<TMapped>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, map, filter, entity, isIdentityInsert);
                     //generate update
-                    var updateStatement = GenerateSqlStatment<TMapped>(DMLStatementType.Update, SqlStatementResultCardinality.None, map, filter, null, entity, isIdentityInsert);
+                    var updateStatement = GenerateSqlStatment<TMapped>(DMLStatementType.Update, SqlStatementResultCardinality.None, map, filter, entity, isIdentityInsert);
 
                     //generate custom insert or update statement
                     result.CustomSqlStatement = $@"

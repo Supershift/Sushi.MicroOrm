@@ -498,6 +498,28 @@ WHERE Product_Key > @productID";
             Assert.AreEqual(identifier.Batch, newIdentifier.Batch);
         }
 
+
+
+        [TestMethod]
+        public async Task InsertOrUpdateNewRecordWithIdendityFalseAsync()
+        {
+            var identifier = new Identifier()
+            {
+                GUID = Guid.NewGuid(),
+                Batch = Guid.NewGuid()
+            };
+            var connector = new Connector<Identifier>();
+            await connector.InsertOrUpdateAsync(identifier, false);
+
+            //check if the object exists now
+            var filter = connector.CreateQuery();
+            filter.Add(x => x.GUID, identifier.GUID);
+            var newIdentifier = await connector.GetSingleAsync(filter);
+
+            Assert.IsNotNull(newIdentifier);
+            Assert.AreEqual(identifier.Batch, newIdentifier.Batch);
+        }
+
         [TestMethod]
         public async Task InsertOrUpdateExistingRecordAsync()
         {

@@ -24,23 +24,5 @@ namespace Sushi.MicroORM.Tests.DAL
         public int RoomNumber { get; set; }
         public int RoomType { get; set; }
         public int CustomerID { get; set; }
-
-        public static List<BookedRoom> FetchAll(int customerID)
-        {
-            var connector = new Connector<BookedRoom>();
-            var filter = connector.CreateDataFilter();
-            filter.Add(x => x.CustomerID, customerID);
-            var result = connector.FetchAll(filter);
-            return result;
-        }
-
-        public static async Task<List<BookedRoom>> FetchAllAsync(int customerID)
-        {
-            var connector = new Connector<BookedRoom>();
-            var filter = connector.CreateDataFilter();
-            filter.Add(x => x.CustomerID, customerID);
-            var result = await connector.FetchAllAsync(filter);
-            return result;
-        }
     }
 }

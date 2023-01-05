@@ -57,17 +57,6 @@ namespace Sushi.MicroORM.Tests.DAL
         public double? Measurement { get; set; }
         public DateOnly? DeliveryDate { get; set; }
         public TimeOnly? DeliveryTime3 { get; set; }
-
-        public static List<Order> FetchAll(int customerID)
-        {
-            var connector = new Connector<Order>();
-            var filter = connector.CreateDataFilter();
-            
-            filter.Add(x => x.CustomerID, customerID);
-            
-            var result = connector.FetchAll(filter);
-            return result;
-        }
     }
 
     

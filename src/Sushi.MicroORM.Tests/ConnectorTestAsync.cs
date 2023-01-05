@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Sushi.MicroORM.Mapping;
 using Sushi.MicroORM.Tests.DAL;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,14 +15,37 @@ namespace Sushi.MicroORM.Tests
     [TestClass]
     public class ConnectorTestAsync
     {
-        Connector<Order> ConnectorOrders { get { return new Connector<Order>(); } }
-        Connector<Product> ConnectorProducts { get { return new Connector<Product>(); } }
+        private readonly Connector<Order> _connectorOrders;
+        private readonly Connector<Product> _connectorProducts;
+        private readonly ConnectionStringProvider _connectionStringProvider = new ConnectionStringProvider();
+        private readonly DataMapProvider _dataMapProvider= new DataMapProvider();
+
+        public ConnectorTestAsync()
+        {
+            var configuration = new ConfigurationBuilder()
+            .AddUserSecrets(Assembly.GetExecutingAssembly(), optional: true)
+            .AddEnvironmentVariables()
+            .Build();
+
+
+            string connectionString = configuration.GetConnectionString("TestDatabase");
+            _connectionStringProvider.DefaultConnectionString = connectionString;
+
+            var connectionString2 = configuration.GetConnectionString("Customers");
+            _connectionStringProvider.AddMappedConnectionString("Sushi.MicroORM.Tests.DAL.Customers", connectionString2);
+
+            var connectionString3 = configuration.GetConnectionString("Addresses");
+            _connectionStringProvider.AddMappedConnectionString(typeof(DAL.Customers.Address), connectionString3);
+
+            _connectorOrders = CreateConnector<Order>();
+            _connectorProducts = CreateConnector<Product>();
+        }
 
         [TestMethod]
         public async Task FetchSingleByIDAsync()
         {
             int id = 1;
-            var order = await ConnectorOrders.FetchSingleAsync(id);
+            var order = await _connectorOrders.FetchSingleAsync(id);
 
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -28,43 +53,14 @@ namespace Sushi.MicroORM.Tests
         }
 
         [TestMethod]
-        public async Task FetchSingleNotExistingByIDAsync()
-        {
-            var ConnectorOrders = new Connector<Order>()
-            {
-                FetchSingleMode = FetchSingleMode.ReturnDefaultWhenNotFound
-            };
-            int id = -1;
-
-            var order = await ConnectorOrders.FetchSingleAsync(id);
-
-            Assert.IsNull(order);
-        }
-
-        [TestMethod]
-        public async Task FetchSingleNotExistingByIDNewInstanceAsync()
-        {
-            var ConnectorOrders = new Connector<Order>()
-            {
-                FetchSingleMode = FetchSingleMode.ReturnNewObjectWhenNotFound
-            };
-            int id = -1;
-
-            var order = await ConnectorOrders.FetchSingleAsync(id);
-
-            Assert.IsNotNull(order);
-            Assert.AreEqual(0, order.ID);
-        }
-
-        [TestMethod]
         public async Task FetchSingleByFilterAsync()
         {
             int id = 2;
 
-            var filter = ConnectorOrders.CreateQuery();
+            var filter = _connectorOrders.CreateQuery();
             filter.Add(x => x.ID, id);
 
-            var order = await ConnectorOrders.FetchSingleAsync(filter);
+            var order = await _connectorOrders.FetchSingleAsync(filter);
 
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -78,7 +74,7 @@ namespace Sushi.MicroORM.Tests
 
             string sql = $"SELECT * FROM cat_Orders WHERE Order_Key = {id}"; //this is BAD PRACTICE! always use parameters
 
-            var order = await ConnectorOrders.FetchSingleAsync(sql);
+            var order = await _connectorOrders.FetchSingleAsync(sql);
 
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -92,10 +88,10 @@ namespace Sushi.MicroORM.Tests
 
             string sql = $"SELECT * FROM cat_Orders WHERE Order_Key = @orderID"; //this is BAD PRACTICE! always use parameters
 
-            var filter = ConnectorOrders.CreateQuery();
+            var filter = _connectorOrders.CreateQuery();
             filter.AddParameter("@orderID", id);
 
-            var order = await ConnectorOrders.FetchSingleAsync(sql, filter);
+            var order = await _connectorOrders.FetchSingleAsync(sql, filter);
             
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -106,7 +102,8 @@ namespace Sushi.MicroORM.Tests
         public async Task FetchSingleMultilevelAsync()
         {
             int productID = 1;
-            var product = await Product.FetchSingleAsync(productID);
+            var connector = CreateConnector<Product>();
+            var product = await connector.FetchSingleAsync(productID);
 
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(product, Newtonsoft.Json.Formatting.Indented));
 
@@ -117,7 +114,7 @@ namespace Sushi.MicroORM.Tests
         public async Task FetchAllAsync()
         {
             
-            var orders = await ConnectorOrders.FetchAllAsync();
+            var orders = await _connectorOrders.FetchAllAsync();
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -131,7 +128,7 @@ namespace Sushi.MicroORM.Tests
         {
             int maxResults = 2;
 
-            var connector = new Connector<Order>();
+            var connector = CreateConnector<Order>();
             var filter = connector.CreateQuery();
             filter.MaxResults = maxResults;
             var orders = await connector.FetchAllAsync(filter);
@@ -144,7 +141,7 @@ namespace Sushi.MicroORM.Tests
         {
             int maxResults = 2;
 
-            var connector = new Connector<Order>();
+            var connector = CreateConnector<Order>();
             var query = connector.CreateQuery();
             query.Add(x => x.DeliveryDate, new DateOnly(2000, 1, 1), ComparisonOperator.GreaterThanOrEquals);
             var orders = await connector.FetchAllAsync(query);
@@ -156,11 +153,11 @@ namespace Sushi.MicroORM.Tests
         public async Task TestCancellation()
         {
             var cts = new CancellationTokenSource();
-            var filter = new DataQuery<Order>();
+            var filter = _connectorOrders.CreateQuery();
             cts.Cancel();
             try
             {
-                var orders = await ConnectorOrders.FetchAllAsync(filter, cts.Token);
+                var orders = await _connectorOrders.FetchAllAsync(filter, cts.Token);
                 Assert.Fail();
             }
             catch(TaskCanceledException)
@@ -174,25 +171,26 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchAllInvalidMapAsync()
         {
-            var connector = new Connector<Order>(new Order.InvalidOrderMap());
-            var request = connector.CreateQuery();
-            try
-            {
-                var orders = await connector.FetchAllAsync(request);
-                Assert.Fail();
-            }
-            catch (Exception ex)
-            {
-                if (!ex.Message.Contains("no table"))
-                    Assert.Fail();
-            }
+            Assert.Fail("Needs to be implemented");
+            //var connector = new Connector<Order>(new Order.InvalidOrderMap());
+            //var request = connector.CreateQuery();
+            //try
+            //{
+            //    var orders = await connector.FetchAllAsync(request);
+            //    Assert.Fail();
+            //}
+            //catch (Exception ex)
+            //{
+            //    if (!ex.Message.Contains("no table"))
+            //        Assert.Fail();
+            //}
         }
 
         [TestMethod]
         public async Task FetchAllBySqlAsync()
         {
             string sql = "SELECT TOP(3) * FROM cat_Orders";
-            var orders = await ConnectorOrders.FetchAllAsync(sql);
+            var orders = await _connectorOrders.FetchAllAsync(sql);
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -206,7 +204,10 @@ namespace Sushi.MicroORM.Tests
         {
             int customerID = 1;
 
-            var bookings = await BookedRoom.FetchAllAsync(customerID);
+            var connector = CreateConnector<BookedRoom>();
+            var filter = connector.CreateQuery();
+            filter.Add(x => x.CustomerID, customerID);
+            var bookings = await connector.FetchAllAsync(filter);
 
             Console.Write(Newtonsoft.Json.JsonConvert.SerializeObject(bookings, Newtonsoft.Json.Formatting.Indented));
             Assert.IsTrue(bookings.Count > 0);
@@ -215,10 +216,10 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchPagingAsync()
         {
-            var request = new DataQuery<Order>();
+            var request = _connectorOrders.CreateQuery();
             request.AddPaging(5, 2);
                 
-            var orders = await ConnectorOrders.FetchAllAsync(request);
+            var orders = await _connectorOrders.FetchAllAsync(request);
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -236,9 +237,9 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchAllOrderedBy()
         {
-            var ConnectorOrders = new Connector<Order>();
+            var ConnectorOrders = CreateConnector<Order>();
 
-            var filter = new DataQuery<Order>();
+            var filter = _connectorOrders.CreateQuery();
             filter.AddOrder(x => x.ID, SortOrder.DESC);
             filter.MaxResults = 2;
             var orders = await ConnectorOrders.FetchAllAsync(filter);
@@ -256,10 +257,10 @@ namespace Sushi.MicroORM.Tests
         public async Task FetchWhereInIntAsync()
         {
 
-            var request = new DataQuery<Order>();
+            var request = _connectorOrders.CreateQuery();
             //request.WhereClause.Add(new DatabaseDataValueColumn("Order_Key", System.Data.SqlDbType.Int, new int[] { 1, 2,3 }, ComparisonOperator.In));
             request.Add(x => x.ID, new int[] { 1, 2, 3 }, ComparisonOperator.In);
-            var orders = await ConnectorOrders.FetchAllAsync(request);
+            var orders = await _connectorOrders.FetchAllAsync(request);
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -271,10 +272,10 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchWhereInEmptyEnumerableAsync()
         {
-            var request = new DataQuery<Order>();
+            var request = _connectorOrders.CreateQuery();
             
             request.Add(x => x.ID, new int[] { }, ComparisonOperator.In);
-            var orders = await ConnectorOrders.FetchAllAsync(request);
+            var orders = await _connectorOrders.FetchAllAsync(request);
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -286,7 +287,7 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchWhereInStringAsync()
         {
-            var request = new DataQuery<Product>();
+            var request = _connectorProducts.CreateQuery();
             var names = new string[]
             {
                 "TV",
@@ -295,7 +296,7 @@ namespace Sushi.MicroORM.Tests
             };
 
             request.Add(x => x.MetaData.Name, names, ComparisonOperator.In);
-            var products = await ConnectorProducts.FetchAllAsync(request);
+            var products = await _connectorProducts.FetchAllAsync(request);
             foreach (var product in products)
             {
                 Console.WriteLine($"{product.ID} - {product.MetaData.Name}");
@@ -307,10 +308,10 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchWhereGreaterThanStringAsync()
         {
-            var filter = ConnectorProducts.CreateQuery();
+            var filter = _connectorProducts.CreateQuery();
 
             filter.Add(x => x.MetaData.Description, "", ComparisonOperator.GreaterThan);
-            var products = await ConnectorProducts.FetchAllAsync(filter);
+            var products = await _connectorProducts.FetchAllAsync(filter);
             foreach (var product in products)
             {
                 Console.WriteLine($"{product.ID} - {product.MetaData.Name}");
@@ -322,7 +323,7 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchNotExistingAsync()
         {
-            var order = await ConnectorOrders.FetchSingleAsync(-1);
+            var order = await _connectorOrders.FetchSingleAsync(-1);
             Assert.IsTrue(order == null);
         }
         [TestMethod]
@@ -334,13 +335,13 @@ namespace Sushi.MicroORM.Tests
 UPDATE cat_Products
 SET Product_Name = @name
 WHERE Product_Key = @productID";
-            var filter = new DataQuery<Product>();
+            var filter = _connectorProducts.CreateQuery();
             filter.AddParameter(@"name", System.Data.SqlDbType.VarChar, name);
             filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
-            await ConnectorProducts.ExecuteNonQueryAsync(query, filter);
+            await _connectorProducts.ExecuteNonQueryAsync(query, filter);
 
             //check if name was updated
-            var product = await ConnectorProducts.FetchSingleAsync(productID);
+            var product = await _connectorProducts.FetchSingleAsync(productID);
             Assert.AreEqual(name, product.MetaData.Name);
         }
 
@@ -353,9 +354,9 @@ WHERE Product_Key = @productID";
 SELECT COUNT(*)
 FROM cat_Products
 WHERE Product_Key = @productID";
-            var filter = new DataQuery<Product>();
+            var filter = _connectorProducts.CreateQuery();
             filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
-            var count = await ConnectorProducts.ExecuteScalarAsync<int>(query, filter);
+            var count = await _connectorProducts.ExecuteScalarAsync<int>(query, filter);
             Assert.AreEqual(1, count);
 
         }
@@ -363,7 +364,7 @@ WHERE Product_Key = @productID";
         [TestMethod]
         public async Task ExecuteSetAsync()
         {
-            var ConnectorProducts = new Connector<Product>();
+            var ConnectorProducts = CreateConnector<Product>();
             string name = DateTime.UtcNow.Ticks.ToString();
             var query = @"
 SELECT DISTINCT(Product_ProductTypeID)
@@ -381,17 +382,15 @@ FROM cat_Products";
 
         [TestMethod]
         public async Task ExecuteSetWithFilterAsync()
-        {
-            var ConnectorProducts = new Connector<Product>();
-            string name = DateTime.UtcNow.Ticks.ToString();
+        {   
             int productID = 1;
             var query = @"
 SELECT DISTINCT(Product_ProductTypeID)
 FROM cat_Products
 WHERE Product_Key > @productID";
-            var filter = new DataQuery<Product>();
+            var filter = _connectorProducts.CreateQuery();
             filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
-            var productTypes = await ConnectorProducts.ExecuteSetAsync<Product.ProducType?>(query, filter);
+            var productTypes = await _connectorProducts.ExecuteSetAsync<Product.ProducType?>(query, filter);
 
             foreach (var productType in productTypes)
             {
@@ -410,7 +409,7 @@ WHERE Product_Key > @productID";
                 DeliveryTime = new TimeSpan(3, 20, 35),
                 DeliveryTime2 = DateTime.UtcNow.TimeOfDay
             };
-            await ConnectorOrders.SaveAsync(order);
+            await _connectorOrders.SaveAsync(order);
 
             Assert.IsTrue(order.ID > 0);
         }
@@ -419,7 +418,7 @@ WHERE Product_Key > @productID";
         public async Task SaveExistingAsync()
         {
             //save the order
-            var order = ConnectorOrders.FetchSingle(20);
+            var order = _connectorOrders.FetchSingle(20);
 
 
             string newComments = DateTime.UtcNow.ToString();
@@ -427,13 +426,98 @@ WHERE Product_Key > @productID";
             order.Comments = newComments;
             order.DeliveryTime = null;
             order.DeliveryTime2 = DateTime.UtcNow.TimeOfDay;
-            ConnectorOrders.Save(order);
+            _connectorOrders.Save(order);
 
             //retrieve order again from database
-            order = await ConnectorOrders.FetchSingleAsync(20);
+            order = await _connectorOrders.FetchSingleAsync(20);
 
 
             Assert.AreEqual(newComments, order.Comments);
+        }
+
+        [TestMethod]
+        public void BulkInsertAutoIncrement()
+        {
+            var ConnectorOrders = CreateConnector<Order>();
+
+            var orders = new List<Order>();
+
+            int numberOfRows = 100;
+
+            //assign unique ID to orders so we can check if all items were inserterd
+            var uniqueID = Guid.NewGuid().ToString();
+            for (int i = 0; i < numberOfRows; i++)
+            {
+                var order = new Order()
+                {
+                    CustomerID = i,
+                    Created = DateTime.UtcNow,
+                    DeliveryTime = new TimeSpan(3, 20, 35),
+                    DeliveryTime2 = DateTime.UtcNow.TimeOfDay,
+                    Comments = uniqueID
+                };
+                orders.Add(order);
+            }
+
+            ConnectorOrders.BulkInsert(orders);
+
+            //retrieve orders
+            var query = ConnectorOrders.CreateQuery();
+            query.Add(x => x.Comments, uniqueID);
+            var retrievedOrders = ConnectorOrders.FetchAll(query);
+            Assert.AreEqual(numberOfRows, retrievedOrders.Count);
+        }
+
+        [TestMethod]
+        public void BulkInsertIdentityInsert()
+        {
+            var identifiers = new List<Identifier>();
+
+            int numberOfRows = 100;
+
+            //assign unique ID to identifiers so we can check if all items were inserterd
+            var uniqueID = Guid.NewGuid();
+            for (int i = 0; i < numberOfRows; i++)
+            {
+                var order = new Identifier()
+                {
+                    GUID = Guid.NewGuid(),
+                    Batch = uniqueID
+                };
+                identifiers.Add(order);
+            }
+
+            var connector = CreateConnector<Identifier>();
+            connector.BulkInsert(identifiers, true);
+
+            //retrieve 
+            var query = connector.CreateQuery();
+            query.Add(x => x.Batch, uniqueID);
+            var retrievedRows = connector.FetchAll(query);
+            Assert.AreEqual(numberOfRows, retrievedRows.Count);
+        }
+
+        [TestMethod]
+        public void BulkInsertCompositeKey()
+        {
+            var rows = new List<CompositeKey>();
+
+            int numberOfRows = 100;
+
+            int offset = Guid.NewGuid().GetHashCode();
+            for (int i = offset; i < offset + numberOfRows; i++)
+            {
+                var row = new CompositeKey()
+                {
+                    FirstID = i,
+                    SecondID = Guid.NewGuid().GetHashCode(),
+                    SomeValue = i.ToString()
+                };
+                rows.Add(row);
+            }
+
+            var connector = CreateConnector<CompositeKey>();
+            connector.BulkInsert(rows);
         }
 
         [TestMethod]
@@ -446,7 +530,7 @@ WHERE Product_Key > @productID";
             customerTable.Rows.Add(98);
             customerTable.Rows.Add(99);
 
-            var connector = new Connector<Order>();
+            var connector = CreateConnector<Order>();
             var filter = connector.CreateQuery();
             filter.AddParameter("@customerIDs", customerTable, "cat_CustomerTableType");
             var orders = await connector.FetchAllAsync(sproc, filter);
@@ -475,7 +559,7 @@ WHERE Product_Key > @productID";
                 Price = 12.50M,
                 
             };
-            await ConnectorProducts.InsertAsync(product);
+            await _connectorProducts.InsertAsync(product);
         }
 
         [TestMethod]
@@ -486,7 +570,7 @@ WHERE Product_Key > @productID";
                 GUID = Guid.NewGuid(),
                 Batch = Guid.NewGuid()
             };
-            var connector = new Connector<Identifier>();
+            var connector = CreateConnector<Identifier>();
             await connector.InsertOrUpdateAsync(identifier);
 
             //check if the object exists now
@@ -506,7 +590,7 @@ WHERE Product_Key > @productID";
                 GUID = Guid.NewGuid(),
                 Batch = Guid.NewGuid()
             };
-            var connector = new Connector<Identifier>();
+            var connector = CreateConnector<Identifier>();
             await connector.InsertAsync(identifier);
 
             //get the existing object
@@ -535,7 +619,7 @@ WHERE Product_Key > @productID";
                 SecondID = Guid.NewGuid().GetHashCode(),
                 SomeValue = Guid.NewGuid().ToString()
             };
-            var connector = new Connector<CompositeKey>();
+            var connector = CreateConnector<CompositeKey>();
             await connector.InsertAsync(compositeKey);
         }
 
@@ -548,7 +632,7 @@ WHERE Product_Key > @productID";
                 SecondID = 1,
                 SomeValue = Guid.NewGuid().ToString()
             };
-            var connector = new Connector<CompositeKey>();
+            var connector = CreateConnector<CompositeKey>();
             await connector.UpdateAsync(compositeKey);
 
             var filter = connector.CreateQuery();
@@ -557,6 +641,11 @@ WHERE Product_Key > @productID";
             var result = await connector.FetchSingleAsync(filter);
 
             Assert.AreEqual(compositeKey.SomeValue, result.SomeValue);
+        }
+
+        private Connector<T> CreateConnector<T>() where T : new()
+        {
+            return new Connector<T>(_connectionStringProvider, _dataMapProvider);
         }
     }
 }

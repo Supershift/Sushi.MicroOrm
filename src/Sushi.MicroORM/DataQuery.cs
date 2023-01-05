@@ -19,19 +19,10 @@ namespace Sushi.MicroORM
     public class DataQuery<T> where T : new()
     {
         /// <summary>
-        /// Creates an instance of <see cref="DataQuery{T}"/>.
-        /// </summary>
-        public DataQuery() : this(null) { }
-
-        /// <summary>
         /// Creates an instance of <see cref="DataQuery{T}"/> using the specified mapping.
         /// </summary>
         public DataQuery(DataMap map)
-        {
-            //try to get the mapping declared for type T if no map provided
-            if (map == null)                
-                map = DatabaseConfiguration.DataMapProvider.GetMapForType<T>();
-            
+        {   
             Map = map;
             if(Map == null)
                 throw new Exception($"No default mapping defined for class {typeof(T)}. Apply a DataMap attribute to {typeof(T)} or create a datafilter with an instance of a mapping.");            

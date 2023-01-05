@@ -18,35 +18,21 @@ namespace Sushi.MicroORM
     /// <typeparam name="T">Type to convert database recrods to</typeparam>
     public class Connector<T> where T : new()
     {
+        private readonly ConnectionStringProvider _connectionStringProvider;
+        /// <summary>
+        /// An object representing the mapping between <typeparamref name="T"/> and database.
+        /// </summary>
+        private readonly DataMap<T> _map;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Connector{T}"/> class.
         /// </summary>
-        public Connector() : this(null, null) { }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Connector{T}"/> class, using <paramref name="connectionString"/> instead of the default connection string for <typeparamref name="T"/>.
-        /// </summary>
-        public Connector(string connectionString) : this(connectionString, null) { }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Connector{T}"/> class, using <paramref name="map"/> instead of the default map for <typeparamref name="T"/>.
-        /// </summary>
-        public Connector(DataMap<T> map) : this(null, map) { }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Connector{T}"/> class, using <paramref name="connectionString"/> and <paramref name="map"/> instead of the default connection string and map for <typeparamref name="T"/>.
-        /// </summary>
-        public Connector(string connectionString, DataMap<T> map)
+        public Connector(
+            ConnectionStringProvider connectionStringProvider,
+            DataMapProvider dataMapProvider)
         {
-            if(map == null)                
-                map = DatabaseConfiguration.DataMapProvider.GetMapForType<T>() as DataMap<T>;
-
-            Map = map;
-            if (Map == null)
-                throw new Exception($"No mapping defined for class {typeof(T)}");
-
-            if (!string.IsNullOrWhiteSpace(connectionString))
-                ConnectionString = connectionString;
+            _connectionStringProvider = connectionStringProvider;
+            _map = dataMapProvider.GetMapForType<T>() as DataMap<T>;
         }
 
         /// <summary>
@@ -54,28 +40,27 @@ namespace Sushi.MicroORM
         /// </summary>
         public int? CommandTimeout { get; set; }
 
-        private string _ConnectionString;
+        private string _connectionString;
+        
+
         /// <summary>
-        /// Gets the connection string used to connect to the database
+        /// Gets the connection string used to connect to the database. Setting this will override <see cref="ConnectionStringProvider"/>.
         /// </summary>
         public string ConnectionString
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(_ConnectionString))
-                    _ConnectionString = DatabaseConfiguration.ConnectionStringProvider.GetConnectionString(typeof(T));
-                return _ConnectionString;
+                if (string.IsNullOrWhiteSpace(_connectionString))
+                    _connectionString = _connectionStringProvider.GetConnectionString(typeof(T));
+                return _connectionString;
             }
             set
             {
-                _ConnectionString = value;
+                _connectionString = value;
             }
         }
 
-        /// <summary>
-        /// Gets an object representing the mapping between <typeparamref name="T"/> and database.
-        /// </summary>
-        public DataMap<T> Map { get; protected set; }
+        
 
         /// <summary>
         /// Gets or sets the behavior for connector's FetchSingle methods in case a record is not found in the database.         
@@ -83,22 +68,12 @@ namespace Sushi.MicroORM
         public FetchSingleMode FetchSingleMode { get; set; } = FetchSingleMode.ReturnDefaultWhenNotFound;
 
         /// <summary>
-        /// Creates a new instance of <see cref="DataQuery{T}"/>. Use the constructor of Dataquery for more control when creating a Dataquery.
-        /// </summary>
-        /// <returns></returns>
-        [Obsolete("Use CreateQuery instead")]
-        public DataQuery<T> CreateDataFilter()
-        {
-            return new DataQuery<T>(Map);
-        }
-
-        /// <summary>
         /// Creates a new instance of <see cref="DataQuery{T}"/>. 
         /// </summary>
         /// <returns></returns>
         public DataQuery<T> CreateQuery()
         {
-            return new DataQuery<T>(Map);
+            return new DataQuery<T>(_map);
         }
 
         /// <summary>
@@ -132,7 +107,7 @@ namespace Sushi.MicroORM
                             //if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
                             if(typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
                             {
-                                var singleResult = ResultMapper.MapToSingleResult(reader, Map, FetchSingleMode);
+                                var singleResult = ResultMapper.MapToSingleResult(reader, _map, FetchSingleMode);
                                 result = new SqlStatementResult<TResult>((TResult)(object)singleResult);
                             }
                             else
@@ -149,7 +124,7 @@ namespace Sushi.MicroORM
                             if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
                             {
                                 //map the contents of the reader to a result
-                                var multipleResults = ResultMapper.MapToMultipleResults(reader, Map);
+                                var multipleResults = ResultMapper.MapToMultipleResults(reader, _map);
                                 //cast to TResult
                                 var castedResults = new QueryListResult<TResult>();
                                 foreach(var singleResult in multipleResults)
@@ -230,7 +205,7 @@ namespace Sushi.MicroORM
                             //if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
                             if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
                             {
-                                var singleResult = await ResultMapperAsync.MapToSingleResultAsync(reader, Map, FetchSingleMode, cancellationToken).ConfigureAwait(false);
+                                var singleResult = await ResultMapperAsync.MapToSingleResultAsync(reader, _map, FetchSingleMode, cancellationToken).ConfigureAwait(false);
                                 result = new SqlStatementResult<TResult>((TResult)(object)singleResult);
                             }
                             else
@@ -248,7 +223,7 @@ namespace Sushi.MicroORM
                             if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
                             {
                                 //map the contents of the reader to a result
-                                var multipleResults = await ResultMapperAsync.MapToMultipleResultsAsync(reader, Map, cancellationToken).ConfigureAwait(false);
+                                var multipleResults = await ResultMapperAsync.MapToMultipleResultsAsync(reader, _map, cancellationToken).ConfigureAwait(false);
                                 //cast to TResult
                                 var castedResults = new QueryListResult<TResult>();
                                 foreach(var singleResult in multipleResults)
@@ -301,7 +276,7 @@ namespace Sushi.MicroORM
 
         internal void AddPrimaryKeyToquery(DataQuery<T> query, T entity)
         {
-            var primaryKeyColumns = Map.GetPrimaryKeyColumns();
+            var primaryKeyColumns = _map.GetPrimaryKeyColumns();
             foreach (var column in primaryKeyColumns)
             {
                 query.Add(column.Column, column.SqlType, ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity));
@@ -313,7 +288,7 @@ namespace Sushi.MicroORM
 
         internal bool IsInsert(T entity)
         {
-            var primaryKeyColumns = Map.GetPrimaryKeyColumns();
+            var primaryKeyColumns = _map.GetPrimaryKeyColumns();
             var identityColumn = primaryKeyColumns.FirstOrDefault(x => x.IsIdentity);
             if (identityColumn == null)
                 throw new Exception(@"No identity primary key column defined on mapping. Cannot determine if action is update or insert. 
@@ -365,12 +340,12 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         protected DataQuery<T> CreateFetchSinglequery(int id)
         {
-            var primaryKeyColumns = Map.GetPrimaryKeyColumns();
+            var primaryKeyColumns = _map.GetPrimaryKeyColumns();
             if (primaryKeyColumns.Count != 1)
                 throw new Exception("Mapping does not have one and only one primary key column.");
             var primaryKeyColumn = primaryKeyColumns[0];            
 
-            var query = new DataQuery<T>(Map);
+            var query = new DataQuery<T>(_map);
             query.Add(primaryKeyColumn.Column, SqlDbType.Int, id);
             return query;
         }
@@ -416,7 +391,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public T FetchSingle(string sqlText, DataQuery<T> query)
         {
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, Map, query, sqlText);            
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, _map, query, sqlText);            
 
             //execute and get response
             var statementResult = ExecuteSqlStatement<T>(statement);
@@ -477,7 +452,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task<T> FetchSingleAsync(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
         {
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, Map, query, sqlText);            
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, _map, query, sqlText);            
 
             //execute and get response
             var statementResult = await ExecuteSqlStatementAsync<T>(statement, cancellationToken).ConfigureAwait(false);
@@ -493,7 +468,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public void Update(T entity)
         {
             List<WhereCondition> whereColumns = new List<WhereCondition>();
-            var query = new DataQuery<T>(Map);            
+            var query = new DataQuery<T>(_map);            
             AddPrimaryKeyToquery(query, entity);
             Update(entity, query);
         }
@@ -506,7 +481,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public void Update(T entity, DataQuery<T> query)
         {
             //generate sql statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Update, SqlStatementResultCardinality.None, Map, query, null, entity, false);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Update, SqlStatementResultCardinality.None, _map, query, null, entity, false);
 
             //execute statement
             ExecuteSqlStatement<object>(sqlStatement);            
@@ -528,7 +503,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public async Task UpdateAsync(T entity, CancellationToken cancellationToken)
         {
             List<WhereCondition> whereColumns = new List<WhereCondition>();
-            var query = new DataQuery<T>(Map);            
+            var query = new DataQuery<T>(_map);            
             AddPrimaryKeyToquery(query, entity);
             await UpdateAsync(entity, query, cancellationToken).ConfigureAwait(false);
         }        
@@ -542,7 +517,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public async Task UpdateAsync(T entity, DataQuery<T> query, CancellationToken cancellationToken)
         {
             //generate sql statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Update, SqlStatementResultCardinality.None, Map, query, null, entity, false);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Update, SqlStatementResultCardinality.None, _map, query, null, entity, false);
 
             //execute statement
             await ExecuteSqlStatementAsync<object>(sqlStatement, cancellationToken).ConfigureAwait(false);
@@ -551,7 +526,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         internal void ApplyIdentityColumnToEntity(T entity, int identityValue)
         {
             
-                var identityColumn = Map.Items.FirstOrDefault(x => x.IsIdentity);            
+                var identityColumn = _map.Items.FirstOrDefault(x => x.IsIdentity);            
                 if (identityValue > 0 && identityColumn != null)
                     ReflectionHelper.SetMemberValue(identityColumn.MemberInfoTree, identityValue, entity);
             
@@ -574,7 +549,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public void Insert(T entity, bool isIdentityInsert)
         {
             //generate insert statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, Map, null, null, entity, isIdentityInsert);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, _map, null, null, entity, isIdentityInsert);
 
             //execute and get response
             var response = ExecuteSqlStatement<int>(sqlStatement);
@@ -599,12 +574,12 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>        
         public void InsertOrUpdate(T entity, bool isIdentityInsert)
         {
-            var query = new DataQuery<T>();
+            var query = new DataQuery<T>(_map);
             //generate query condition for primary key
             AddPrimaryKeyToquery(query, entity);
 
             //generate sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.SingleRow, Map, query, null, entity, isIdentityInsert);
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.SingleRow, _map, query, null, entity, isIdentityInsert);
 
             //execute
             var response = ExecuteSqlStatement<int>(statement);
@@ -629,12 +604,12 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// </summary>        
         public async Task InsertOrUpdateAsync(T entity, bool isIdentityInsert, CancellationToken cancellationToken)
         {
-            var query = new DataQuery<T>();
+            var query = new DataQuery<T>(_map);
             //generate query condition for primary key
             AddPrimaryKeyToquery(query, entity);
 
             //generate sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.SingleRow, Map, query, null, entity, isIdentityInsert);
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.SingleRow, _map, query, null, entity, isIdentityInsert);
 
             //execute
             var response = await ExecuteSqlStatementAsync<int>(statement, cancellationToken).ConfigureAwait(false);
@@ -678,7 +653,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public async Task InsertAsync(T entity, bool isIdentityInsert, CancellationToken cancellationToken)
         {
             //generate insert statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, Map, null, null, entity, isIdentityInsert);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, _map, null, null, entity, isIdentityInsert);
 
             //execute and get response
             var response = await ExecuteSqlStatementAsync<int>(sqlStatement, cancellationToken).ConfigureAwait(false);
@@ -731,7 +706,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             var statementType = DMLStatementType.Select;
             if (!string.IsNullOrWhiteSpace(sqlText))
                 statementType = DMLStatementType.CustomQuery;
-            var statement = SqlStatementGenerator.GenerateSqlStatment(statementType, SqlStatementResultCardinality.MultipleRows, Map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment(statementType, SqlStatementResultCardinality.MultipleRows, _map, query, sqlText);
 
             //execute and get response
             var statementResult = ExecuteSqlStatement<T>(statement);
@@ -829,7 +804,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             var statementType = DMLStatementType.Select;
             if (!string.IsNullOrWhiteSpace(sqlText))
                 statementType = DMLStatementType.CustomQuery;
-            var statement = SqlStatementGenerator.GenerateSqlStatment(statementType, SqlStatementResultCardinality.MultipleRows, Map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment(statementType, SqlStatementResultCardinality.MultipleRows, _map, query, sqlText);
             
             //execute and get response
             var statementResult = await ExecuteSqlStatementAsync<T>(statement, cancellationToken).ConfigureAwait(false);
@@ -857,7 +832,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public void Delete(T entity)
         {
-            var query = new DataQuery<T>(Map);            
+            var query = new DataQuery<T>(_map);            
             AddPrimaryKeyToquery(query, entity);
             Delete(query);
         }
@@ -870,7 +845,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public void Delete(DataQuery<T> query)
         {
             //generate delete statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Delete, SqlStatementResultCardinality.None, Map, query, null);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Delete, SqlStatementResultCardinality.None, _map, query, null);
 
             //execute
             var result = ExecuteSqlStatement<object>(sqlStatement);
@@ -892,7 +867,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task DeleteAsync(T entity, CancellationToken cancellationToken)
         {
-            var query = new DataQuery<T>(Map);
+            var query = new DataQuery<T>(_map);
             AddPrimaryKeyToquery(query, entity);
             await DeleteAsync(query, cancellationToken).ConfigureAwait(false);
         }
@@ -916,7 +891,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public async Task DeleteAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
             //generate delete statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Delete, SqlStatementResultCardinality.None, Map, query, null);
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Delete, SqlStatementResultCardinality.None, _map, query, null);
 
             //execute
             var result = await ExecuteSqlStatementAsync<object>(sqlStatement, cancellationToken).ConfigureAwait(false);
@@ -994,7 +969,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public TScalar ExecuteScalar<TScalar>(string sqlText, DataQuery<T> query)
         {
             //generate the sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, _map, query, sqlText);
 
             //execute and get response
             var statementResult = ExecuteSqlStatement<TScalar>(statement);
@@ -1036,7 +1011,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public async Task<TScalar> ExecuteScalarAsync<TScalar>(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
         {
             //generate the sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, Map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, _map, query, sqlText);
 
             //execute and get response
             var statementResult = await ExecuteSqlStatementAsync<TScalar>(statement, cancellationToken).ConfigureAwait(false);
@@ -1066,7 +1041,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public List<TResult> ExecuteSet<TResult>(string sqlText, DataQuery<T> query)
         {
             //generate statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, Map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, _map, query, sqlText);
 
             //execute statement and map response
             var result = ExecuteSqlStatement<TResult>(statement);
@@ -1106,7 +1081,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public async Task<List<TResult>> ExecuteSetAsync<TResult>(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
         {
             //generate statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, Map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, _map, query, sqlText);
 
             //execute statement and map response
             var result = await ExecuteSqlStatementAsync<TResult>(statement, cancellationToken).ConfigureAwait(false);
@@ -1154,13 +1129,13 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             if (entities == null || entities.Count() == 0)
                 return;
 
-            var dataTable = Utility.CreateDataTableFromMap(Map, isIdentityInsert);            
+            var dataTable = Utility.CreateDataTableFromMap(_map, isIdentityInsert);            
 
             //create rows in the datatable for each entity
             foreach (var entity in entities)
             {
                 var row = dataTable.NewRow();
-                foreach (var databaseColumn in Map.Items.Where(x=>x.IsReadOnly == false))
+                foreach (var databaseColumn in _map.Items.Where(x=>x.IsReadOnly == false))
                 {
                     //set values in the row for each column (and only if the column exists in the table definition)
                     if (dataTable.Columns.Contains(databaseColumn.Column))

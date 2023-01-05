@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Sushi.MicroORM.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,12 +19,14 @@ namespace Sushi.MicroORM
         /// </summary>        
         /// <returns></returns>
         public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString) 
-        {
-            // todo: use options or builder pattern for configuration
-            DatabaseConfiguration.SetDefaultConnectionString(defaultConnectionString);
-            
-            services.AddTransient(typeof(Connector<>));
+        {   
+            services.TryAddTransient(typeof(Connector<>));
 
+            services.TryAddSingleton<DataMapProvider>();
+
+            var connectionStringProvider = new ConnectionStringProvider();
+            connectionStringProvider.DefaultConnectionString = defaultConnectionString;
+            services.TryAddSingleton(connectionStringProvider);
             return services;
         }
     }

@@ -38,12 +38,29 @@ namespace Sushi.MicroORM
         /// </summary>
         protected ConcurrentDictionary<Type, string> CachedConnectionStrings { get; } = new ConcurrentDictionary<Type, string>();
 
+
         /// <summary>
-        /// Adds or updates the connection string for the specified typename.
+        /// Adds or updates the connection string for <typeparamref name="T"/>.
+        /// </summary>        
+        public void AddMappedConnectionString<T>(string connectionString)
+        {
+            AddMappedConnectionString(typeof(T).ToString(), connectionString);
+        }
+
+        /// <summary>
+        /// Adds or updates the connection string for <paramref name="type"/>.
+        /// </summary>        
+        public void AddMappedConnectionString(Type type, string connectionString)
+        {
+            AddMappedConnectionString(type.ToString(), connectionString);
+        }
+
+        /// <summary>
+        /// Adds or updates the connection string for the specified <paramref name="typeName"/>.
         /// </summary>
         /// <param name="typeName"></param>
         /// <param name="connectionString"></param>
-        public void AddConnectionString(string typeName, string connectionString)
+        public void AddMappedConnectionString(string typeName, string connectionString)
         {
             // add the connection string to the backing store            
             MappedConnectionStrings[typeName] = connectionString;

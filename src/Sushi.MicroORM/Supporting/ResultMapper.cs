@@ -14,27 +14,21 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="T"/> using the provided <paramref name="map"/>.
         /// </summary>                   
-        public static T MapToSingleResult<T>(SqlDataReader reader, DataMap<T> map, FetchSingleMode fetchSingleMode) where T : new() 
+        public static T MapToSingleResult<T>(SqlDataReader reader, DataMap<T> map) where T : new() 
         {
-            var instance = new T();
+            T instance;
             //read the first row from the result
             bool recordFound = reader.Read();
             if (recordFound)
             {
                 //map the columns of the first row to the instance, using the map
+                instance = new T();
                 SetResultValuesToObject(reader, map, instance);
             }
             else            
             {
-                //return default or empty object, based on configuration                
-                switch (fetchSingleMode)
-                {
-                    case FetchSingleMode.ReturnDefaultWhenNotFound:
-                        instance = default(T);
-                        break;
-                    case FetchSingleMode.ReturnNewObjectWhenNotFound:
-                        break;
-                }
+                //return default                
+                instance = default;
             }
                                     
             return instance;

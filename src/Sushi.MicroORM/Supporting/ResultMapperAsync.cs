@@ -16,30 +16,24 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="T"/> using the provided <paramref name="map"/>.
         /// </summary>                  
-        public static async Task<T> MapToSingleResultAsync<T>(SqlDataReader reader, DataMap<T> map, FetchSingleMode fetchSingleMode, CancellationToken cancellationToken) where T : new() 
+        public static async Task<T> MapToSingleResultAsync<T>(SqlDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new() 
         {
-            var instance = new T();
-            //read the first row from the result
+            T result;
+            // read the first row from the result
             bool recordFound = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
             if (recordFound)
             {
-                //map the columns of the first row to the instance, using the map
-                SetResultValuesToObject(reader, map, instance);
+                // map the columns of the first row to the result, using the map
+                result = new T();
+                SetResultValuesToObject(reader, map, result);
             }
-            else            
+            else
             {
-                //return default or empty object, based on configuration                
-                switch (fetchSingleMode)
-                {
-                    case FetchSingleMode.ReturnDefaultWhenNotFound:
-                        instance = default(T);
-                        break;
-                    case FetchSingleMode.ReturnNewObjectWhenNotFound:
-                        break;
-                }
+                // return default                 
+                result = default;
             }
                         
-            return instance;
+            return result;
         }
 
         /// <summary>

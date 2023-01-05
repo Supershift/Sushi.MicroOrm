@@ -60,13 +60,6 @@ namespace Sushi.MicroORM
             }
         }
 
-        
-
-        /// <summary>
-        /// Gets or sets the behavior for connector's FetchSingle methods in case a record is not found in the database.         
-        /// </summary>
-        public FetchSingleMode FetchSingleMode { get; set; } = FetchSingleMode.ReturnDefaultWhenNotFound;
-
         /// <summary>
         /// Creates a new instance of <see cref="DataQuery{T}"/>. 
         /// </summary>
@@ -107,7 +100,7 @@ namespace Sushi.MicroORM
                             //if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
                             if(typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
                             {
-                                var singleResult = ResultMapper.MapToSingleResult(reader, _map, FetchSingleMode);
+                                var singleResult = ResultMapper.MapToSingleResult(reader, _map);
                                 result = new SqlStatementResult<TResult>((TResult)(object)singleResult);
                             }
                             else
@@ -205,7 +198,7 @@ namespace Sushi.MicroORM
                             //if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
                             if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
                             {
-                                var singleResult = await ResultMapperAsync.MapToSingleResultAsync(reader, _map, FetchSingleMode, cancellationToken).ConfigureAwait(false);
+                                var singleResult = await ResultMapperAsync.MapToSingleResultAsync(reader, _map, cancellationToken).ConfigureAwait(false);
                                 result = new SqlStatementResult<TResult>((TResult)(object)singleResult);
                             }
                             else

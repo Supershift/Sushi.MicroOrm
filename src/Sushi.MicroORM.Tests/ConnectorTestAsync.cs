@@ -73,8 +73,10 @@ namespace Sushi.MicroORM.Tests
             int id = 3;
 
             string sql = $"SELECT * FROM cat_Orders WHERE Order_Key = {id}"; //this is BAD PRACTICE! always use parameters
+            var query = _connectorOrders.CreateQuery();
+            query.SqlQuery = sql;
 
-            var order = await _connectorOrders.FetchSingleAsync(sql);
+            var order = await _connectorOrders.FetchSingleAsync(query);
 
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -88,10 +90,12 @@ namespace Sushi.MicroORM.Tests
 
             string sql = $"SELECT * FROM cat_Orders WHERE Order_Key = @orderID"; //this is BAD PRACTICE! always use parameters
 
-            var filter = _connectorOrders.CreateQuery();
-            filter.AddParameter("@orderID", id);
+            var query = _connectorOrders.CreateQuery();
+            query.SqlQuery = sql;
+            query.AddParameter("@orderID", id);
 
-            var order = await _connectorOrders.FetchSingleAsync(sql, filter);
+
+            var order = await _connectorOrders.FetchSingleAsync(query);
             
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -170,7 +174,9 @@ namespace Sushi.MicroORM.Tests
         public async Task FetchAllBySqlAsync()
         {
             string sql = "SELECT TOP(3) * FROM cat_Orders";
-            var orders = await _connectorOrders.FetchAllAsync(sql);
+            var query = _connectorOrders.CreateQuery();
+            query.SqlQuery = sql;
+            var orders = await _connectorOrders.FetchAllAsync(query);
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -311,14 +317,15 @@ namespace Sushi.MicroORM.Tests
         {
             string name = DateTime.UtcNow.Ticks.ToString();
             int productID = 1;
-            var query = @"
+            var sql = @"
 UPDATE cat_Products
 SET Product_Name = @name
 WHERE Product_Key = @productID";
-            var filter = _connectorProducts.CreateQuery();
-            filter.AddParameter(@"name", System.Data.SqlDbType.VarChar, name);
-            filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
-            await _connectorProducts.ExecuteNonQueryAsync(query, filter);
+            var query = _connectorProducts.CreateQuery();
+            query.AddParameter(@"name", System.Data.SqlDbType.VarChar, name);
+            query.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
+            query.SqlQuery = sql;
+            await _connectorProducts.ExecuteNonQueryAsync(query);
 
             //check if name was updated
             var product = await _connectorProducts.FetchSingleAsync(productID);
@@ -330,13 +337,14 @@ WHERE Product_Key = @productID";
         {
             string name = DateTime.UtcNow.Ticks.ToString();
             int productID = 1;
-            var query = @"
+            var sql = @"
 SELECT COUNT(*)
 FROM cat_Products
 WHERE Product_Key = @productID";
-            var filter = _connectorProducts.CreateQuery();
-            filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
-            var count = await _connectorProducts.ExecuteScalarAsync<int>(query, filter);
+            var query = _connectorProducts.CreateQuery();
+            query.SqlQuery = sql;
+            query.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
+            var count = await _connectorProducts.ExecuteScalarAsync<int>(query);
             Assert.AreEqual(1, count);
 
         }
@@ -346,10 +354,11 @@ WHERE Product_Key = @productID";
         {
             var ConnectorProducts = CreateConnector<Product>();
             string name = DateTime.UtcNow.Ticks.ToString();
-            var query = @"
+            var sql = @"
 SELECT DISTINCT(Product_ProductTypeID)
 FROM cat_Products";
-
+            var query = ConnectorProducts.CreateQuery();
+            query.SqlQuery = sql;
             var productTypes = await ConnectorProducts.ExecuteSetAsync<Product.ProducType?>(query);
 
             foreach (var productType in productTypes)
@@ -364,13 +373,14 @@ FROM cat_Products";
         public async Task ExecuteSetWithFilterAsync()
         {   
             int productID = 1;
-            var query = @"
+            var sql = @"
 SELECT DISTINCT(Product_ProductTypeID)
 FROM cat_Products
 WHERE Product_Key > @productID";
-            var filter = _connectorProducts.CreateQuery();
-            filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
-            var productTypes = await _connectorProducts.ExecuteSetAsync<Product.ProducType?>(query, filter);
+            var query = _connectorProducts.CreateQuery();
+            query.SqlQuery = sql;
+            query.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
+            var productTypes = await _connectorProducts.ExecuteSetAsync<Product.ProducType?>(query);
 
             foreach (var productType in productTypes)
             {
@@ -511,9 +521,10 @@ WHERE Product_Key > @productID";
             customerTable.Rows.Add(99);
 
             var connector = CreateConnector<Order>();
-            var filter = connector.CreateQuery();
-            filter.AddParameter("@customerIDs", customerTable, "cat_CustomerTableType");
-            var orders = await connector.FetchAllAsync(sproc, filter);
+            var query = connector.CreateQuery();
+            query.SqlQuery = sproc;
+            query.AddParameter("@customerIDs", customerTable, "cat_CustomerTableType");
+            var orders = await connector.FetchAllAsync(query);
 
             var count98 = orders.Count(x => x.CustomerID == 98);
             var count99 = orders.Count(x => x.CustomerID == 99);

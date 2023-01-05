@@ -29,6 +29,11 @@ namespace Sushi.MicroORM
         }
 
         /// <summary>
+        /// Gets or sets a custom SQL query to be executed. Setting this will make the <see cref="Connector{T}"/> ignore any other query input set, except parameters.
+        /// </summary>
+        public string SqlQuery { get; set; }
+
+        /// <summary>
         /// Gets an object representing the mapping between class T and database
         /// </summary>
         public DataMap Map { get; protected set; }        

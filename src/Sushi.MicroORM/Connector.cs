@@ -211,7 +211,6 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 await InsertAsync(entity, false, cancellationToken).ConfigureAwait(false);
             else
                 await UpdateAsync(entity, cancellationToken).ConfigureAwait(false);
-
         }
 
         /// <summary>
@@ -250,45 +249,24 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task<T> FetchSingleAsync(DataQuery<T> query)
         {
-            return await FetchSingleAsync(null, query).ConfigureAwait(false);
+            return await FetchSingleAsync(query, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
         /// Fetches a single record from the database, using the query provided by <paramref name="sqlText"/>. 
-        /// </summary>        
-        /// <param name="sqlText"></param>
-        /// <returns></returns>
-        public async Task<T> FetchSingleAsync(string sqlText)
-        {
-            return await FetchSingleAsync(sqlText, null).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Fetches a single record from the database, using the query provided by <paramref name="sqlText"/>. Parameters used in <paramref name="sqlText"/> can be set on <paramref name="query"/>.
-        /// </summary>
-        /// <param name="query"></param>
-        /// <param name="sqlText"></param>
-        /// <returns></returns>
-        public async Task<T> FetchSingleAsync(string sqlText, DataQuery<T> query)
-        {
-            return await FetchSingleAsync(sqlText, query, CancellationToken.None).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Fetches a single record from the database, using the query provided by <paramref name="sqlText"/>. Parameters used in <paramref name="sqlText"/> can be set on <paramref name="query"/>.
         /// </summary>
         /// <param name="query"></param>
         /// <param name="sqlText"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<T> FetchSingleAsync(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
+        public async Task<T> FetchSingleAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, _map, query, sqlText);            
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, _map, query);            
 
-            //execute and get response
+            // execute and get response
             var statementResult = await ExecuteSqlStatementAsync<T>(statement, cancellationToken).ConfigureAwait(false);
 
-            //return result
+            // return result
             return statementResult.SingleResult;
         }
 
@@ -321,10 +299,10 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <param name="cancellationToken"></param>
         public async Task UpdateAsync(T entity, DataQuery<T> query, CancellationToken cancellationToken)
         {
-            //generate sql statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Update, SqlStatementResultCardinality.None, _map, query, null, entity, false);
+            // generate sql statement
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Update, SqlStatementResultCardinality.None, _map, query, entity, false);
 
-            //execute statement
+            // execute statement
             await ExecuteSqlStatementAsync<object>(sqlStatement, cancellationToken).ConfigureAwait(false);
         }
 
@@ -351,16 +329,16 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         public async Task InsertOrUpdateAsync(T entity, bool isIdentityInsert, CancellationToken cancellationToken)
         {
             var query = new DataQuery<T>(_map);
-            //generate query condition for primary key
+            // generate query condition for primary key
             AddPrimaryKeyToquery(query, entity);
 
-            //generate sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.SingleRow, _map, query, null, entity, isIdentityInsert);
+            // generate sql statement
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.SingleRow, _map, query, entity, isIdentityInsert);
 
-            //execute
+            // execute
             var response = await ExecuteSqlStatementAsync<int>(statement, cancellationToken).ConfigureAwait(false);
 
-            //if response contains a value map it to the idenity column
+            // if response contains a value map it to the idenity column
             if (response.SingleResult > 0)
             {
                 ApplyIdentityColumnToEntity(entity, response.SingleResult);
@@ -398,13 +376,14 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task InsertAsync(T entity, bool isIdentityInsert, CancellationToken cancellationToken)
         {
-            //generate insert statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, _map, null, null, entity, isIdentityInsert);
+            // generate insert statement
+            var query = CreateQuery();
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, _map, query, entity, isIdentityInsert);
 
-            //execute and get response
+            // execute and get response
             var response = await ExecuteSqlStatementAsync<int>(sqlStatement, cancellationToken).ConfigureAwait(false);
 
-            //if response contains a value map it to the idenity column
+            // if response contains a value map it to the idenity column
             if (response.SingleResult > 0)
             {
                 ApplyIdentityColumnToEntity(entity, response.SingleResult);
@@ -426,25 +405,8 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task<QueryListResult<T>> FetchAllAsync(CancellationToken cancellationToken)
         {
-            return await FetchAllAsync(null, null, cancellationToken).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Fetches all records from the database for <paramref name="sqlText"/>.
-        /// </summary>        
-        /// <returns></returns>
-        public async Task<QueryListResult<T>> FetchAllAsync(string sqlText)
-        {
-            return await FetchAllAsync(sqlText, null, CancellationToken.None).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Fetches all records from the database for <paramref name="sqlText"/>.
-        /// </summary>        
-        /// <returns></returns>
-        public async Task<QueryListResult<T>> FetchAllAsync(string sqlText, CancellationToken cancellationToken)
-        {
-            return await FetchAllAsync(sqlText, null, cancellationToken).ConfigureAwait(false);
+            var query = CreateQuery();
+            return await FetchAllAsync(query, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -454,48 +416,28 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task<QueryListResult<T>> FetchAllAsync(DataQuery<T> query)
         {
-            return await FetchAllAsync(null, query, CancellationToken.None).ConfigureAwait(false);
+            return await FetchAllAsync(query, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Fetches all records from the database, using <paramref name="query"/> to build a where clause
-        /// </summary>        
-        /// <returns></returns>
-        public async Task<QueryListResult<T>> FetchAllAsync(DataQuery<T> query, CancellationToken cancellationToken)
-        {
-            return await FetchAllAsync(null, query, cancellationToken).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Fetches all records from the database for <paramref name="sqlText"/>, using parameters set on <paramref name="query"/>
-        /// </summary>
-        /// <param name="sqlText"></param>
-        /// <param name="query"></param>
-        /// <returns></returns>
-        public async Task<QueryListResult<T>> FetchAllAsync(string sqlText, DataQuery<T> query)
-        {
-            return await FetchAllAsync(sqlText, query, CancellationToken.None).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Fetches all records from the database for <paramref name="sqlText"/>, using parameters set on <paramref name="query"/>
+        /// Fetches all records from the database, using <paramref name="query"/> to build a where clause.
         /// </summary>
         /// <param name="sqlText"></param>
         /// <param name="query"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<QueryListResult<T>> FetchAllAsync(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
+        public async Task<QueryListResult<T>> FetchAllAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
-            //generate the sql statement            
+            // generate the sql statement            
             var statementType = DMLStatementType.Select;
-            if (!string.IsNullOrWhiteSpace(sqlText))
+            if (!string.IsNullOrWhiteSpace(query.SqlQuery))
                 statementType = DMLStatementType.CustomQuery;
-            var statement = SqlStatementGenerator.GenerateSqlStatment(statementType, SqlStatementResultCardinality.MultipleRows, _map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment(statementType, SqlStatementResultCardinality.MultipleRows, _map, query);
             
-            //execute and get response
+            // execute and get response
             var statementResult = await ExecuteSqlStatementAsync<T>(statement, cancellationToken).ConfigureAwait(false);
 
-            //if total number of rows is set apply it to the query's paging object
+            // if total number of rows is set apply it to the query's paging object
             if (query?.Paging != null && statementResult.TotalNumberOfRows.HasValue)
             {
                 query.Paging.TotalNumberOfRows = statementResult.TotalNumberOfRows;
@@ -506,7 +448,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 }
             }
 
-            //return result
+            // return result
             return statementResult.MultipleResults;
         }
 
@@ -548,76 +490,53 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <returns></returns>
         public async Task DeleteAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
-            //generate delete statement
-            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Delete, SqlStatementResultCardinality.None, _map, query, null);
+            // generate delete statement
+            var sqlStatement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Delete, SqlStatementResultCardinality.None, _map, query);
 
-            //execute
-            var result = await ExecuteSqlStatementAsync<object>(sqlStatement, cancellationToken).ConfigureAwait(false);
+            // execute
+            _ = await ExecuteSqlStatementAsync<object>(sqlStatement, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Executes a custom SQL statement defined by <paramref name="sqlText"/> without a return value.
-        /// </summary>
-        /// <param name="sqlText">The SQL text.</param>
-        /// <returns></returns>
-        public async Task ExecuteNonQueryAsync(string sqlText)
-        {
-            await ExecuteScalarAsync<int>(sqlText).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Executes a custom SQL statement defined by <paramref name="sqlText"/> without a return value. Parameters can be defined on <paramref name="query"/>.
-        /// </summary>
-        /// <param name="sqlText"></param>
+        /// Executes a custom SQL statement defined on <paramref name="query"/> without a return value. Parameters can be defined on <paramref name="query"/>.
+        /// </summary>        
         /// <param name="query"></param>
-        public async Task ExecuteNonQueryAsync(string sqlText, DataQuery<T> query)
+        public async Task ExecuteNonQueryAsync(DataQuery<T> query)
         {
-            await ExecuteNonQueryAsync(sqlText, query, CancellationToken.None).ConfigureAwait(false);            
+            await ExecuteNonQueryAsync(query, CancellationToken.None).ConfigureAwait(false);            
         }
 
         /// <summary>
-        /// Executes a custom SQL statement defined by <paramref name="sqlText"/> without a return value. Parameters can be defined on <paramref name="query"/>.
+        /// Executes a custom SQL statement defined on <paramref name="query"/> without a return value. Parameters can be defined on <paramref name="query"/>.
         /// </summary>
         /// <param name="sqlText"></param>
         /// <param name="query"></param>
         /// <param name="cancellationToken"></param>
-        public async Task ExecuteNonQueryAsync(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
+        public async Task ExecuteNonQueryAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
-            await ExecuteScalarAsync<int>(sqlText, query, cancellationToken).ConfigureAwait(false);
+            await ExecuteScalarAsync<int>(query, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Executes a custom SQL statement defined by <paramref name="sqlText"/> with a return value of <typeparamref name="TScalar"/>.
-        /// </summary>
-        /// <param name="sqlText">The SQL text.</param>
-        /// <returns></returns>
-        public async Task<TScalar> ExecuteScalarAsync<TScalar>(string sqlText)
-        {            
-            return await ExecuteScalarAsync<TScalar>(sqlText, null).ConfigureAwait(false);            
-        }
-
-        /// <summary>
-        /// Executes a custom SQL statement defined by <paramref name="sqlText"/> with a return value of <typeparamref name="TScalar"/>. Parameters can be defined on <paramref name="query"/>.
-        /// </summary>
-        /// <param name="sqlText">The SQL text.</param>        
+        /// Executes a custom SQL statement defined on <paramref name="query"/> with a return value of <typeparamref name="TScalar"/>. 
+        /// </summary>        
         /// <param name="query"></param>
         /// <returns></returns>
-        public async Task<TScalar> ExecuteScalarAsync<TScalar>(string sqlText, DataQuery<T> query)
+        public async Task<TScalar> ExecuteScalarAsync<TScalar>(DataQuery<T> query)
         {
-            return await ExecuteScalarAsync<TScalar>(sqlText, query, CancellationToken.None).ConfigureAwait(false);
+            return await ExecuteScalarAsync<TScalar>(query, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Executes a custom SQL statement defined by <paramref name="sqlText"/> with a return value of <typeparamref name="TScalar"/>. Parameters can be defined on <paramref name="query"/>.
+        /// Executes a custom SQL statement defined on <paramref name="query"/> with a return value of <typeparamref name="TScalar"/>. 
         /// </summary>
-        /// <param name="sqlText">The SQL text.</param>        
         /// <param name="query"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<TScalar> ExecuteScalarAsync<TScalar>(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
+        public async Task<TScalar> ExecuteScalarAsync<TScalar>(DataQuery<T> query, CancellationToken cancellationToken)
         {
             //generate the sql statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, _map, query, sqlText);
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, _map, query);
 
             //execute and get response
             var statementResult = await ExecuteSqlStatementAsync<TScalar>(statement, cancellationToken).ConfigureAwait(false);
@@ -626,47 +545,33 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             return statementResult.SingleResult;
         }
 
-
         /// <summary>
-        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result.
+        /// Executes a custom SQL statement defined on <paramref name="query"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="query"/>.
         /// </summary>
-        /// <param name="sqlText"></param>        
+        /// <param name="query"></param>        
         /// <returns></returns>
-        public async Task<List<TResult>> ExecuteSetAsync<TResult>(string sqlText)
+        public async Task<List<TResult>> ExecuteSetAsync<TResult>(DataQuery<T> query)
         {
-            return await ExecuteSetAsync<TResult>(sqlText, null).ConfigureAwait(false);
+            return await ExecuteSetAsync<TResult>(query, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="query"/>.
-        /// </summary>
-        /// <param name="sqlText"></param>
-        /// <param name="query"></param>
-        
-        /// <returns></returns>
-        public async Task<List<TResult>> ExecuteSetAsync<TResult>(string sqlText, DataQuery<T> query)
-        {
-            return await ExecuteSetAsync<TResult>(sqlText, query, CancellationToken.None).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Executes a custom SQL statement defined by <paramref name="sqlText"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="query"/>.
+        /// Executes a custom SQL statement defined on <paramref name="query"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="query"/>.
         /// </summary>
         /// <param name="sqlText"></param>
         /// <param name="query"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<List<TResult>> ExecuteSetAsync<TResult>(string sqlText, DataQuery<T> query, CancellationToken cancellationToken)
+        public async Task<List<TResult>> ExecuteSetAsync<TResult>(DataQuery<T> query, CancellationToken cancellationToken)
         {
-            //generate statement
-            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, _map, query, sqlText);
+            // generate statement
+            var statement = SqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, _map, query);
 
-            //execute statement and map response
+            // execute statement and map response
             var result = await ExecuteSqlStatementAsync<TResult>(statement, cancellationToken).ConfigureAwait(false);
 
             return result.MultipleResults;
         }
-
 
         /// <summary>
         /// Inserts a collection of entities of <typeparamref name="T"/> using Sql Bulk Copy. The SqlDbType defined on the column attributes is ignored. Instead, the Sql Type is derived from the .NET type of the mapped properties.

@@ -164,26 +164,6 @@ namespace Sushi.MicroORM.Tests
             {
                 
             }
-            
-            
-        }
-
-        [TestMethod]
-        public async Task FetchAllInvalidMapAsync()
-        {
-            Assert.Fail("Needs to be implemented");
-            //var connector = new Connector<Order>(new Order.InvalidOrderMap());
-            //var request = connector.CreateQuery();
-            //try
-            //{
-            //    var orders = await connector.FetchAllAsync(request);
-            //    Assert.Fail();
-            //}
-            //catch (Exception ex)
-            //{
-            //    if (!ex.Message.Contains("no table"))
-            //        Assert.Fail();
-            //}
         }
 
         [TestMethod]
@@ -418,7 +398,7 @@ WHERE Product_Key > @productID";
         public async Task SaveExistingAsync()
         {
             //save the order
-            var order = _connectorOrders.FetchSingle(20);
+            var order = await _connectorOrders.FetchSingleAsync(20);
 
 
             string newComments = DateTime.UtcNow.ToString();
@@ -426,7 +406,7 @@ WHERE Product_Key > @productID";
             order.Comments = newComments;
             order.DeliveryTime = null;
             order.DeliveryTime2 = DateTime.UtcNow.TimeOfDay;
-            _connectorOrders.Save(order);
+            await _connectorOrders.SaveAsync(order);
 
             //retrieve order again from database
             order = await _connectorOrders.FetchSingleAsync(20);
@@ -436,7 +416,7 @@ WHERE Product_Key > @productID";
         }
 
         [TestMethod]
-        public void BulkInsertAutoIncrement()
+        public async Task BulkInsertAutoIncrement()
         {
             var ConnectorOrders = CreateConnector<Order>();
 
@@ -459,17 +439,17 @@ WHERE Product_Key > @productID";
                 orders.Add(order);
             }
 
-            ConnectorOrders.BulkInsert(orders);
+            await ConnectorOrders.BulkInsertAsync(orders);
 
             //retrieve orders
             var query = ConnectorOrders.CreateQuery();
             query.Add(x => x.Comments, uniqueID);
-            var retrievedOrders = ConnectorOrders.FetchAll(query);
+            var retrievedOrders = await ConnectorOrders.FetchAllAsync(query);
             Assert.AreEqual(numberOfRows, retrievedOrders.Count);
         }
 
         [TestMethod]
-        public void BulkInsertIdentityInsert()
+        public async Task BulkInsertIdentityInsert()
         {
             var identifiers = new List<Identifier>();
 
@@ -488,17 +468,17 @@ WHERE Product_Key > @productID";
             }
 
             var connector = CreateConnector<Identifier>();
-            connector.BulkInsert(identifiers, true);
+            await connector.BulkInsertAsync(identifiers, true);
 
             //retrieve 
             var query = connector.CreateQuery();
             query.Add(x => x.Batch, uniqueID);
-            var retrievedRows = connector.FetchAll(query);
+            var retrievedRows = await connector.FetchAllAsync(query);
             Assert.AreEqual(numberOfRows, retrievedRows.Count);
         }
 
         [TestMethod]
-        public void BulkInsertCompositeKey()
+        public async Task BulkInsertCompositeKey()
         {
             var rows = new List<CompositeKey>();
 
@@ -517,7 +497,7 @@ WHERE Product_Key > @productID";
             }
 
             var connector = CreateConnector<CompositeKey>();
-            connector.BulkInsert(rows);
+            await connector.BulkInsertAsync(rows);
         }
 
         [TestMethod]

@@ -38,12 +38,6 @@ namespace Sushi.MicroORM
         /// Gets or sets the <see cref="ComparisonOperator"/> used to compare <see cref="Column"/> and <see cref="Value"/>.
         /// </summary>
         public ComparisonOperator CompareType { get; set; }
-        /// <summary>
-        /// Gets or sets the logical operator used to combine this predicate with other predicates in the where clause.
-        /// </summary>
-        internal WhereConditionOperator ConnectType { get; set; }
-
-
 
         /// <summary>
         /// Initializes a new instance of <see cref="WhereCondition"/> using the specified SQL statement as predicate.
@@ -51,7 +45,7 @@ namespace Sushi.MicroORM
         /// <param name="sqlText">The SQL text.</param>
         public WhereCondition(string sqlText)
         {
-            this.SqlText = sqlText;
+            SqlText = sqlText;
         }                
 
         /// <summary>
@@ -60,24 +54,16 @@ namespace Sushi.MicroORM
         public WhereCondition(string column, SqlDbType type, object value, ComparisonOperator comparisonOperator)
             : this(column, type, value, 0, comparisonOperator) { }
 
-
         /// <summary>
         /// Initializes a new instance of <see cref="WhereCondition"/> where the predicate is built using the specified <paramref name="column"/> and <paramref name="value"/>.
         /// </summary>
         public WhereCondition(string column, SqlDbType type, object value, int length, ComparisonOperator comparisonOperator)
-            : this(column, type, value, length, comparisonOperator, WhereConditionOperator.And) { }
-
-        /// <summary>
-        /// Initializes a new instance of <see cref="WhereCondition"/> where the predicate is built using the specified <paramref name="column"/> and <paramref name="value"/>.
-        /// </summary>
-        public WhereCondition(string column, SqlDbType type, object value, int length, ComparisonOperator comparisonOperator, WhereConditionOperator connectType)
         {
             Column = column;
             SqlType = type;         
             Value = value;
             Length = length;
-            this.CompareType = comparisonOperator;
-            this.ConnectType = connectType;
+            CompareType = comparisonOperator;            
         }
     }
 }

@@ -181,55 +181,37 @@ END";
             }
             return statement;
         }
+        
         /// <summary>
-        /// Sets <see cref="SqlStatement{TMapped}.WhereClause"/> and <see cref="SqlStatement{TMapped}.Parameters"/> based on values supplied in <paramref name="filter"/>.
+        /// Sets <see cref="SqlStatement{TMapped}.WhereClause"/> and <see cref="SqlStatement{TMapped}.Parameters"/> based on values supplied in <paramref name="query"/>.
         /// </summary>        
+        /// <param name="sqlStament"></param>
         /// <param name="query"></param>
-        /// <param name="filter"></param>
         /// <returns></returns>
-        private SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> query, DataQuery<T> filter) where T: new()
+        private SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> sqlStament, DataQuery<T> query) where T: new()
         {
-            var whereClause = filter?.WhereClause;
-
             // get custom sql parameters from filter and add to result
-            if (filter?.SqlParameters != null)
+            if (query?.SqlParameters != null)
             {
-                foreach (var p in filter.SqlParameters)
+                foreach (var p in query.SqlParameters)
                 {
-                    query.Parameters.Add(new SqlStatementParameter(p.ParameterName, p.Value, p.SqlDbType, 0, p.TypeName));                    
+                    sqlStament.Parameters.Add(new SqlStatementParameter(p.ParameterName, p.Value, p.SqlDbType, 0, p.TypeName));                    
                 }
             }
 
-            if (whereClause == null || whereClause.Count == 0) return query;
-            
-            bool orGroupIsSet = false;
+            // if the query does not contain a where clause, we are done
+            if (query?.WhereClause?.Any() != true)
+            {
+                return sqlStament;
+            }
 
             var sb = new StringBuilder("WHERE ");
             // generate a sql text where predicate for each predicate in the filter's where clause
-            for (int i = 0; i < whereClause.Count; i++)
+            for (int i = 0; i < query.WhereClause.Count; i++)
             {
-                WhereCondition predicate = whereClause[i];
+                WhereCondition predicate = query.WhereClause[i];
 
                 string parameterName = $"@C{i}";
-
-                // add opening paranthesis to seperate predicates based on where condition operator
-                WhereCondition nextcolumn = null;
-
-                while (nextcolumn == null)
-                {
-                    if (whereClause.Count > i + 1)
-                    {
-                        nextcolumn = whereClause[i + 1];
-
-                        if (predicate.ConnectType == WhereConditionOperator.And && nextcolumn.ConnectType == WhereConditionOperator.Or)
-                        {
-                            orGroupIsSet = true;
-                            sb.Append('(');
-                        }
-                    }
-                    else
-                        break;
-                }
 
                 // if custom sql was provided for this predicate, add that to the where clause. otherwise, build the sql for the where clause
                 if (!string.IsNullOrWhiteSpace(predicate.SqlText))
@@ -249,7 +231,7 @@ END";
                             else
                             {
                                 sb.Append($"{predicate.Column} = {parameterName}");
-                                query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+                                sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
 
                             }
                             break;
@@ -262,12 +244,12 @@ END";
                             else
                             {
                                 sb.Append($"{predicate.Column} <> {parameterName}");
-                                query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+                                sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             }
                             break;
                         case ComparisonOperator.Like:
                             sb.Append($"{predicate.Column} LIKE {parameterName}");
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+                            sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.In:
                             if (predicate.Value is IEnumerable items)
@@ -281,7 +263,7 @@ END";
                                     {
                                         string inParam = $"{parameterName}_{j}";
 
-                                        query.Parameters.Add(new SqlStatementParameter(inParam, item, predicate.SqlType, predicate.Length));
+                                        sqlStament.Parameters.Add(new SqlStatementParameter(inParam, item, predicate.SqlType, predicate.Length));
                                         inParams.Add(inParam);
 
                                         j++;
@@ -301,51 +283,28 @@ END";
                             break;
                         case ComparisonOperator.GreaterThan:
                             sb.Append($"{predicate.Column} > {parameterName}");
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+                            sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.GreaterThanOrEquals:
                             sb.Append($"{predicate.Column} >= {parameterName}");
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+                            sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.LessThan:
                             sb.Append($"{predicate.Column} < {parameterName}");
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+                            sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.LessThanOrEquals:
                             sb.Append($"{predicate.Column} <= {parameterName}");
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+                            sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
-                    }
-                }
-
-                // add closing paranthesis to seperate predicates based on where condition operator
-                if (nextcolumn != null)
-                {
-                    if (nextcolumn.ConnectType == WhereConditionOperator.And)
-                    {
-                        if (orGroupIsSet)
-                        {
-                            orGroupIsSet = false;
-                            sb.Append(") AND ");
-                        }
-                        else
-                            sb.Append(" AND ");
-                    }
-                    else if (nextcolumn.ConnectType == WhereConditionOperator.Or || nextcolumn.ConnectType == WhereConditionOperator.OrUngrouped)
-                    {
-                        sb.Append(" OR ");
                     }
                 }
             }
 
-            // add last closing paranthesis
-            if (orGroupIsSet)
-                sb.Append(")");
-
-            // add where clause to query
-            query.WhereClause = sb.ToString();
+            // add plain text where clause to sql statement
+            sqlStament.WhereClause = sb.ToString();
             
-            return query;
+            return sqlStament;
         }
     }
 }

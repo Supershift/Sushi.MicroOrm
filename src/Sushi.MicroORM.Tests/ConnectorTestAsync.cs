@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Sushi.MicroORM.Mapping;
+using Sushi.MicroORM.Supporting;
 using Sushi.MicroORM.Tests.DAL;
 using System;
 using System.Collections.Generic;
@@ -636,7 +637,8 @@ WHERE Product_Key > @productID";
 
         private Connector<T> CreateConnector<T>() where T : new()
         {
-            return new Connector<T>(_connectionStringProvider, _dataMapProvider);
+            var executer = new SqlExecuter(new ResultMapper());
+            return new Connector<T>(_connectionStringProvider, _dataMapProvider, executer);
         }
     }
 }

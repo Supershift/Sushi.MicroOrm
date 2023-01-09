@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Sushi.MicroORM.Mapping;
+using Sushi.MicroORM.Supporting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +24,9 @@ namespace Sushi.MicroORM
             services.TryAddTransient(typeof(Connector<>));
 
             services.TryAddSingleton<DataMapProvider>();
+
+            services.TryAddTransient<SqlExecuter>();
+            services.TryAddTransient<ResultMapper>();
 
             var connectionStringProvider = new ConnectionStringProvider();
             connectionStringProvider.DefaultConnectionString = defaultConnectionString;

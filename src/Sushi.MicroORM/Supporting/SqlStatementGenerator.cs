@@ -51,56 +51,22 @@ namespace Sushi.MicroORM.Supporting
             switch (statementType)
             {
                 case DMLStatementType.Select:
-                    ApplySelectToStatement(result, map, query);                    
-                    AddWhereClauseToStatement(result, query);
+                    ApplySelectToStatement(result, map, query);                                        
                     break;
                 case DMLStatementType.Insert:
-                    ApplyInsertToStatement(result, map, entity, isIdentityInsert);                    
-                    AddWhereClauseToStatement(result, query);
+                    ApplyInsertToStatement(result, map, query, entity, isIdentityInsert);                                        
                     break;
                 case DMLStatementType.Update:
-                    result.DmlClause = $"UPDATE {map.TableName}";
-                    //generate the set clause for all columns that are not readonly, and add the parameter to the statement
-                    var columnsToUpdate = map.Items.Where(x => x.IsReadOnly == false && x.IsIdentity == false).ToList();
-                    var setClauseColumns = new List<string>();
-                    for(int i =0;i < columnsToUpdate.Count;i++)
-                    {
-                        var column = columnsToUpdate[i];
-                        string parameterName = $"@u{i}";
-                        var value = ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity);
-                        result.Parameters.Add(new SqlStatementParameter(parameterName, value, column.SqlType, column.Length));
-                        setClauseColumns.Add($"{column.Column} = {parameterName}");
-                    }
-                    result.UpdateSetClause = $"SET {string.Join(",", setClauseColumns)}";                    
-                    AddWhereClauseToStatement(result, query);
+                    ApplyUpdateToStatement(result, map, query, entity);                    
                     break;
                 case DMLStatementType.Delete:
-                    result.DmlClause = "DELETE ";                    
-                    AddWhereClauseToStatement(result, query);
+                    ApplyDeleteToStatement(result, query);
                     break;
                 case DMLStatementType.CustomQuery:                                        
                     AddWhereClauseToStatement(result, query);
                     break;
                 case DMLStatementType.InsertOrUpdate:
-                    //this generates two seperate statements which need to be merged into one statement which uses an IF EXIST / ELSE
-                    //generate insert
-                    var insertStatement = GenerateSqlStatment<TMapped>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, map, query, entity, isIdentityInsert);
-                    //generate update
-                    var updateStatement = GenerateSqlStatment<TMapped>(DMLStatementType.Update, SqlStatementResultCardinality.None, map, query, entity, isIdentityInsert);
-
-                    //generate custom insert or update statement
-                    result.CustomSqlStatement = $@"
-IF EXISTS(SELECT * FROM {map.TableName} {updateStatement.WhereClause})
-BEGIN
-{updateStatement.GenerateSqlStatement()}
-END
-ELSE
-BEGIN
-{insertStatement.GenerateSqlStatement()}
-END";
-                    //add the parameters from update and insert statements
-                    result.Parameters.AddRange(updateStatement.Parameters);
-                    result.Parameters.AddRange(insertStatement.Parameters);
+                    ApplyInsertOrUpdateToStatement(result, map, query, entity, isIdentityInsert);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -112,23 +78,78 @@ END";
             return result;
         }
 
+        private SqlStatement<T> ApplyDeleteToStatement<T>(SqlStatement<T> statement, DataQuery<T> query) where T : new()
+        {
+            statement.DmlClause = "DELETE ";
+            AddWhereClauseToStatement(statement, query);
+            return statement;
+        }
+
+        private SqlStatement<T> ApplyInsertOrUpdateToStatement<T>(SqlStatement<T> statement, DataMap<T> map, DataQuery<T> query, T entity, bool isIdentityInsert) where T : new()
+        {
+            // this generates two seperate statements which need to be merged into one statement which uses an IF EXIST / ELSE
+            // generate insert
+            var insertStatement = GenerateSqlStatment(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, map, query, entity, isIdentityInsert);
+            // generate update
+            var updateStatement = GenerateSqlStatment(DMLStatementType.Update, SqlStatementResultCardinality.None, map, query, entity, isIdentityInsert);
+
+            // generate custom insert or update statement
+            statement.CustomSqlStatement = $@"
+IF EXISTS(SELECT * FROM {map.TableName} {updateStatement.WhereClause})
+BEGIN
+{updateStatement.GenerateSqlStatement()}
+END
+ELSE
+BEGIN
+{insertStatement.GenerateSqlStatement()}
+END";
+            
+            // add the parameters from update and insert statements
+            statement.Parameters.AddRange(updateStatement.Parameters);
+            statement.Parameters.AddRange(insertStatement.Parameters);
+
+            return statement;
+        }
+
+        private SqlStatement<T> ApplyUpdateToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> query, T entity) where T : new()
+        {
+            statement.DmlClause = $"UPDATE {map.TableName}";
+            // generate the set clause for all columns that are not readonly, and add the parameter to the statement
+            var columnsToUpdate = map.Items.Where(x => x.IsReadOnly == false && x.IsIdentity == false).ToList();
+            var setClauseColumns = new List<string>();
+            for (int i = 0; i < columnsToUpdate.Count; i++)
+            {
+                var column = columnsToUpdate[i];
+                string parameterName = $"@u{i}";
+                var value = ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity);
+                statement.Parameters.Add(new SqlStatementParameter(parameterName, value, column.SqlType, column.Length));
+                setClauseColumns.Add($"{column.Column} = {parameterName}");
+            }
+            statement.UpdateSetClause = $"SET {string.Join(",", setClauseColumns)}";
+
+            // add where clause
+            AddWhereClauseToStatement(statement, query);
+
+            return statement;
+        }
+
         private SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> query) where T: new()
         {
-            //set opening statement
+            // set opening statement
             statement.DmlClause = "SELECT ";
             if (statement.ResultCardinality == SqlStatementResultCardinality.SingleRow)
                 statement.DmlClause += "TOP(1) ";
             else if (query?.MaxResults != null)
                 statement.DmlClause += $"TOP({query.MaxResults}) ";
 
-            //generate the column list, ie. MyColumn1, MyColumn2, MyColumn3 + MyColumn4 AS MyAlias
+            // generate the column list, ie. MyColumn1, MyColumn2, MyColumn3 + MyColumn4 AS MyAlias
             statement.DmlClause += string.Join(",", map.Items.Select(x => x.ColumnSelectListName));
 
-            //set order by from query
+            // set order by from query
             if (query != null)
                 statement.OrderByClause = query.OrderBy;
 
-            //add offset to order by if paging is supplied
+            // add offset to order by if paging is supplied
             if (query?.Paging != null && query?.Paging?.NumberOfRows > 0)
             {
                 statement.AddPagingRowCountStatement = true;
@@ -144,10 +165,14 @@ END";
                 }
                 statement.OrderByClause += $" OFFSET {query.Paging.PageIndex * query.Paging.NumberOfRows} ROWS FETCH NEXT {query.Paging.NumberOfRows} ROWS ONLY";
             }
+
+            // add where clause
+            AddWhereClauseToStatement(statement, query);
+
             return statement;
         }
 
-        private SqlStatement<T> ApplyInsertToStatement<T>(SqlStatement<T> statement, DataMap<T> map, T entity, bool isIdentityInsert) where T : new()
+        private SqlStatement<T> ApplyInsertToStatement<T>(SqlStatement<T> statement, DataMap<T> map, DataQuery<T> query, T entity, bool isIdentityInsert) where T : new()
         {
             //generate opening statement
             statement.DmlClause = $"INSERT";
@@ -179,6 +204,10 @@ END";
                         statement.OutputClause = $"OUTPUT inserted.{identityColumn.Column}";
                 }
             }
+
+            // add where clause
+            AddWhereClauseToStatement(statement, query);
+
             return statement;
         }
         
@@ -298,6 +327,12 @@ END";
                             sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                     }
+                }
+
+                // add 'AND' if this is not the last condition
+                if(i + 1 < query.WhereClause.Count)
+                {
+                    sb.Append(" AND ");
                 }
             }
 

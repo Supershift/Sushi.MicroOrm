@@ -9,14 +9,14 @@ using System.Threading.Tasks;
 namespace Sushi.MicroORM.Supporting
 {
     /// <summary>
-    /// Provides methods to map the results from a <see cref="SqlDataReader"/> to objects, based on <see cref="DataMap"/>.
+    /// Provides methods to read results from a <see cref="SqlDataReader"/> to objects, based on <see cref="DataMap"/>.
     /// </summary>
-    public static class ResultMapperAsync
+    public class ResultMapper
     {
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="T"/> using the provided <paramref name="map"/>.
         /// </summary>                  
-        public static async Task<T> MapToSingleResultAsync<T>(SqlDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new() 
+        public async Task<T> MapToSingleResultAsync<T>(SqlDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new() 
         {
             T result;
             // read the first row from the result
@@ -39,7 +39,7 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="TResult"/>
         /// </summary>                  
-        public static async Task<TResult> MapToSingleResultScalarAsync<TResult>(SqlDataReader reader, CancellationToken cancellationToken) 
+        public async Task<TResult> MapToSingleResultScalarAsync<TResult>(SqlDataReader reader, CancellationToken cancellationToken) 
         {
             //read the first row from the result
             bool recordFound = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
@@ -60,7 +60,7 @@ namespace Sushi.MicroORM.Supporting
         /// If <paramref name="reader"/> contains a second resultset, it is expected to contain a scalar value that will be used to set <see cref="PagingData.NumberOfRows"/>.
         /// </summary>
         /// <typeparam name="T"></typeparam>             
-        public static async Task<QueryListResult<T>> MapToMultipleResultsAsync<T>(SqlDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new()
+        public async Task<QueryListResult<T>> MapToMultipleResultsAsync<T>(SqlDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new()
         {
             var result = new QueryListResult<T>();
             //read all rows from the first resultset
@@ -77,7 +77,7 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Converts the first column of all rows found in <paramref name="reader"/> to an object of type <typeparamref name="TResult"/>
         /// </summary>                  
-        public static async Task<QueryListResult<TResult>> MapToMultipleResultsScalarAsync<TResult>(SqlDataReader reader, CancellationToken cancellationToken)
+        public async Task<QueryListResult<TResult>> MapToMultipleResultsScalarAsync<TResult>(SqlDataReader reader, CancellationToken cancellationToken)
         {
             var result = new QueryListResult<TResult>();
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
@@ -94,7 +94,7 @@ namespace Sushi.MicroORM.Supporting
             return result;
         }
 
-        private static TResult SetResultValuesToObject<T, TResult>(SqlDataReader reader, DataMap<T> map, TResult instance) where T : new() where TResult : new()
+        private TResult SetResultValuesToObject<T, TResult>(SqlDataReader reader, DataMap<T> map, TResult instance) where T : new() where TResult : new()
         {
             //for each mapped member on the instance, go through the result set and find a column with the expected name
             foreach (var item in map.Items)

@@ -19,13 +19,14 @@ namespace Sushi.MicroORM.Supporting
     public class SqlExecutor
     {   
         private string _parameterlist;
+        private readonly ResultMapper _resultMapper;
 
         /// <summary>
         /// Creates a new instance of <see cref="SqlExecutor"/>.
         /// </summary>
-        public SqlExecutor()
+        public SqlExecutor(ResultMapper resultMapper)
         {
-
+            _resultMapper = resultMapper;
         }
 
         /// <summary>
@@ -111,13 +112,13 @@ namespace Sushi.MicroORM.Supporting
                             // if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
                             if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
                             {
-                                var singleResult = await ResultMapperAsync.MapToSingleResultAsync(reader, map, cancellationToken).ConfigureAwait(false);
+                                var singleResult = await _resultMapper.MapToSingleResultAsync(reader, map, cancellationToken).ConfigureAwait(false);
                                 result = new SqlStatementResult<TResult>((TResult)(object)singleResult);
                             }
                             else
                             {
                                 // create a single (scalar) result
-                                var scalarResult = await ResultMapperAsync.MapToSingleResultScalarAsync<TResult>(reader, cancellationToken).ConfigureAwait(false);
+                                var scalarResult = await _resultMapper.MapToSingleResultScalarAsync<TResult>(reader, cancellationToken).ConfigureAwait(false);
                                 result = new SqlStatementResult<TResult>(scalarResult);
                             }
                             break;
@@ -129,7 +130,7 @@ namespace Sushi.MicroORM.Supporting
                             if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
                             {
                                 // map the contents of the reader to a result
-                                var multipleResults = await ResultMapperAsync.MapToMultipleResultsAsync(reader, map, cancellationToken).ConfigureAwait(false);
+                                var multipleResults = await _resultMapper.MapToMultipleResultsAsync(reader, map, cancellationToken).ConfigureAwait(false);
                                 // cast to TResult
                                 var castedResults = new QueryListResult<TResult>();
                                 foreach (var singleResult in multipleResults)
@@ -142,20 +143,20 @@ namespace Sushi.MicroORM.Supporting
 
                                 if (reader.NextResult())
                                 {
-                                    numberOfRows = await ResultMapperAsync.MapToSingleResultScalarAsync<int?>(reader, cancellationToken).ConfigureAwait(false);
+                                    numberOfRows = await _resultMapper.MapToSingleResultScalarAsync<int?>(reader, cancellationToken).ConfigureAwait(false);
                                 }
 
                                 result = new SqlStatementResult<TResult>(castedResults, numberOfRows);
                             }
                             else
                             {
-                                var multipleResults = await ResultMapperAsync.MapToMultipleResultsScalarAsync<TResult>(reader, cancellationToken).ConfigureAwait(false);
+                                var multipleResults = await _resultMapper.MapToMultipleResultsScalarAsync<TResult>(reader, cancellationToken).ConfigureAwait(false);
                                 // check if there is a 2nd result set with total number of rows for paging
                                 int? numberOfRows = null;
 
                                 if (reader.NextResult())
                                 {
-                                    numberOfRows = await ResultMapperAsync.MapToSingleResultScalarAsync<int?>(reader, cancellationToken).ConfigureAwait(false);
+                                    numberOfRows = await _resultMapper.MapToSingleResultScalarAsync<int?>(reader, cancellationToken).ConfigureAwait(false);
                                 }
 
                                 result = new SqlStatementResult<TResult>(multipleResults, numberOfRows);

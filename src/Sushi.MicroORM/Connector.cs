@@ -76,7 +76,7 @@ namespace Sushi.MicroORM
         /// <returns></returns>
         public virtual async Task<SqlStatementResult<TResult>> ExecuteSqlStatementAsync<TResult>(SqlStatement<T> statement, CancellationToken cancellationToken)
         {   
-            var sqlExecutor = new SqlExecutor();
+            var sqlExecutor = new SqlExecutor(new ResultMapper());
             var result = await sqlExecutor.ExecuteAsync<T, TResult>(statement, ConnectionString, CommandTimeout, _map, cancellationToken);
             return result;
         }
@@ -221,12 +221,10 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
         internal void ApplyIdentityColumnToEntity(T entity, int identityValue)
         {
-            
-                var identityColumn = _map.Items.FirstOrDefault(x => x.IsIdentity);            
-                if (identityValue > 0 && identityColumn != null)
-                    ReflectionHelper.SetMemberValue(identityColumn.MemberInfoTree, identityValue, entity);
-            
-        }   
+            var identityColumn = _map.Items.FirstOrDefault(x => x.IsIdentity);
+            if (identityValue > 0 && identityColumn != null)
+                ReflectionHelper.SetMemberValue(identityColumn.MemberInfoTree, identityValue, entity);
+        }
 
         /// <summary>
         /// Inserts a new record for <typeparamref name="T"/> in the database if no record exists for the same primary key. Else the existing record is updated.

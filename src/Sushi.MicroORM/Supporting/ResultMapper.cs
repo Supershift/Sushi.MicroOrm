@@ -2,6 +2,8 @@
 using Sushi.MicroORM.Mapping;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,14 +11,14 @@ using System.Threading.Tasks;
 namespace Sushi.MicroORM.Supporting
 {
     /// <summary>
-    /// Provides methods to read results from a <see cref="SqlDataReader"/> to objects, based on <see cref="DataMap"/>.
+    /// Provides methods to read results from a <see cref="DbDataReader"/> to objects, based on <see cref="DataMap"/>.
     /// </summary>
     public class ResultMapper
     {
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="T"/> using the provided <paramref name="map"/>.
         /// </summary>                  
-        public async Task<T> MapToSingleResultAsync<T>(SqlDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new() 
+        public async Task<T> MapToSingleResultAsync<T>(DbDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new() 
         {
             T result;
             // read the first row from the result
@@ -39,7 +41,7 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="TResult"/>
         /// </summary>                  
-        public async Task<TResult> MapToSingleResultScalarAsync<TResult>(SqlDataReader reader, CancellationToken cancellationToken) 
+        public async Task<TResult> MapToSingleResultScalarAsync<TResult>(DbDataReader reader, CancellationToken cancellationToken) 
         {
             //read the first row from the result
             bool recordFound = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
@@ -60,7 +62,7 @@ namespace Sushi.MicroORM.Supporting
         /// If <paramref name="reader"/> contains a second resultset, it is expected to contain a scalar value that will be used to set <see cref="PagingData.NumberOfRows"/>.
         /// </summary>
         /// <typeparam name="T"></typeparam>             
-        public async Task<QueryListResult<T>> MapToMultipleResultsAsync<T>(SqlDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new()
+        public async Task<QueryListResult<T>> MapToMultipleResultsAsync<T>(DbDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new()
         {
             var result = new QueryListResult<T>();
             //read all rows from the first resultset
@@ -77,7 +79,7 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Converts the first column of all rows found in <paramref name="reader"/> to an object of type <typeparamref name="TResult"/>
         /// </summary>                  
-        public async Task<QueryListResult<TResult>> MapToMultipleResultsScalarAsync<TResult>(SqlDataReader reader, CancellationToken cancellationToken)
+        public async Task<QueryListResult<TResult>> MapToMultipleResultsScalarAsync<TResult>(DbDataReader reader, CancellationToken cancellationToken)
         {
             var result = new QueryListResult<TResult>();
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
@@ -94,29 +96,32 @@ namespace Sushi.MicroORM.Supporting
             return result;
         }
 
-        private TResult SetResultValuesToObject<T, TResult>(SqlDataReader reader, DataMap<T> map, TResult instance) where T : new() where TResult : new()
+        internal void SetResultValuesToObject<T, TResult>(IDataRecord reader, DataMap<T> map, TResult instance) where T : new() where TResult : new()
         {
-            //for each mapped member on the instance, go through the result set and find a column with the expected name
-            foreach (var item in map.Items)
+            // for each mapped member on the instance, go through the result set and find a column with the expected name
+            for (int i = 0; i < map.Items.Count; i++)
             {
-                for (int column = 0; column < reader.FieldCount; column++)
+                var item = map.Items[i];
+
+                // which name is expected in the result set by the mapped item
+                string mappedName = item.Column;
+                if (!string.IsNullOrWhiteSpace(item.Alias))
+                    mappedName = item.Alias;
+
+                // find a column matching the mapped name
+                for (int columnIndex = 0; columnIndex < reader.FieldCount; columnIndex++)
                 {
-                    //get the name of the column as returned by the database
-                    var columnName = reader.GetName(column);
-                    //which name is expected in the result set by the mapped item
-                    string mappedName = item.Column;
-                    if (!string.IsNullOrWhiteSpace(item.Alias))
-                        mappedName = item.Alias;
+                    // get the name of the column as returned by the database
+                    var columnName = reader.GetName(columnIndex);
 
                     if (mappedName.Equals(columnName, StringComparison.CurrentCultureIgnoreCase))
                     {
-                        var value = reader.GetValue(column);
+                        var value = reader.GetValue(columnIndex);
                         ReflectionHelper.SetMemberValue(item.MemberInfoTree, value, instance);
                         break;
                     }
                 }
             }
-            return instance;
         }
     }
 }

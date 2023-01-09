@@ -19,7 +19,7 @@ namespace Sushi.MicroORM
         /// Adds a default implementation for the <see cref="Connector{T}"/> service.
         /// </summary>        
         /// <returns></returns>
-        public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString) 
+        public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString, Action<MicroOrmConfigurationBuilder> config = null) 
         {   
             services.TryAddTransient(typeof(Connector<>));
 
@@ -31,7 +31,26 @@ namespace Sushi.MicroORM
             var connectionStringProvider = new ConnectionStringProvider();
             connectionStringProvider.DefaultConnectionString = defaultConnectionString;
             services.TryAddSingleton(connectionStringProvider);
+
+            // perform configuration action for caller
+            if(config != null)
+            {
+                var builder = new MicroOrmConfigurationBuilder(connectionStringProvider);
+
+                config(builder);
+            }
+
             return services;
         }
+    }
+
+    public class MicroOrmConfigurationBuilder
+    {
+        public MicroOrmConfigurationBuilder(ConnectionStringProvider connectionStringProvider)
+        {
+            ConnectionStringProvider = connectionStringProvider;
+        }
+
+        public ConnectionStringProvider ConnectionStringProvider { get; private set; } 
     }
 }

@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Sushi.MicroORM.Mapping;
 using Sushi.MicroORM.Supporting;
@@ -17,9 +19,8 @@ namespace Sushi.MicroORM.Tests
     public class ConnectorTestAsync
     {
         private readonly Connector<Order> _connectorOrders;
-        private readonly Connector<Product> _connectorProducts;
-        private readonly ConnectionStringProvider _connectionStringProvider = new ConnectionStringProvider();
-        private readonly DataMapProvider _dataMapProvider= new DataMapProvider();
+        private readonly Connector<Product> _connectorProducts;                
+        private readonly ServiceProvider _serviceProvider;
 
         public ConnectorTestAsync()
         {
@@ -28,16 +29,25 @@ namespace Sushi.MicroORM.Tests
             .AddEnvironmentVariables()
             .Build();
 
-
+            // get connection strings
             string connectionString = configuration.GetConnectionString("TestDatabase");
-            _connectionStringProvider.DefaultConnectionString = connectionString;
-
             var connectionString2 = configuration.GetConnectionString("Customers");
-            _connectionStringProvider.AddMappedConnectionString("Sushi.MicroORM.Tests.DAL.Customers", connectionString2);
-
             var connectionString3 = configuration.GetConnectionString("Addresses");
-            _connectionStringProvider.AddMappedConnectionString(typeof(DAL.Customers.Address), connectionString3);
 
+            // register dependencies
+            IServiceCollection serviceCollection = new ServiceCollection();
+
+            // add micro orm
+            serviceCollection.AddMicroORM(connectionString, c =>
+            {
+                c.ConnectionStringProvider.AddMappedConnectionString("Sushi.MicroORM.Tests.DAL.Customers", connectionString2);
+                c.ConnectionStringProvider.AddMappedConnectionString(typeof(DAL.Customers.Address), connectionString3);
+            });
+
+            // build provider
+            _serviceProvider = serviceCollection.BuildServiceProvider();
+
+            // create default connector
             _connectorOrders = CreateConnector<Order>();
             _connectorProducts = CreateConnector<Product>();
         }
@@ -637,8 +647,7 @@ WHERE Product_Key > @productID";
 
         private Connector<T> CreateConnector<T>() where T : new()
         {
-            var executer = new SqlExecuter(new ResultMapper());
-            return new Connector<T>(_connectionStringProvider, _dataMapProvider, executer);
+            return _serviceProvider.GetRequiredService<Connector<T>>();
         }
     }
 }

@@ -112,24 +112,24 @@ END";
             return result;
         }
 
-        private SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> filter) where T: new()
+        private SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> query) where T: new()
         {
             //set opening statement
             statement.DmlClause = "SELECT ";
             if (statement.ResultCardinality == SqlStatementResultCardinality.SingleRow)
                 statement.DmlClause += "TOP(1) ";
-            else if (filter?.MaxResults != null)
-                statement.DmlClause += $"TOP({filter.MaxResults}) ";
+            else if (query?.MaxResults != null)
+                statement.DmlClause += $"TOP({query.MaxResults}) ";
 
             //generate the column list, ie. MyColumn1, MyColumn2, MyColumn3 + MyColumn4 AS MyAlias
             statement.DmlClause += string.Join(",", map.Items.Select(x => x.ColumnSelectListName));
 
-            //set order by from filter
-            if (filter != null)
-                statement.OrderByClause = filter.OrderBy;
+            //set order by from query
+            if (query != null)
+                statement.OrderByClause = query.OrderBy;
 
             //add offset to order by if paging is supplied
-            if (filter?.Paging != null && filter?.Paging?.NumberOfRows > 0)
+            if (query?.Paging != null && query?.Paging?.NumberOfRows > 0)
             {
                 statement.AddPagingRowCountStatement = true;
 
@@ -142,7 +142,7 @@ END";
                     else
                         throw new Exception("Cannot apply paging to an unordered SQL SELECT statement. Add an order by clause or map a primary key.");
                 }
-                statement.OrderByClause += $" OFFSET {filter.Paging.PageIndex * filter.Paging.NumberOfRows} ROWS FETCH NEXT {filter.Paging.NumberOfRows} ROWS ONLY";
+                statement.OrderByClause += $" OFFSET {query.Paging.PageIndex * query.Paging.NumberOfRows} ROWS FETCH NEXT {query.Paging.NumberOfRows} ROWS ONLY";
             }
             return statement;
         }
@@ -190,7 +190,7 @@ END";
         /// <returns></returns>
         private SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> sqlStament, DataQuery<T> query) where T: new()
         {
-            // get custom sql parameters from filter and add to result
+            // get custom sql parameters from query and add to result
             if (query?.SqlParameters != null)
             {
                 foreach (var p in query.SqlParameters)
@@ -206,7 +206,7 @@ END";
             }
 
             var sb = new StringBuilder("WHERE ");
-            // generate a sql text where predicate for each predicate in the filter's where clause
+            // generate a sql text where predicate for each predicate in the query's where clause
             for (int i = 0; i < query.WhereClause.Count; i++)
             {
                 WhereCondition predicate = query.WhereClause[i];

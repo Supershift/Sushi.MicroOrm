@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.PortableExecutable;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -74,97 +75,9 @@ namespace Sushi.MicroORM
         /// </summary>        
         /// <returns></returns>
         public virtual async Task<SqlStatementResult<TResult>> ExecuteSqlStatementAsync<TResult>(SqlStatement<T> statement, CancellationToken cancellationToken)
-        {
-            SqlStatementResult<TResult> result;
-            //perform a callback here?
-            using (var sqlCommander = new SqlCommander(ConnectionString, CommandTimeout))
-            {
-                //apply sql statement to sql commander
-                sqlCommander.SqlText = statement.GenerateSqlStatement();
-
-                //add parameters
-                foreach (var parameter in statement.Parameters)
-                    sqlCommander.SetParameterInput(parameter.Name, parameter.Value, parameter.Type, parameter.Length, parameter.TypeName);
-
-                //execute the statement
-                SqlDataReader reader = null;
-
-                try
-                {
-                    switch (statement.ResultCardinality)
-                    {
-                        case SqlStatementResultCardinality.SingleRow:
-                            //execute the command, which will return a reader
-                            reader = await sqlCommander.ExecReaderAsync(cancellationToken).ConfigureAwait(false);
-                            //if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
-                            if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
-                            {
-                                var singleResult = await ResultMapperAsync.MapToSingleResultAsync(reader, _map, cancellationToken).ConfigureAwait(false);
-                                result = new SqlStatementResult<TResult>((TResult)(object)singleResult);
-                            }
-                            else
-                            {
-                                //create a single (scalar) result
-                                var scalarResult = await ResultMapperAsync.MapToSingleResultScalarAsync<TResult>(reader, cancellationToken).ConfigureAwait(false);
-                                result = new SqlStatementResult<TResult>(scalarResult);
-                            }
-                            break;
-                        case SqlStatementResultCardinality.MultipleRows:
-                            //execute the command, which will return a reader
-                            reader = await sqlCommander.ExecReaderAsync(cancellationToken).ConfigureAwait(false);
-                            
-                            //if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
-                            if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
-                            {
-                                //map the contents of the reader to a result
-                                var multipleResults = await ResultMapperAsync.MapToMultipleResultsAsync(reader, _map, cancellationToken).ConfigureAwait(false);
-                                //cast to TResult
-                                var castedResults = new QueryListResult<TResult>();
-                                foreach(var singleResult in multipleResults)
-                                {
-                                    castedResults.Add((TResult)(object)singleResult);
-                                }   
-
-                                //check if there is a 2nd result set with total number of rows for paging
-                                int? numberOfRows = null;
-
-                                if (reader.NextResult())
-                                {
-                                    numberOfRows = await ResultMapperAsync.MapToSingleResultScalarAsync<int?>(reader, cancellationToken).ConfigureAwait(false);
-                                }
-
-                                result = new SqlStatementResult<TResult>(castedResults, numberOfRows);
-                            }
-                            else
-                            {
-                                var multipleResults = await ResultMapperAsync.MapToMultipleResultsScalarAsync<TResult>(reader, cancellationToken).ConfigureAwait(false);
-                                //check if there is a 2nd result set with total number of rows for paging
-                                int? numberOfRows = null;
-
-                                if (reader.NextResult())
-                                {
-                                    numberOfRows = await ResultMapperAsync.MapToSingleResultScalarAsync<int?>(reader, cancellationToken).ConfigureAwait(false);
-                                }
-
-                                result = new SqlStatementResult<TResult>(multipleResults, numberOfRows);
-                            }
-                            break;
-                        case SqlStatementResultCardinality.None:
-                            //execute the command
-                            await sqlCommander.ExecNonQueryAsync(cancellationToken).ConfigureAwait(false);
-                            result = new SqlStatementResult<TResult>();
-                            break;
-                        default:
-                            throw new NotImplementedException();
-                    }
-                }
-                finally
-                {
-                    if (reader != null)
-                        reader.Close();
-                }
-            }
-            //perform a callback here?
+        {   
+            var sqlExecutor = new SqlExecutor();
+            var result = await sqlExecutor.ExecuteAsync<T, TResult>(statement, ConnectionString, CommandTimeout, _map, cancellationToken);
             return result;
         }
 

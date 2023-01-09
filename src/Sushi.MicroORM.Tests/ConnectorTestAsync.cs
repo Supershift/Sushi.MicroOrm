@@ -154,8 +154,6 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchAllByDateOnly()
         {
-            int maxResults = 2;
-
             var connector = CreateConnector<Order>();
             var query = connector.CreateQuery();
             query.Add(x => x.DeliveryDate, new DateOnly(2000, 1, 1), ComparisonOperator.GreaterThanOrEquals);
@@ -225,8 +223,7 @@ namespace Sushi.MicroORM.Tests
             Console.WriteLine("Total number of rows: " + orders.TotalNumberOfRows);
             Console.WriteLine("Total number of pages: " + orders.TotalNumberOfPages);
 
-            Assert.IsTrue(orders.Count == request.Paging.NumberOfRows);
-            Assert.IsTrue(request.Paging.TotalNumberOfRows.HasValue);
+            Assert.IsTrue(orders.Count == request.Paging.NumberOfRows);            
             Assert.IsTrue(orders.TotalNumberOfPages.HasValue);
             Assert.IsTrue(orders.TotalNumberOfRows.HasValue);
         }

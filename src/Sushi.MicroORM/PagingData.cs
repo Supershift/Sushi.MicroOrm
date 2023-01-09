@@ -38,12 +38,6 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Zero based page index, used as offset.
         /// </summary>
-        public int PageIndex { get; set; }
-        
-        /// <summary>
-        /// After a query is performed the total number of rows for the supplied where clause is set here.
-        /// </summary>
-        [Obsolete("Use QueryListResult.TotalNumberOfRows instead")]
-        public int? TotalNumberOfRows { get; set; }        
+        public int PageIndex { get; set; }        
     }
 }

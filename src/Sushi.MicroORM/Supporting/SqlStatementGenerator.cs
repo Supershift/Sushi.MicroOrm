@@ -11,7 +11,7 @@ namespace Sushi.MicroORM.Supporting
     /// <summary>
     /// Provides methods to generate instance of <see cref="SqlStatement{TMapped}"/>.
     /// </summary>
-    public static class SqlStatementGenerator
+    public class SqlStatementGenerator
     {
         /// <summary>
         /// Generates an instance of <see cref="SqlStatement{TMapped}"/>.
@@ -20,10 +20,9 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="statementType"></param>
         /// <param name="resultType"></param>
         /// <param name="map"></param>
-        /// <param name="query"></param>
-        /// <param name="customQuery"></param>
+        /// <param name="query"></param>        
         /// <returns></returns>
-        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query) where TMapped : new()
+        public SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query) where TMapped : new()
         {
             return GenerateSqlStatment(statementType, resultType, map, query, default, false);
         }
@@ -35,12 +34,11 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="statementType"></param>
         /// <param name="resultType"></param>
         /// <param name="map"></param>
-        /// <param name="query"></param>
-        /// <param name="customQuery"></param>
+        /// <param name="query"></param>        
         /// <param name="entity"></param>
         /// <param name="isIdentityInsert"></param>
         /// <returns></returns>
-        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query, 
+        public SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query, 
             TMapped entity, bool isIdentityInsert) where TMapped: new()
         {
             //validate if the supplied mapping has everything needed to generate queries
@@ -114,7 +112,7 @@ END";
             return result;
         }
 
-        private static SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> filter) where T: new()
+        private SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> filter) where T: new()
         {
             //set opening statement
             statement.DmlClause = "SELECT ";
@@ -149,7 +147,7 @@ END";
             return statement;
         }
 
-        private static SqlStatement<T> ApplyInsertToStatement<T>(SqlStatement<T> statement, DataMap<T> map, T entity, bool isIdentityInsert) where T : new()
+        private SqlStatement<T> ApplyInsertToStatement<T>(SqlStatement<T> statement, DataMap<T> map, T entity, bool isIdentityInsert) where T : new()
         {
             //generate opening statement
             statement.DmlClause = $"INSERT";
@@ -189,11 +187,11 @@ END";
         /// <param name="query"></param>
         /// <param name="filter"></param>
         /// <returns></returns>
-        private static SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> query, DataQuery<T> filter) where T: new()
+        private SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> query, DataQuery<T> filter) where T: new()
         {
             var whereClause = filter?.WhereClause;
 
-            //get custom sql parameters from filter and add to result
+            // get custom sql parameters from filter and add to result
             if (filter?.SqlParameters != null)
             {
                 foreach (var p in filter.SqlParameters)
@@ -207,14 +205,14 @@ END";
             bool orGroupIsSet = false;
 
             var sb = new StringBuilder("WHERE ");
-            //generate a sql text where predicate for each predicate in the filter's where clause
-            for(int i=0;i<whereClause.Count; i++) 
+            // generate a sql text where predicate for each predicate in the filter's where clause
+            for (int i = 0; i < whereClause.Count; i++)
             {
                 WhereCondition predicate = whereClause[i];
 
                 string parameterName = $"@C{i}";
 
-                //add opening paranthesis to seperate predicates based on where condition operator
+                // add opening paranthesis to seperate predicates based on where condition operator
                 WhereCondition nextcolumn = null;
 
                 while (nextcolumn == null)
@@ -233,7 +231,7 @@ END";
                         break;
                 }
 
-                //if custom sql was provided for this predicate, add that to the where clause. otherwise, build the sql for the where clause
+                // if custom sql was provided for this predicate, add that to the where clause. otherwise, build the sql for the where clause
                 if (!string.IsNullOrWhiteSpace(predicate.SqlText))
                 {
                     sb.Append(predicate.SqlText);
@@ -243,7 +241,7 @@ END";
                     switch (predicate.CompareType)
                     {
                         case ComparisonOperator.Equals:
-                            //if we need to compare to a NULL value, use an 'IS NULL' predicate
+                            // if we need to compare to a NULL value, use an 'IS NULL' predicate
                             if (predicate.Value == null)
                             {
                                 sb.Append($"{predicate.Column} IS NULL");
@@ -252,11 +250,11 @@ END";
                             {
                                 sb.Append($"{predicate.Column} = {parameterName}");
                                 query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
-                                
+
                             }
                             break;
                         case ComparisonOperator.NotEqualTo:
-                            //if we need to compare to a NULL value, use an 'IS NOT NULL' predicate
+                            // if we need to compare to a NULL value, use an 'IS NOT NULL' predicate
                             if (predicate.Value == null)
                             {
                                 sb.Append($"{predicate.Column} IS NOT NULL");
@@ -268,13 +266,13 @@ END";
                             }
                             break;
                         case ComparisonOperator.Like:
-                            sb.Append($"{predicate.Column} LIKE {parameterName}");                            
+                            sb.Append($"{predicate.Column} LIKE {parameterName}");
                             query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.In:
                             if (predicate.Value is IEnumerable items)
                             {
-                                //create a unique parameter for each item in the 'IN' predicate
+                                // create a unique parameter for each item in the 'IN' predicate
                                 var inParams = new List<string>();
                                 int j = 0;
                                 if (items != null)
@@ -289,8 +287,8 @@ END";
                                         j++;
                                     }
                                 }
-                                //if there are items in the collection, add a predicate to the where in clause. 
-                                //if not, add a predicate that always evaluates to false, because no row will match the empty values
+                                // if there are items in the collection, add a predicate to the where in clause. 
+                                // if not, add a predicate that always evaluates to false, because no row will match the empty values
                                 if (inParams.Count > 0)
                                     sb.Append($"{predicate.Column} IN ({string.Join(",", inParams)})");
                                 else
@@ -302,25 +300,25 @@ END";
                             }
                             break;
                         case ComparisonOperator.GreaterThan:
-                            sb.Append($"{predicate.Column} > {parameterName}");                            
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                                
+                            sb.Append($"{predicate.Column} > {parameterName}");
+                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.GreaterThanOrEquals:
-                            sb.Append($"{predicate.Column} >= {parameterName}");                            
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                                
+                            sb.Append($"{predicate.Column} >= {parameterName}");
+                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.LessThan:
-                            sb.Append($"{predicate.Column} < {parameterName}");                            
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                            
+                            sb.Append($"{predicate.Column} < {parameterName}");
+                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.LessThanOrEquals:
                             sb.Append($"{predicate.Column} <= {parameterName}");
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                                
+                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                     }
                 }
 
-                //add closing paranthesis to seperate predicates based on where condition operator
+                // add closing paranthesis to seperate predicates based on where condition operator
                 if (nextcolumn != null)
                 {
                     if (nextcolumn.ConnectType == WhereConditionOperator.And)
@@ -337,14 +335,14 @@ END";
                     {
                         sb.Append(" OR ");
                     }
-                }                
+                }
             }
 
-            //add last closing paranthesis
+            // add last closing paranthesis
             if (orGroupIsSet)
                 sb.Append(")");
 
-            //add where clause to query
+            // add where clause to query
             query.WhereClause = sb.ToString();
             
             return query;

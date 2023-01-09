@@ -68,7 +68,7 @@ namespace Sushi.MicroORM.Supporting
         }
 
         /// <summary>
-        /// Executes the <see cref="_command"/> and returns a <see cref="SqlDataReader"/> to read the result set.
+        /// Executes the <paramref name="sqlStatement"/> and adds the result to a <see cref="SqlStatementResult{TResult}"/>.
         /// </summary>        
         public async Task<SqlStatementResult<TResult>> ExecuteAsync<T, TResult>(SqlStatement<T> sqlStatement, string connectionString, int? commandTimeout, 
             DataMap<T> map, CancellationToken cancellationToken) where T : new()
@@ -234,11 +234,6 @@ namespace Sushi.MicroORM.Supporting
         //            }
         //        }
 
-        /// <summary>
-        /// Gets the error text.
-        /// </summary>
-        /// <param name="error">The error.</param>
-        /// <returns></returns>
         private string GetErrorText(string query, string error)
         {
             return string.Format("Error while executing<br/>{0}<br/>{1}<br/><br/><b>{2}</b>",

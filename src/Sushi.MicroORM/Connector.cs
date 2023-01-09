@@ -76,8 +76,8 @@ namespace Sushi.MicroORM
         /// <returns></returns>
         public virtual async Task<SqlStatementResult<TResult>> ExecuteSqlStatementAsync<TResult>(SqlStatement<T> statement, CancellationToken cancellationToken)
         {   
-            var sqlExecutor = new SqlExecutor(new ResultMapper());
-            var result = await sqlExecutor.ExecuteAsync<T, TResult>(statement, ConnectionString, CommandTimeout, _map, cancellationToken);
+            var sqlExecuter = new SqlExecuter(new ResultMapper());
+            var result = await sqlExecuter.ExecuteAsync<T, TResult>(statement, ConnectionString, CommandTimeout, _map, cancellationToken);
             return result;
         }
 

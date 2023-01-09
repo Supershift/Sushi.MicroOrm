@@ -16,15 +16,15 @@ namespace Sushi.MicroORM.Supporting
     /// <summary>
     /// Executes <see cref="SqlStatement{TMapped}"/>.
     /// </summary>
-    public class SqlExecutor
+    public class SqlExecuter
     {   
         private string _parameterlist;
         private readonly ResultMapper _resultMapper;
 
         /// <summary>
-        /// Creates a new instance of <see cref="SqlExecutor"/>.
+        /// Creates a new instance of <see cref="SqlExecuter"/>.
         /// </summary>
-        public SqlExecutor(ResultMapper resultMapper)
+        public SqlExecuter(ResultMapper resultMapper)
         {
             _resultMapper = resultMapper;
         }

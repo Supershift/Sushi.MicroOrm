@@ -17,10 +17,6 @@ namespace Sushi.MicroORM
     /// </summary>
     public static class Utility
     {
-        internal const string OnlyNumeric = @"^[-+]?\d*$";
-
-        internal static Regex _OnlyNumeric = new Regex(OnlyNumeric, RegexOptions.Compiled | RegexOptions.Multiline);
-
         /// <summary>
         /// Determines the best matching <see cref="SqlDbType"/> for <paramref name="type"/>.
         /// </summary>        
@@ -65,6 +61,23 @@ namespace Sushi.MicroORM
             
 
             return sqlDbType;
+        }
+
+        /// <summary>
+        /// Converts <paramref name="value"/> to an enumeration member if <paramref name="type"/> or its underlying <see cref="Type"/> is an <see cref="Enum"/>.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static object ConvertValueToEnum(object value, Type type)
+        {
+            // if the type is an enum, we need to convert the value to the enum's type
+            if (type.IsEnum)
+            {
+                value = Enum.ToObject(type, value);
+            }
+
+            return value;
         }
 
         internal static DataTable CreateDataTableFromMap(DataMap map, bool identityInsert)

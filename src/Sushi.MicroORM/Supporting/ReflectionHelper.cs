@@ -112,7 +112,7 @@ namespace Sushi.MicroORM.Supporting
             }
             else
             {                
-                value = ConvertValueToEnum(value, type);
+                value = Utility.ConvertValueToEnum(value, type);
             }
 
             // custom support for converting to DateOnly and TimeOnly
@@ -190,25 +190,6 @@ namespace Sushi.MicroORM.Supporting
             //now set the db value on the final member
             var lastMemberInfo = memberInfoTree.Last();
             SetMemberValue(lastMemberInfo, value, entity);
-        }
-
-
-
-        /// <summary>
-        /// Converts <paramref name="value"/> to an enumeration member if <paramref name="type"/> or its underlying <see cref="Type"/> is an <see cref="Enum"/>.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static object ConvertValueToEnum(object value, Type type)
-        {   
-            //if the type is an enum, we need to convert the value to the enum's type
-            if (type.IsEnum)
-            {
-                value = Enum.ToObject(type, value);
-            }
-
-            return value;
         }
 
         /// <summary>

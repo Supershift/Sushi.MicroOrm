@@ -51,6 +51,7 @@ namespace Sushi.MicroORM.Supporting
         /// If <see cref="SqlStatementResultCardinality.SingleRow"/> the result is set on <see cref="SingleResult"/>.
         /// </summary>
         public SqlStatementResultCardinality ResultCardinality { get; private set; }
+        
         /// <summary>
         /// Gets the mapped result for the sql statement if <see cref="ResultCardinality"/> is set to <see cref="SqlStatementResultCardinality.SingleRow"/>.
         /// </summary>

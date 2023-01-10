@@ -28,7 +28,7 @@ namespace Sushi.MicroORM.Supporting
         }
 
         /// <summary>
-        /// Generates an instance of <see cref="SqlStatement{TMapped}"/>. Use this overload to provide an entity to insert or update.
+        /// Generates an instance of <see cref="SqlStatement{TMapped}"/>. Use this overload to pass an entity to insert or update.
         /// </summary>
         /// <typeparam name="TMapped"></typeparam>        
         /// <param name="statementType"></param>
@@ -97,11 +97,11 @@ namespace Sushi.MicroORM.Supporting
             statement.CustomSqlStatement = $@"
 IF EXISTS(SELECT * FROM {map.TableName} {updateStatement.WhereClause})
 BEGIN
-{updateStatement.GenerateSqlStatement()}
+{updateStatement.ToString()}
 END
 ELSE
 BEGIN
-{insertStatement.GenerateSqlStatement()}
+{insertStatement.ToString()}
 END";
             
             // add the parameters from update and insert statements

@@ -87,7 +87,7 @@ namespace Sushi.MicroORM.Supporting
         /// Generates a sql statement based on the clauses.
         /// </summary>
         /// <returns></returns>
-        public string GenerateSqlStatement()
+        public override string ToString()
         {
             if (!string.IsNullOrWhiteSpace(CustomSqlStatement))
                 return CustomSqlStatement;

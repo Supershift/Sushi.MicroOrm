@@ -76,7 +76,7 @@ namespace Sushi.MicroORM.Supporting
             SqlStatementResult<TResult> result;
 
             // create query text from statement
-            var query = sqlStatement.GenerateSqlStatement();
+            var query = sqlStatement.ToString();
 
             try
             {   

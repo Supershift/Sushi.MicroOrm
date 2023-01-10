@@ -1,4 +1,5 @@
-﻿using Sushi.MicroORM.Mapping;
+﻿using Sushi.MicroORM.Exceptions;
+using Sushi.MicroORM.Mapping;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace Sushi.MicroORM.Supporting
     /// <summary>
     /// Provides methods to generate instance of <see cref="SqlStatement{TMapped}"/>.
     /// </summary>
-    public static class SqlStatementGenerator
+    public class SqlStatementGenerator
     {
         /// <summary>
         /// Generates an instance of <see cref="SqlStatement{TMapped}"/>.
@@ -20,27 +21,27 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="statementType"></param>
         /// <param name="resultType"></param>
         /// <param name="map"></param>
-        /// <param name="query"></param>
-        /// <param name="customQuery"></param>
+        /// <param name="query"></param>        
         /// <returns></returns>
-        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query) where TMapped : new()
+        /// <exception cref="InvalidQueryException"></exception>
+        public SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query) where TMapped : new()
         {
             return GenerateSqlStatment(statementType, resultType, map, query, default, false);
         }
 
         /// <summary>
-        /// Generates an instance of <see cref="SqlStatement{TMapped}"/>. Use this overload to provide an entity to insert or update.
+        /// Generates an instance of <see cref="SqlStatement{TMapped}"/>. Use this overload to pass an entity to insert or update.
         /// </summary>
         /// <typeparam name="TMapped"></typeparam>        
         /// <param name="statementType"></param>
         /// <param name="resultType"></param>
         /// <param name="map"></param>
-        /// <param name="query"></param>
-        /// <param name="customQuery"></param>
+        /// <param name="query"></param>        
         /// <param name="entity"></param>
         /// <param name="isIdentityInsert"></param>
         /// <returns></returns>
-        public static SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query, 
+        /// <exception cref="InvalidQueryException"></exception>
+        public SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query, 
             TMapped entity, bool isIdentityInsert) where TMapped: new()
         {
             //validate if the supplied mapping has everything needed to generate queries
@@ -53,56 +54,22 @@ namespace Sushi.MicroORM.Supporting
             switch (statementType)
             {
                 case DMLStatementType.Select:
-                    ApplySelectToStatement(result, map, query);                    
-                    AddWhereClauseToStatement(result, query);
+                    ApplySelectToStatement(result, map, query);                                        
                     break;
                 case DMLStatementType.Insert:
-                    ApplyInsertToStatement(result, map, entity, isIdentityInsert);                    
-                    AddWhereClauseToStatement(result, query);
+                    ApplyInsertToStatement(result, map, query, entity, isIdentityInsert);                                        
                     break;
                 case DMLStatementType.Update:
-                    result.DmlClause = $"UPDATE {map.TableName}";
-                    //generate the set clause for all columns that are not readonly, and add the parameter to the statement
-                    var columnsToUpdate = map.Items.Where(x => x.IsReadOnly == false && x.IsIdentity == false).ToList();
-                    var setClauseColumns = new List<string>();
-                    for(int i =0;i < columnsToUpdate.Count;i++)
-                    {
-                        var column = columnsToUpdate[i];
-                        string parameterName = $"@u{i}";
-                        var value = ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity);
-                        result.Parameters.Add(new SqlStatementParameter(parameterName, value, column.SqlType, column.Length));
-                        setClauseColumns.Add($"{column.Column} = {parameterName}");
-                    }
-                    result.UpdateSetClause = $"SET {string.Join(",", setClauseColumns)}";                    
-                    AddWhereClauseToStatement(result, query);
+                    ApplyUpdateToStatement(result, map, query, entity);                    
                     break;
                 case DMLStatementType.Delete:
-                    result.DmlClause = "DELETE ";                    
-                    AddWhereClauseToStatement(result, query);
+                    ApplyDeleteToStatement(result, query);
                     break;
                 case DMLStatementType.CustomQuery:                                        
                     AddWhereClauseToStatement(result, query);
                     break;
                 case DMLStatementType.InsertOrUpdate:
-                    //this generates two seperate statements which need to be merged into one statement which uses an IF EXIST / ELSE
-                    //generate insert
-                    var insertStatement = GenerateSqlStatment<TMapped>(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, map, query, entity, isIdentityInsert);
-                    //generate update
-                    var updateStatement = GenerateSqlStatment<TMapped>(DMLStatementType.Update, SqlStatementResultCardinality.None, map, query, entity, isIdentityInsert);
-
-                    //generate custom insert or update statement
-                    result.CustomSqlStatement = $@"
-IF EXISTS(SELECT * FROM {map.TableName} {updateStatement.WhereClause})
-BEGIN
-{updateStatement.GenerateSqlStatement()}
-END
-ELSE
-BEGIN
-{insertStatement.GenerateSqlStatement()}
-END";
-                    //add the parameters from update and insert statements
-                    result.Parameters.AddRange(updateStatement.Parameters);
-                    result.Parameters.AddRange(insertStatement.Parameters);
+                    ApplyInsertOrUpdateToStatement(result, map, query, entity, isIdentityInsert);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -114,42 +81,101 @@ END";
             return result;
         }
 
-        private static SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> filter) where T: new()
+        private SqlStatement<T> ApplyDeleteToStatement<T>(SqlStatement<T> statement, DataQuery<T> query) where T : new()
         {
-            //set opening statement
+            statement.DmlClause = "DELETE ";
+            AddWhereClauseToStatement(statement, query);
+            return statement;
+        }
+
+        private SqlStatement<T> ApplyInsertOrUpdateToStatement<T>(SqlStatement<T> statement, DataMap<T> map, DataQuery<T> query, T entity, bool isIdentityInsert) where T : new()
+        {
+            // this generates two seperate statements which need to be merged into one statement which uses an IF EXIST / ELSE
+            // generate insert
+            var insertStatement = GenerateSqlStatment(DMLStatementType.Insert, SqlStatementResultCardinality.SingleRow, map, query, entity, isIdentityInsert);
+            // generate update
+            var updateStatement = GenerateSqlStatment(DMLStatementType.Update, SqlStatementResultCardinality.None, map, query, entity, isIdentityInsert);
+
+            // generate custom insert or update statement
+            statement.CustomSqlStatement = $@"
+IF EXISTS(SELECT * FROM {map.TableName} {updateStatement.WhereClause})
+BEGIN
+{updateStatement.ToString()}
+END
+ELSE
+BEGIN
+{insertStatement.ToString()}
+END";
+            
+            // add the parameters from update and insert statements
+            statement.Parameters.AddRange(updateStatement.Parameters);
+            statement.Parameters.AddRange(insertStatement.Parameters);
+
+            return statement;
+        }
+
+        private SqlStatement<T> ApplyUpdateToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> query, T entity) where T : new()
+        {
+            statement.DmlClause = $"UPDATE {map.TableName}";
+            // generate the set clause for all columns that are not readonly, and add the parameter to the statement
+            var columnsToUpdate = map.Items.Where(x => x.IsReadOnly == false && x.IsIdentity == false).ToList();
+            var setClauseColumns = new List<string>();
+            for (int i = 0; i < columnsToUpdate.Count; i++)
+            {
+                var column = columnsToUpdate[i];
+                string parameterName = $"@u{i}";
+                var value = ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity);
+                statement.Parameters.Add(new SqlStatementParameter(parameterName, value, column.SqlType, column.Length));
+                setClauseColumns.Add($"{column.Column} = {parameterName}");
+            }
+            statement.UpdateSetClause = $"SET {string.Join(",", setClauseColumns)}";
+
+            // add where clause
+            AddWhereClauseToStatement(statement, query);
+
+            return statement;
+        }
+
+        private SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> query) where T: new()
+        {
+            // set opening statement
             statement.DmlClause = "SELECT ";
             if (statement.ResultCardinality == SqlStatementResultCardinality.SingleRow)
                 statement.DmlClause += "TOP(1) ";
-            else if (filter?.MaxResults != null)
-                statement.DmlClause += $"TOP({filter.MaxResults}) ";
+            else if (query?.MaxResults != null)
+                statement.DmlClause += $"TOP({query.MaxResults}) ";
 
-            //generate the column list, ie. MyColumn1, MyColumn2, MyColumn3 + MyColumn4 AS MyAlias
+            // generate the column list, ie. MyColumn1, MyColumn2, MyColumn3 + MyColumn4 AS MyAlias
             statement.DmlClause += string.Join(",", map.Items.Select(x => x.ColumnSelectListName));
 
-            //set order by from filter
-            if (filter != null)
-                statement.OrderByClause = filter.OrderBy;
+            // set order by from query
+            if (query != null)
+                statement.OrderByClause = query.OrderBy;
 
-            //add offset to order by if paging is supplied
-            if (filter?.Paging != null && filter?.Paging?.NumberOfRows > 0)
+            // add offset to order by if paging is supplied
+            if (query?.Paging != null && query?.Paging?.NumberOfRows > 0)
             {
                 statement.AddPagingRowCountStatement = true;
 
                 if (string.IsNullOrWhiteSpace(statement.OrderByClause))
                 {
-                    //if offset is used, it always needs an order by clause. create one if none supplied
+                    // if offset is used, it always needs an order by clause. create one if none supplied.
                     var primaryKeyColumns = map.GetPrimaryKeyColumns();
                     if (primaryKeyColumns.Count > 0)
                         statement.OrderByClause = "ORDER BY " + string.Join(",", primaryKeyColumns.Select(x => x.Column));
                     else
-                        throw new Exception("Cannot apply paging to an unordered SQL SELECT statement. Add an order by clause or map a primary key.");
+                        throw new InvalidQueryException("Cannot apply paging to an unordered SQL SELECT statement. Add an order by clause or map a primary key.");
                 }
-                statement.OrderByClause += $" OFFSET {filter.Paging.PageIndex * filter.Paging.NumberOfRows} ROWS FETCH NEXT {filter.Paging.NumberOfRows} ROWS ONLY";
+                statement.OrderByClause += $" OFFSET {query.Paging.PageIndex * query.Paging.NumberOfRows} ROWS FETCH NEXT {query.Paging.NumberOfRows} ROWS ONLY";
             }
+
+            // add where clause
+            AddWhereClauseToStatement(statement, query);
+
             return statement;
         }
 
-        private static SqlStatement<T> ApplyInsertToStatement<T>(SqlStatement<T> statement, DataMap<T> map, T entity, bool isIdentityInsert) where T : new()
+        private SqlStatement<T> ApplyInsertToStatement<T>(SqlStatement<T> statement, DataMap<T> map, DataQuery<T> query, T entity, bool isIdentityInsert) where T : new()
         {
             //generate opening statement
             statement.DmlClause = $"INSERT";
@@ -181,59 +207,45 @@ END";
                         statement.OutputClause = $"OUTPUT inserted.{identityColumn.Column}";
                 }
             }
+
+            // add where clause
+            AddWhereClauseToStatement(statement, query);
+
             return statement;
         }
+        
         /// <summary>
-        /// Sets <see cref="SqlStatement{TMapped}.WhereClause"/> and <see cref="SqlStatement{TMapped}.Parameters"/> based on values supplied in <paramref name="filter"/>.
+        /// Sets <see cref="SqlStatement{TMapped}.WhereClause"/> and <see cref="SqlStatement{TMapped}.Parameters"/> based on values supplied in <paramref name="query"/>.
         /// </summary>        
+        /// <param name="sqlStament"></param>
         /// <param name="query"></param>
-        /// <param name="filter"></param>
         /// <returns></returns>
-        private static SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> query, DataQuery<T> filter) where T: new()
+        private SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> sqlStament, DataQuery<T> query) where T: new()
         {
-            var whereClause = filter?.WhereClause;
-
-            //get custom sql parameters from filter and add to result
-            if (filter?.SqlParameters != null)
+            // get custom sql parameters from query and add to result
+            if (query?.SqlParameters != null)
             {
-                foreach (var p in filter.SqlParameters)
+                foreach (var p in query.SqlParameters)
                 {
-                    query.Parameters.Add(new SqlStatementParameter(p.ParameterName, p.Value, p.SqlDbType, 0, p.TypeName));                    
+                    sqlStament.Parameters.Add(new SqlStatementParameter(p.ParameterName, p.Value, p.SqlDbType, 0, p.TypeName));                    
                 }
             }
 
-            if (whereClause == null || whereClause.Count == 0) return query;
-            
-            bool orGroupIsSet = false;
+            // if the query does not contain a where clause, we are done
+            if (query?.WhereClause?.Any() != true)
+            {
+                return sqlStament;
+            }
 
             var sb = new StringBuilder("WHERE ");
-            //generate a sql text where predicate for each predicate in the filter's where clause
-            for(int i=0;i<whereClause.Count; i++) 
+            // generate a sql text where predicate for each predicate in the query's where clause
+            for (int i = 0; i < query.WhereClause.Count; i++)
             {
-                WhereCondition predicate = whereClause[i];
+                WhereCondition predicate = query.WhereClause[i];
 
                 string parameterName = $"@C{i}";
 
-                //add opening paranthesis to seperate predicates based on where condition operator
-                WhereCondition nextcolumn = null;
-
-                while (nextcolumn == null)
-                {
-                    if (whereClause.Count > i + 1)
-                    {
-                        nextcolumn = whereClause[i + 1];
-
-                        if (predicate.ConnectType == WhereConditionOperator.And && nextcolumn.ConnectType == WhereConditionOperator.Or)
-                        {
-                            orGroupIsSet = true;
-                            sb.Append('(');
-                        }
-                    }
-                    else
-                        break;
-                }
-
-                //if custom sql was provided for this predicate, add that to the where clause. otherwise, build the sql for the where clause
+                // if custom sql was provided for this predicate, add that to the where clause. otherwise, build the sql for the where clause
                 if (!string.IsNullOrWhiteSpace(predicate.SqlText))
                 {
                     sb.Append(predicate.SqlText);
@@ -243,7 +255,7 @@ END";
                     switch (predicate.CompareType)
                     {
                         case ComparisonOperator.Equals:
-                            //if we need to compare to a NULL value, use an 'IS NULL' predicate
+                            // if we need to compare to a NULL value, use an 'IS NULL' predicate
                             if (predicate.Value == null)
                             {
                                 sb.Append($"{predicate.Column} IS NULL");
@@ -251,12 +263,12 @@ END";
                             else
                             {
                                 sb.Append($"{predicate.Column} = {parameterName}");
-                                query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
-                                
+                                sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+
                             }
                             break;
                         case ComparisonOperator.NotEqualTo:
-                            //if we need to compare to a NULL value, use an 'IS NOT NULL' predicate
+                            // if we need to compare to a NULL value, use an 'IS NOT NULL' predicate
                             if (predicate.Value == null)
                             {
                                 sb.Append($"{predicate.Column} IS NOT NULL");
@@ -264,17 +276,17 @@ END";
                             else
                             {
                                 sb.Append($"{predicate.Column} <> {parameterName}");
-                                query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+                                sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             }
                             break;
                         case ComparisonOperator.Like:
-                            sb.Append($"{predicate.Column} LIKE {parameterName}");                            
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
+                            sb.Append($"{predicate.Column} LIKE {parameterName}");
+                            sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.In:
                             if (predicate.Value is IEnumerable items)
                             {
-                                //create a unique parameter for each item in the 'IN' predicate
+                                // create a unique parameter for each item in the 'IN' predicate
                                 var inParams = new List<string>();
                                 int j = 0;
                                 if (items != null)
@@ -283,14 +295,14 @@ END";
                                     {
                                         string inParam = $"{parameterName}_{j}";
 
-                                        query.Parameters.Add(new SqlStatementParameter(inParam, item, predicate.SqlType, predicate.Length));
+                                        sqlStament.Parameters.Add(new SqlStatementParameter(inParam, item, predicate.SqlType, predicate.Length));
                                         inParams.Add(inParam);
 
                                         j++;
                                     }
                                 }
-                                //if there are items in the collection, add a predicate to the where in clause. 
-                                //if not, add a predicate that always evaluates to false, because no row will match the empty values
+                                // if there are items in the collection, add a predicate to the where in clause. 
+                                // if not, add a predicate that always evaluates to false, because no row will match the empty values
                                 if (inParams.Count > 0)
                                     sb.Append($"{predicate.Column} IN ({string.Join(",", inParams)})");
                                 else
@@ -302,52 +314,35 @@ END";
                             }
                             break;
                         case ComparisonOperator.GreaterThan:
-                            sb.Append($"{predicate.Column} > {parameterName}");                            
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                                
+                            sb.Append($"{predicate.Column} > {parameterName}");
+                            sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.GreaterThanOrEquals:
-                            sb.Append($"{predicate.Column} >= {parameterName}");                            
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                                
+                            sb.Append($"{predicate.Column} >= {parameterName}");
+                            sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.LessThan:
-                            sb.Append($"{predicate.Column} < {parameterName}");                            
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                            
+                            sb.Append($"{predicate.Column} < {parameterName}");
+                            sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                         case ComparisonOperator.LessThanOrEquals:
                             sb.Append($"{predicate.Column} <= {parameterName}");
-                            query.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));                                
+                            sqlStament.Parameters.Add(new SqlStatementParameter(parameterName, predicate.Value, predicate.SqlType, predicate.Length));
                             break;
                     }
                 }
 
-                //add closing paranthesis to seperate predicates based on where condition operator
-                if (nextcolumn != null)
+                // add 'AND' if this is not the last condition
+                if(i + 1 < query.WhereClause.Count)
                 {
-                    if (nextcolumn.ConnectType == WhereConditionOperator.And)
-                    {
-                        if (orGroupIsSet)
-                        {
-                            orGroupIsSet = false;
-                            sb.Append(") AND ");
-                        }
-                        else
-                            sb.Append(" AND ");
-                    }
-                    else if (nextcolumn.ConnectType == WhereConditionOperator.Or || nextcolumn.ConnectType == WhereConditionOperator.OrUngrouped)
-                    {
-                        sb.Append(" OR ");
-                    }
-                }                
+                    sb.Append(" AND ");
+                }
             }
 
-            //add last closing paranthesis
-            if (orGroupIsSet)
-                sb.Append(")");
-
-            //add where clause to query
-            query.WhereClause = sb.ToString();
+            // add plain text where clause to sql statement
+            sqlStament.WhereClause = sb.ToString();
             
-            return query;
+            return sqlStament;
         }
     }
 }

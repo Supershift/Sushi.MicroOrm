@@ -34,7 +34,7 @@ namespace Sushi.MicroORM
 
             //if this is an enum, get the underlying type (by default it is int32, but could be different)
             if (type.IsEnum)
-                type = type.GetEnumUnderlyingType();
+                type = type.GetEnumUnderlyingType();            
 
             //now assume sqldbtype based on CLR type
             var sqlDbType = SqlDbType.NVarChar;

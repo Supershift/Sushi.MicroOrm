@@ -87,7 +87,7 @@ namespace Sushi.MicroORM.Supporting
         /// Generates a sql statement based on the clauses.
         /// </summary>
         /// <returns></returns>
-        public string GenerateSqlStatement()
+        public override string ToString()
         {
             if (!string.IsNullOrWhiteSpace(CustomSqlStatement))
                 return CustomSqlStatement;
@@ -108,6 +108,10 @@ namespace Sushi.MicroORM.Supporting
                             result += "\r\n" + GeneratePagingRowCountSqlStatement();
                         break;
                 }
+
+                // remove double line endings
+                result = result.Replace("\r\n\r\n", "\r\n");
+                result = result.TrimEnd();
 
                 return result;
             }

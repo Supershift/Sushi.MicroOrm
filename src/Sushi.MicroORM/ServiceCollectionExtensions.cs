@@ -27,6 +27,7 @@ namespace Sushi.MicroORM
 
             services.TryAddTransient<SqlExecuter>();
             services.TryAddTransient<ResultMapper>();
+            services.TryAddTransient<SqlStatementGenerator>();
 
             var connectionStringProvider = new ConnectionStringProvider();
             connectionStringProvider.DefaultConnectionString = defaultConnectionString;
@@ -42,15 +43,5 @@ namespace Sushi.MicroORM
 
             return services;
         }
-    }
-
-    public class MicroOrmConfigurationBuilder
-    {
-        public MicroOrmConfigurationBuilder(ConnectionStringProvider connectionStringProvider)
-        {
-            ConnectionStringProvider = connectionStringProvider;
-        }
-
-        public ConnectionStringProvider ConnectionStringProvider { get; private set; } 
     }
 }

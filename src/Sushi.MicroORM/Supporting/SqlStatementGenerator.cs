@@ -1,4 +1,5 @@
-﻿using Sushi.MicroORM.Mapping;
+﻿using Sushi.MicroORM.Exceptions;
+using Sushi.MicroORM.Mapping;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -22,6 +23,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="map"></param>
         /// <param name="query"></param>        
         /// <returns></returns>
+        /// <exception cref="InvalidQueryException"></exception>
         public SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query) where TMapped : new()
         {
             return GenerateSqlStatment(statementType, resultType, map, query, default, false);
@@ -38,6 +40,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="entity"></param>
         /// <param name="isIdentityInsert"></param>
         /// <returns></returns>
+        /// <exception cref="InvalidQueryException"></exception>
         public SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query, 
             TMapped entity, bool isIdentityInsert) where TMapped: new()
         {
@@ -156,12 +159,12 @@ END";
 
                 if (string.IsNullOrWhiteSpace(statement.OrderByClause))
                 {
-                    //if offset is used, it always needs an order by clause. create one if none supplied
+                    // if offset is used, it always needs an order by clause. create one if none supplied.
                     var primaryKeyColumns = map.GetPrimaryKeyColumns();
                     if (primaryKeyColumns.Count > 0)
                         statement.OrderByClause = "ORDER BY " + string.Join(",", primaryKeyColumns.Select(x => x.Column));
                     else
-                        throw new Exception("Cannot apply paging to an unordered SQL SELECT statement. Add an order by clause or map a primary key.");
+                        throw new InvalidQueryException("Cannot apply paging to an unordered SQL SELECT statement. Add an order by clause or map a primary key.");
                 }
                 statement.OrderByClause += $" OFFSET {query.Paging.PageIndex * query.Paging.NumberOfRows} ROWS FETCH NEXT {query.Paging.NumberOfRows} ROWS ONLY";
             }

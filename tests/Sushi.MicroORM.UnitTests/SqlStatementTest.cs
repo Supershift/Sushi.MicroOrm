@@ -16,6 +16,26 @@ namespace Sushi.MicroORM.UnitTests
             var statement = new SqlStatement<object>(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows);
             statement.DmlClause = "SELECT *";
             statement.FromClause = "FROM MyTable";
+            statement.WhereClause = "WHERE ID > 10";            
+
+            // act
+            var query = statement.ToString();
+
+            // assert
+            string expected = @"SELECT *
+FROM MyTable
+WHERE ID > 10";
+
+            Assert.Equal(expected, query);
+        }
+
+        [Fact]
+        public void ToStringTest_SelectOrderBy()
+        {
+            // arrange
+            var statement = new SqlStatement<object>(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows);
+            statement.DmlClause = "SELECT *";
+            statement.FromClause = "FROM MyTable";
             statement.WhereClause = "WHERE ID > 10";
             statement.OrderByClause = "ORDER BY ID";
 

@@ -109,6 +109,10 @@ namespace Sushi.MicroORM.Supporting
                         break;
                 }
 
+                // remove double line endings
+                result = result.Replace("\r\n\r\n", "\r\n");
+                result = result.TrimEnd();
+
                 return result;
             }
         }

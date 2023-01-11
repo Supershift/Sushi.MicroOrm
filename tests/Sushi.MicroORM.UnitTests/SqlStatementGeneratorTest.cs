@@ -115,6 +115,153 @@ WHERE ID >= @C0";
         }
 
         [Fact]
+        public void InsertSingleRowTest()
+        {
+            // arrange
+            var generator = new SqlStatementGenerator();
+            var map = new MyMap();
+            var query = new DataQuery<MyClass>(map);
+
+            var entity = new MyClass()
+            {
+                Id = 1,
+                Name = "Insert"
+            };
+
+            // act
+            var statement = generator.GenerateSqlStatment(DMLStatementType.Insert, SqlStatementResultCardinality.None, map, query, entity, true);
+            var sql = statement.ToString();
+
+            // assert
+            string expected = @"INSERT
+INTO MyTable( ID,Name )
+VALUES ( @i0,@i1 )";
+
+            Assert.Equal(expected, sql);
+            Assert.NotNull(statement.Parameters);
+            Assert.NotEmpty(statement.Parameters);
+            Assert.Equal("@i0", statement.Parameters[0].Name);
+            Assert.Equal(entity.Id, statement.Parameters[0].Value);
+            Assert.Equal("@i1", statement.Parameters[1].Name);
+            Assert.Equal(entity.Name, statement.Parameters[1].Value);
+        }
+
+        [Fact]
+        public void InsertOrUpdateSingleRowTest()
+        {
+            // arrange
+            var generator = new SqlStatementGenerator();
+            var map = new MyMap();
+            var query = new DataQuery<MyClass>(map);
+
+            var entity = new MyClass()
+            {
+                Id = 1,
+                Name = "Insert Or Update"
+            };
+
+            query.Add(x => x.Id, entity.Id, ComparisonOperator.Equals);
+
+            // act
+            var statement = generator.GenerateSqlStatment(DMLStatementType.InsertOrUpdate, SqlStatementResultCardinality.None, map, query, entity, true);
+            var sql = statement.ToString();
+
+            // assert
+            string expected = @"
+IF EXISTS(SELECT * FROM MyTable WHERE ID = @C0)
+BEGIN
+UPDATE MyTable
+SET Name = @u0
+FROM MyTable
+WHERE ID = @C0
+END
+ELSE
+BEGIN
+INSERT
+INTO MyTable( ID,Name )
+VALUES ( @i0,@i1 )
+END";
+
+            Assert.Equal(expected, sql);
+            Assert.NotNull(statement.Parameters);
+            Assert.NotEmpty(statement.Parameters);
+            Assert.Equal("@u0", statement.Parameters[0].Name);
+            Assert.Equal(entity.Name, statement.Parameters[0].Value);
+            Assert.Equal("@C0", statement.Parameters[1].Name);
+            Assert.Equal(entity.Id, statement.Parameters[1].Value);
+            Assert.Equal("@i0", statement.Parameters[2].Name);
+            Assert.Equal(entity.Id, statement.Parameters[2].Value);
+            Assert.Equal("@i1", statement.Parameters[3].Name);
+            Assert.Equal(entity.Name, statement.Parameters[3].Value);
+        }
+
+        [Fact]
+        public void UpdateSingleRowTest()
+        {
+            // arrange
+            var generator = new SqlStatementGenerator();
+            var map = new MyMap();
+            var query = new DataQuery<MyClass>(map);
+
+            var entity = new MyClass()
+            {
+                Id = 1,
+                Name = "Update"
+            };
+
+            query.Add(x => x.Id, entity.Id, ComparisonOperator.Equals);
+
+            // act
+            var statement = generator.GenerateSqlStatment(DMLStatementType.Update, SqlStatementResultCardinality.None, map, query, entity, true);
+            var sql = statement.ToString();
+
+            // assert
+            string expected = @"UPDATE MyTable
+SET Name = @u0
+FROM MyTable
+WHERE ID = @C0";
+
+            Assert.Equal(expected, sql);
+            Assert.NotNull(statement.Parameters);
+            Assert.NotEmpty(statement.Parameters);
+            Assert.Equal("@u0", statement.Parameters[0].Name);
+            Assert.Equal(entity.Name, statement.Parameters[0].Value);
+            Assert.Equal("@C0", statement.Parameters[1].Name);
+            Assert.Equal(entity.Id, statement.Parameters[1].Value);
+        }
+
+        [Fact]
+        public void DeleteSingleRowTest()
+        {
+            // arrange
+            var generator = new SqlStatementGenerator();
+            var map = new MyMap();
+            var query = new DataQuery<MyClass>(map);
+
+            var entity = new MyClass()
+            {
+                Id = 1
+            };
+
+            query.Add(x => x.Id, entity.Id, ComparisonOperator.Equals);
+
+            // act
+            var statement = generator.GenerateSqlStatment(DMLStatementType.Delete, SqlStatementResultCardinality.None, map, query);
+            var sql = statement.ToString();
+
+            // assert
+            string expected = @"DELETE 
+FROM MyTable
+WHERE ID = @C0";
+
+            Assert.Equal(expected, sql);
+            Assert.NotNull(statement.Parameters);
+            Assert.NotEmpty(statement.Parameters);
+            Assert.Equal("@C0", statement.Parameters[0].Name);
+            Assert.Equal(entity.Id, statement.Parameters[0].Value);
+        }
+
+        [Fact]
         public void SelectMultipleRowsTest_InvalidPagingException()
         {
             // arrange

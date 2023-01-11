@@ -115,7 +115,28 @@ WHERE ID >= @C0";
         }
 
         [Fact]
-        public void InsertSingleRowTest()
+        public void SelectMultipleRowsTest_InvalidQueryException()
+        {
+            // arrange
+            var generator = new SqlStatementGenerator();
+            var map = new DataMap<MyClass>();
+            map.Table("MyTable");
+            var query = new DataQuery<MyClass>(map);
+
+            query.Paging = new PagingData() { NumberOfRows = 10, PageIndex = 2 };
+
+            // act
+            var act = () =>
+            {
+                var statement = generator.GenerateSqlStatment(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows, map, query);
+            };
+
+            // assert
+            Assert.Throws<InvalidQueryException>(act);
+        }
+
+        [Fact]
+        public void InsertTest()
         {
             // arrange
             var generator = new SqlStatementGenerator();
@@ -134,8 +155,8 @@ WHERE ID >= @C0";
 
             // assert
             string expected = @"INSERT
-INTO MyTable( ID,Name )
-VALUES ( @i0,@i1 )";
+INTO MyTable (ID,Name)
+VALUES (@i0,@i1)";
 
             Assert.Equal(expected, sql);
             Assert.NotNull(statement.Parameters);
@@ -147,7 +168,66 @@ VALUES ( @i0,@i1 )";
         }
 
         [Fact]
-        public void InsertOrUpdateSingleRowTest()
+        public void InsertTest_OutputIdentity()
+        {
+            // arrange
+            var generator = new SqlStatementGenerator();
+            var map = new MyMap();
+            var query = new DataQuery<MyClass>(map);
+
+            var entity = new MyClass()
+            {
+                Id = 1,
+                Name = "Insert"
+            };
+
+            // act
+            var statement = generator.GenerateSqlStatment(DMLStatementType.Insert, SqlStatementResultCardinality.None, map, query, entity, false);
+            var sql = statement.ToString();
+
+            // assert
+            string expected = @"INSERT
+INTO MyTable (Name)
+OUTPUT inserted.ID
+VALUES (@i0)";
+
+            Assert.Equal(expected, sql);
+            Assert.NotNull(statement.Parameters);
+            Assert.NotEmpty(statement.Parameters);
+            Assert.Equal("@i0", statement.Parameters[0].Name);            
+            Assert.Equal(entity.Name, statement.Parameters[0].Value);
+        }
+
+        [Fact]
+        public void InsertTest_DefaultValues()
+        {
+            // arrange
+            var generator = new SqlStatementGenerator();
+            var map = new DataMap<MyClass>();
+            map.Table("MyTable");
+            map.Map(x => x.Name, "Name").ReadOnly();
+            var query = new DataQuery<MyClass>(map);
+
+            var entity = new MyClass()
+            {
+                Id = 1,
+                Name = "Insert"
+            };
+
+            // act
+            var statement = generator.GenerateSqlStatment(DMLStatementType.Insert, SqlStatementResultCardinality.None, map, query, entity, true);
+            var sql = statement.ToString();
+
+            // assert
+            string expected = @"INSERT
+INTO MyTable
+DEFAULT VALUES";
+
+            Assert.Equal(expected, sql);                        
+        }
+
+        [Fact]
+        public void InsertOrUpdateTest()
         {
             // arrange
             var generator = new SqlStatementGenerator();
@@ -178,8 +258,8 @@ END
 ELSE
 BEGIN
 INSERT
-INTO MyTable( ID,Name )
-VALUES ( @i0,@i1 )
+INTO MyTable (ID,Name)
+VALUES (@i0,@i1)
 END";
 
             Assert.Equal(expected, sql);
@@ -196,7 +276,7 @@ END";
         }
 
         [Fact]
-        public void UpdateSingleRowTest()
+        public void UpdateTest()
         {
             // arrange
             var generator = new SqlStatementGenerator();
@@ -231,7 +311,7 @@ WHERE ID = @C0";
         }
 
         [Fact]
-        public void DeleteSingleRowTest()
+        public void DeleteTest()
         {
             // arrange
             var generator = new SqlStatementGenerator();
@@ -259,27 +339,6 @@ WHERE ID = @C0";
             Assert.NotEmpty(statement.Parameters);
             Assert.Equal("@C0", statement.Parameters[0].Name);
             Assert.Equal(entity.Id, statement.Parameters[0].Value);
-        }
-
-        [Fact]
-        public void SelectMultipleRowsTest_InvalidPagingException()
-        {
-            // arrange
-            var generator = new SqlStatementGenerator();
-            var map = new DataMap<MyClass>();
-            map.Table("MyTable");
-            var query = new DataQuery<MyClass>(map);
-            
-            query.Paging = new PagingData() { NumberOfRows = 10, PageIndex = 2 };
-
-            // act
-            var act = () =>
-            {
-                var statement = generator.GenerateSqlStatment(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows, map, query);
-            };
-            
-            // assert
-            Assert.Throws<InvalidQueryException>(act);
         }
 
         public class MyClass

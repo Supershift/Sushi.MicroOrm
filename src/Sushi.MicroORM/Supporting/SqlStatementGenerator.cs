@@ -187,7 +187,7 @@ END";
             else
             {
                 //add each column to the columns list
-                statement.InsertIntoClause += $"( {string.Join(",", insertColumns.Select(x => x.Column))} )";
+                statement.InsertIntoClause += $" ({string.Join(",", insertColumns.Select(x => x.Column))})";
                 //add a parameter for each column
                 for (int i = 0; i < insertColumns.Count; i++)
                 {
@@ -197,7 +197,7 @@ END";
                     statement.Parameters.Add(new SqlStatementParameter(parameterName, value, column.SqlType, column.Length));
                 }
                 //create column list
-                statement.InsertValuesClause = $"VALUES ( {string.Join(",", statement.Parameters.Select(x => x.Name))} )";
+                statement.InsertValuesClause = $"VALUES ({string.Join(",", statement.Parameters.Select(x => x.Name))})";
 
                 //add an output clause if we need to retrieve the identity value                        
                 if (!isIdentityInsert)

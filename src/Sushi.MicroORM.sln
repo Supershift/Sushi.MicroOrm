@@ -5,9 +5,9 @@ VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sushi.MicroORM", "Sushi.MicroORM\Sushi.MicroORM.csproj", "{09C7B675-74E8-49F5-A226-A527083F7955}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sushi.MicroORM.Tests", "Sushi.MicroORM.Tests\Sushi.MicroORM.Tests.csproj", "{ACB76E2D-B231-48EB-A017-A184A017AEC8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sushi.MicroORM.ManualTests", "..\tests\Sushi.MicroORM.ManualTests\Sushi.MicroORM.ManualTests.csproj", "{ACB76E2D-B231-48EB-A017-A184A017AEC8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sushi.MicroORM.UnitTests", "..\tests\Sushi.MicroORM.UnitTests\Sushi.MicroORM.UnitTests.csproj", "{E3586975-44EA-42D4-A42B-43588156E656}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sushi.MicroORM.UnitTests", "..\tests\Sushi.MicroORM.UnitTests\Sushi.MicroORM.UnitTests.csproj", "{E3586975-44EA-42D4-A42B-43588156E656}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sushi.MicroORM.Tests.DAL
+namespace Sushi.MicroORM.ManualTests.DAL
 {
     [DataMap(typeof(CompositeKeyMap))]
     public class CompositeKey

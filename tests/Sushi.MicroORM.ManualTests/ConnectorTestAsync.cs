@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Sushi.MicroORM.Mapping;
 using Sushi.MicroORM.Supporting;
-using Sushi.MicroORM.Tests.DAL;
+using Sushi.MicroORM.ManualTests.DAL;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Sushi.MicroORM.Tests
+namespace Sushi.MicroORM.ManualTests
 {
     [TestClass]
     public class ConnectorTestAsync
@@ -40,7 +40,7 @@ namespace Sushi.MicroORM.Tests
             // add micro orm
             serviceCollection.AddMicroORM(connectionString, c =>
             {
-                c.ConnectionStringProvider.AddMappedConnectionString("Sushi.MicroORM.Tests.DAL.Customers", connectionString2);
+                c.ConnectionStringProvider.AddMappedConnectionString("Sushi.MicroORM.ManualTests.DAL.Customers", connectionString2);
                 c.ConnectionStringProvider.AddMappedConnectionString(typeof(DAL.Customers.Address), connectionString3);
             });
 

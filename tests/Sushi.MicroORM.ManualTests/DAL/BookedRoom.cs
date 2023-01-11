@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sushi.MicroORM.Tests.DAL
+namespace Sushi.MicroORM.ManualTests.DAL
 {
     public class BookedRoom
     {

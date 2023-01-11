@@ -82,12 +82,12 @@ namespace Sushi.MicroORM
         public string GetConnectionString(Type type)
         {
             if (MappedConnectionStrings.Count > 0)
-            {   
+            {
                 //check if we already cached a connection string for this type
                 if (IsCachingEnabled)
                 {
                     if (CachedConnectionStrings.TryGetValue(type, out var cachedConnectionString))
-                        return cachedConnectionString;                    
+                        return cachedConnectionString;
                 }
 
                 string typeName = type.ToString();
@@ -105,7 +105,7 @@ namespace Sushi.MicroORM
                     //if the pattern is found, return the mapped connection string
                     if (MappedConnectionStrings.ContainsKey(searchPattern))
                     {
-                        connectionString =  MappedConnectionStrings[searchPattern];
+                        connectionString = MappedConnectionStrings[searchPattern];
                         break;
                     }
                     //make the search pattern one part less specific
@@ -113,12 +113,12 @@ namespace Sushi.MicroORM
                 }
 
                 //cache result
-                if(useCaching)
+                if (IsCachingEnabled)
                 {
-                    CachedConnectionStrings[type] = connectionString;                    
+                    CachedConnectionStrings[type] = connectionString;
                 }
                 return connectionString;
-            }            
+            }
             
             return DefaultConnectionString;
         }

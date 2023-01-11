@@ -100,11 +100,11 @@ namespace Sushi.MicroORM.Supporting
             statement.CustomSqlStatement = $@"
 IF EXISTS(SELECT * FROM {map.TableName} {updateStatement.WhereClause})
 BEGIN
-{updateStatement.ToString()}
+{updateStatement}
 END
 ELSE
 BEGIN
-{insertStatement.ToString()}
+{insertStatement}
 END";
             
             // add the parameters from update and insert statements

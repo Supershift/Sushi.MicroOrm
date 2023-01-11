@@ -29,6 +29,11 @@ namespace Sushi.MicroORM
         }
 
         /// <summary>
+        /// Gets or sets a value indicating if connetionstrings are cached for types. This is only used if multiple connection strings are provided through the AddMappedConnectionString method. Default value is true.
+        /// </summary>
+        public bool IsCachingEnabled { get; set; } = true;
+
+        /// <summary>
         /// Gets a collection of connection strings per typename.
         /// </summary>
         protected ConcurrentDictionary<string, string> MappedConnectionStrings { get; } = new ConcurrentDictionary<string, string>();
@@ -78,12 +83,11 @@ namespace Sushi.MicroORM
         {
             if (MappedConnectionStrings.Count > 0)
             {
-                var useCaching = DatabaseConfiguration.IsConnectionStringCachingEnabled;
                 //check if we already cached a connection string for this type
-                if (useCaching)
+                if (IsCachingEnabled)
                 {
                     if (CachedConnectionStrings.TryGetValue(type, out var cachedConnectionString))
-                        return cachedConnectionString;                    
+                        return cachedConnectionString;
                 }
 
                 string typeName = type.ToString();
@@ -101,7 +105,7 @@ namespace Sushi.MicroORM
                     //if the pattern is found, return the mapped connection string
                     if (MappedConnectionStrings.ContainsKey(searchPattern))
                     {
-                        connectionString =  MappedConnectionStrings[searchPattern];
+                        connectionString = MappedConnectionStrings[searchPattern];
                         break;
                     }
                     //make the search pattern one part less specific
@@ -109,12 +113,12 @@ namespace Sushi.MicroORM
                 }
 
                 //cache result
-                if(useCaching)
+                if (IsCachingEnabled)
                 {
-                    CachedConnectionStrings[type] = connectionString;                    
+                    CachedConnectionStrings[type] = connectionString;
                 }
                 return connectionString;
-            }            
+            }
             
             return DefaultConnectionString;
         }

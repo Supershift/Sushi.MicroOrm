@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Sushi.MicroORM\Sushi.MicroORM.csproj" />
+    <ProjectReference Include="..\..\src\Sushi.MicroORM\Sushi.MicroORM.csproj" />
   </ItemGroup>
 
 </Project>

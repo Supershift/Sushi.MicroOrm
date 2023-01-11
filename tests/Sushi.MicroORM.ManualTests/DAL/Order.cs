@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sushi.MicroORM.Tests.DAL
+namespace Sushi.MicroORM.ManualTests.DAL
 {
     [DataMap(typeof(OrderMap))]    
     public class Order

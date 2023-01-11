@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sushi.MicroORM.Tests
+namespace Sushi.MicroORM.ManualTests
 {
     [TestClass]
     public class ConnectionStringTest

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sushi.MicroORM.Tests.DAL.Customers
+namespace Sushi.MicroORM.ManualTests.DAL.Customers
 {
     [DataMap(typeof(CustomerMap))]
     public class Customer

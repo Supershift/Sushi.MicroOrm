@@ -132,61 +132,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                 await UpdateAsync(entity, cancellationToken).ConfigureAwait(false);
         }
 
-        /// <summary>
-        /// Creates an instance of <see cref="DataQuery{T}" /> that can be used with <see cref="FetchSingleAsync(int)"/>.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        protected DataQuery<T> CreateFetchSinglequery(int id)
-        {
-            var primaryKeyColumns = _map.GetPrimaryKeyColumns();
-            if (primaryKeyColumns.Count != 1)
-                throw new Exception("Mapping does not have one and only one primary key column.");
-            var primaryKeyColumn = primaryKeyColumns[0];            
-
-            var query = new DataQuery<T>(_map);
-            query.Add(primaryKeyColumn.Column, SqlDbType.Int, id);
-            return query;
-        } 
-
-        /// <summary>
-        /// Fetches a single record from the database, using <paramref name="id"/> to build a where clause on <typeparamref name="T"/>'s primary key.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public async Task<T> FetchSingleAsync(int id)
-        {
-            var query = CreateFetchSinglequery(id);
-
-            return await FetchSingleAsync(query).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Fetches a single record from the database, using <paramref name="query"/> to build a where clause for <typeparamref name="T"/>.
-        /// </summary>
-        /// <param name="query"></param>
-        /// <returns></returns>
-        public async Task<T> FetchSingleAsync(DataQuery<T> query)
-        {
-            return await FetchSingleAsync(query, CancellationToken.None).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Fetches a single record from the database.
-        /// </summary>
-        /// <param name="query"></param>        
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public async Task<T> FetchSingleAsync(DataQuery<T> query, CancellationToken cancellationToken)
-        {
-            var statement = _sqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, _map, query);            
-
-            // execute and get response
-            var statementResult = await ExecuteSqlStatementAsync<T>(statement, cancellationToken).ConfigureAwait(false);
-
-            // return result
-            return statementResult.SingleResult;
-        }
+        
 
         /// <summary>
         /// Updates the record <paramref name="entity"/> in the database.
@@ -306,41 +252,49 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <summary>
-        /// Fetches all records from the database.
-        /// </summary>        
-        /// <returns></returns>
-        public async Task<QueryListResult<T>> FetchAllAsync()
-        {
-            return await FetchAllAsync(CancellationToken.None).ConfigureAwait(false); 
-        }
-
-        /// <summary>
-        /// Fetches all records from the database.
-        /// </summary>        
-        /// <returns></returns>
-        public async Task<QueryListResult<T>> FetchAllAsync(CancellationToken cancellationToken)
-        {
-            var query = CreateQuery();
-            return await FetchAllAsync(query, cancellationToken).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Fetches all records from the database, using <paramref name="query"/> to build a where clause
+        /// Gets the first record from the resultset, using <paramref name="query"/> to build a where clause for <typeparamref name="T"/>.
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        public async Task<QueryListResult<T>> FetchAllAsync(DataQuery<T> query)
+        public async Task<T> GetFirstAsync(DataQuery<T> query)
         {
-            return await FetchAllAsync(query, CancellationToken.None).ConfigureAwait(false);
+            return await GetFirstAsync(query, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Fetches all records from the database, using <paramref name="query"/> to build a where clause.
+        /// Gets the first record from the resultset, using <paramref name="query"/> to build a where clause for <typeparamref name="T"/>.
+        /// </summary>
+        /// <param name="query"></param>        
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<T> GetFirstAsync(DataQuery<T> query, CancellationToken cancellationToken)
+        {
+            var statement = _sqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, _map, query);
+
+            // execute and get response
+            var statementResult = await ExecuteSqlStatementAsync<T>(statement, cancellationToken).ConfigureAwait(false);
+
+            // return result
+            return statementResult.SingleResult;
+        }
+
+        /// <summary>
+        /// Gets all records from the database, using <paramref name="query"/> to build a where clause.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public async Task<QueryListResult<T>> GetAllAsync(DataQuery<T> query)
+        {
+            return await GetAllAsync(query, CancellationToken.None).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Gets all records from the database, using <paramref name="query"/> to build a where clause.
         /// </summary>        
         /// <param name="query"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<QueryListResult<T>> FetchAllAsync(DataQuery<T> query, CancellationToken cancellationToken)
+        public async Task<QueryListResult<T>> GetAllAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
             // generate the sql statement            
             var statementType = DMLStatementType.Select;

@@ -21,7 +21,7 @@ namespace Sushi.MicroORM
         /// <returns></returns>
         public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString, Action<MicroOrmConfigurationBuilder> config = null) 
         {   
-            services.TryAddTransient(typeof(Connector<>));
+            services.TryAddTransient(typeof(IConnector<>), typeof(Connector<>));
 
             services.TryAddSingleton<DataMapProvider>();
 

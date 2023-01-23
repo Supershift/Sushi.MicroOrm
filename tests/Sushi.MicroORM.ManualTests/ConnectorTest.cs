@@ -16,13 +16,13 @@ using System.Threading.Tasks;
 namespace Sushi.MicroORM.ManualTests
 {
     [TestClass]
-    public class ConnectorTestAsync
+    public class ConnectorTest
     {
-        private readonly Connector<Order> _connectorOrders;
-        private readonly Connector<Product> _connectorProducts;                
+        private readonly IConnector<Order> _connectorOrders;
+        private readonly IConnector<Product> _connectorProducts;                
         private readonly ServiceProvider _serviceProvider;
 
-        public ConnectorTestAsync()
+        public ConnectorTest()
         {
             var configuration = new ConfigurationBuilder()
             .AddUserSecrets(Assembly.GetExecutingAssembly(), optional: true)
@@ -624,9 +624,9 @@ WHERE Product_Key > @productID";
             Assert.AreEqual(compositeKey.SomeValue, result.SomeValue);
         }
 
-        private Connector<T> CreateConnector<T>() where T : new()
+        private IConnector<T> CreateConnector<T>() where T : new()
         {
-            return _serviceProvider.GetRequiredService<Connector<T>>();
+            return _serviceProvider.GetRequiredService<IConnector<T>>();
         }
     }
 }

@@ -47,10 +47,21 @@ namespace Sushi.MicroORM
         /// Gets the ORDER BY clause that will be applied to the SQL statement to sort the result set. The column list can be appened using <see cref="AddOrder(Expression{Func{T, object}}, SortOrder)"/>.
         /// </summary>
         public string OrderBy { get; private set; }
+        
         /// <summary>
         /// Gets or sets a <see cref="PagingData"/> object that will be used to add paging to the SQL statement.
         /// </summary>
         public PagingData Paging { get; set; }
+
+        /// <summary>
+        /// Gets or sets the connection string to use when executing this query. If left empty, the default connectionstring for <typeparamref name="T"/> will be used.
+        /// </summary>
+        public string ConnectionString { get; set; }
+
+        /// <summary>
+        /// Get or sets the command timeout to use when executing this query. If left empty, the default command timeout will be used.
+        /// </summary>
+        public int? CommandTimeOut { get; set; }
 
         internal List<SqlParameter> SqlParameters { get; } = new List<SqlParameter>();
 

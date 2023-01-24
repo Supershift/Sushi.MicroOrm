@@ -12,6 +12,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
+using NuGet.Frameworks;
 
 namespace Sushi.MicroORM.ManualTests
 {
@@ -622,6 +624,30 @@ WHERE Product_Key > @productID";
             var result = await connector.GetFirstAsync(filter);
 
             Assert.AreEqual(compositeKey.SomeValue, result.SomeValue);
+        }
+
+        [TestMethod]
+        public async Task CustomTimeOut()
+        {
+            var query = _connectorOrders.CreateQuery();
+            query.SqlQuery = "WAITFOR DELAY '00:00:05';";
+            query.CommandTimeOut = 2;
+
+            Exception exception = null;
+            try
+            {
+                await _connectorOrders.ExecuteNonQueryAsync(query);
+            }
+            catch(Exception ex)
+            {
+                exception = ex;
+            }
+
+            Assert.IsNotNull(exception);
+            Assert.IsNotNull(exception.InnerException);
+            Assert.IsInstanceOfType(exception.InnerException, typeof(Microsoft.Data.SqlClient.SqlException));
+            var number = ((Microsoft.Data.SqlClient.SqlException)exception.InnerException).Errors[0].Number;
+            Assert.AreEqual(-2, number);
         }
 
         private IConnector<T> CreateConnector<T>() where T : new()

@@ -192,51 +192,9 @@ namespace Sushi.MicroORM.Supporting
             return result;
         }
 
-        ///// <summary>
-        ///// Executes the SqlCommand non query.
-        ///// </summary>
-        //public async Task<int> ExecNonQueryAsync(CancellationToken cancellationToken)
-        //{
-        //    try
-        //    {
-        //        await OpenAsync(cancellationToken).ConfigureAwait(false);
-        //        return await _command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        //    }
-        //    catch (TaskCanceledException) { throw; }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception(GetErrorText(ex.Message), ex);
-        //    }
-        //    finally
-        //    {
-        //        Log();
-        //    }
-        //}
-
-        //        /// <summary>
-        //        /// Calls <see cref="DatabaseConfiguration.Log"/> for the current command's text.
-        //        /// </summary>
-        //        protected void Log()
-        //        {
-        //            try
-        //            {
-        //                if (DatabaseConfiguration.Log != null)
-        //                {
-        //                    string message = $"\r\n{_command.CommandText}\r\n{_parameterlist}{DateTime.Now}\r\n";
-        //                    DatabaseConfiguration.Log(message);
-        //                }
-        //            }
-        //            catch
-        //            {
-        //#if DEBUG
-        //                throw;
-        //#endif
-        //            }
-        //        }
-
         private string GetErrorText(string query, string error)
         {
-            return string.Format("Error while executing<br/>{0}<br/>{1}<br/><br/><b>{2}</b>",
+            return string.Format("Error while executing\r\n{0}\r\n{1}\r\n{2}",
                 query,
                 _parameterlist,
                 error);

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Options;
 using Sushi.MicroORM.Mapping;
 using Sushi.MicroORM.Supporting;
 using System;
@@ -22,6 +23,7 @@ namespace Sushi.MicroORM
         private readonly ConnectionStringProvider _connectionStringProvider;
         private readonly SqlStatementGenerator _sqlStatementGenerator;
         private readonly SqlExecuter _sqlExecuter;
+        private readonly MicroOrmOptions _options;
 
         /// <summary>
         /// An object representing the mapping between <typeparamref name="T"/> and database.
@@ -33,39 +35,18 @@ namespace Sushi.MicroORM
         /// </summary>
         public Connector(
             ConnectionStringProvider connectionStringProvider,
+            IOptions<MicroOrmOptions> options,
             DataMapProvider dataMapProvider,
             SqlStatementGenerator sqlStatementGenerator,
             SqlExecuter sqlExecuter)
         {
             _connectionStringProvider = connectionStringProvider;
+            _options = options.Value;
             _sqlStatementGenerator = sqlStatementGenerator;
             _sqlExecuter = sqlExecuter;
             _map = dataMapProvider.GetMapForType<T>() as DataMap<T>;
         }
-
-        /// <inheritdoc />
-        public int? CommandTimeout { get; set; }
-
-        private string _connectionString;
-
-
-        /// <summary>
-        /// Gets the connection string used to connect to the database. Setting this will override <see cref="ConnectionStringProvider"/>.
-        /// </summary>
-        public string ConnectionString
-        {
-            get
-            {
-                if (string.IsNullOrWhiteSpace(_connectionString))
-                    _connectionString = _connectionStringProvider.GetConnectionString(typeof(T));
-                return _connectionString;
-            }
-            set
-            {
-                _connectionString = value;
-            }
-        }
-
+        
         /// <inheritdoc />
         public DataQuery<T> CreateQuery()
         {
@@ -78,7 +59,9 @@ namespace Sushi.MicroORM
         /// <returns></returns>
         private async Task<SqlStatementResult<TResult>> ExecuteSqlStatementAsync<TResult>(SqlStatement<T> statement, CancellationToken cancellationToken)
         {
-            var result = await _sqlExecuter.ExecuteAsync<T, TResult>(statement, ConnectionString, CommandTimeout, _map, cancellationToken);
+            string connectionString = _connectionStringProvider.GetConnectionString(typeof(T));
+            int? commandTimeout = _options.DefaultCommandTimeOut;
+            var result = await _sqlExecuter.ExecuteAsync<T, TResult>(statement, connectionString, commandTimeout, _map, cancellationToken);
             return result;
         }
 
@@ -377,15 +360,16 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             }
 
             //create a sql connection (this allows sqlBulkCopy to enlist in a transaction scope, because the sqlConnection automatically enlists when open is called)
-            using var sqlConnection = new SqlConnection(ConnectionString);
+            string connectionString = _connectionStringProvider.GetConnectionString(typeof(T));
+            using var sqlConnection = new SqlConnection(connectionString);
             sqlConnection.Open();
 
             //insert using sqlBulkCopy
             using var bulkCopy = new SqlBulkCopy(sqlConnection, sqlBulkCopyOptions, null);
             //set command time out if a value was explicitly defined
-            if (this.CommandTimeout.HasValue)
+            if (_options.DefaultCommandTimeOut.HasValue)
             {
-                bulkCopy.BulkCopyTimeout = this.CommandTimeout.Value;
+                bulkCopy.BulkCopyTimeout = _options.DefaultCommandTimeOut.Value;
             }
 
             //we need to explicitly define a column mapping, otherwise the ordinal position of the columns in the datatable is used instead of name

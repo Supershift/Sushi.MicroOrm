@@ -12,15 +12,6 @@ namespace Sushi.MicroORM
     public interface IConnector<T> where T : new()
     {
         /// <summary>
-        /// Gets or sets the wait time in seconds before terminating the attempt to execute a command and generating an error.
-        /// </summary>
-        int? CommandTimeout { get; set; }
-        /// <summary>
-        /// Gets the connection string used to connect to the database. Setting this will override <see cref="ConnectionStringProvider"/>.
-        /// </summary>
-        string ConnectionString { get; set; }
-
-        /// <summary>
         /// Inserts a collection of entities of <typeparamref name="T"/> using Sql Bulk Copy. The SqlDbType defined on the column attributes is ignored. Instead, the Sql Type is derived from the .NET type of the mapped properties.
         /// A list of supported types can be found here: https://msdn.microsoft.com/en-us/library/system.data.datacolumn.datatype(v=vs.110).aspx
         /// This method supports System.Transaction.TransactionScope.

@@ -33,12 +33,19 @@ namespace Sushi.MicroORM
             connectionStringProvider.DefaultConnectionString = defaultConnectionString;
             services.TryAddSingleton(connectionStringProvider);
 
-            // perform configuration action for caller
-            if(config != null)
-            {
-                var builder = new MicroOrmConfigurationBuilder(connectionStringProvider);
+            // create config builder
+            var microOrmBuilder = new MicroOrmConfigurationBuilder(connectionStringProvider);
+            var optionsBuilder = services.AddOptions<MicroOrmOptions>();
 
-                config(builder);
+            // execute configuration callbacks
+            if (config != null)
+            {
+                config(microOrmBuilder);
+
+                if(microOrmBuilder.Options != null)
+                {
+                    optionsBuilder.Configure(microOrmBuilder.Options);
+                }
             }
 
             return services;

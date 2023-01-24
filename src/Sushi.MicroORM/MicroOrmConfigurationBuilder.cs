@@ -1,4 +1,6 @@
-﻿namespace Sushi.MicroORM
+﻿using System;
+
+namespace Sushi.MicroORM
 {      
     /// <summary>
     /// Provides methods to configure Sushi MicroORM.
@@ -18,5 +20,10 @@
         /// Gets the <see cref="ConnectionStringProvider"/>.
         /// </summary>
         public ConnectionStringProvider ConnectionStringProvider { get; private set; } 
+
+        /// <summary>
+        /// Gets or sets the callback used to configure <see cref="MicroOrmOptions"/>.
+        /// </summary>
+        public Action<MicroOrmOptions> Options { get; set; }
     }
 }

@@ -185,7 +185,7 @@ serviceCollection.AddMicroORM(connectionString, c =>
     {
         o.DefaultCommandTimeOut = 45;
     };
-	c.ConnectionStringProvider.AddMappedConnectionString<LogItem>(loggingConnectionString);
+    c.ConnectionStringProvider.AddMappedConnectionString<LogItem>(loggingConnectionString);
 });
 ```
 You can add multiple connection strings and map them to specific types and namespaces. 

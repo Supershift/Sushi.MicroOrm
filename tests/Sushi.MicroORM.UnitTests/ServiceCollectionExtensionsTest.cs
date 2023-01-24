@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,6 +60,28 @@ namespace Sushi.MicroORM.UnitTests
 
             // check default connection string is set
             Assert.True(isConfigBuilderCalled);
+        }
+
+        [Fact]
+        public void ConfigurationBuilderTest_MicroOrmOptions()
+        {
+            IServiceCollection serviceCollection = new ServiceCollection();
+            
+            serviceCollection.AddMicroORM("", c =>
+            {
+                c.Options = o =>
+                {
+                    o.DefaultCommandTimeOut = 45;
+                };
+            });
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            // get options
+            var options = serviceProvider.GetRequiredService<IOptions<MicroOrmOptions>>();
+
+            // assert            
+            Assert.NotNull(options.Value);
+            Assert.Equal(45, options.Value.DefaultCommandTimeOut);
         }
 
         [Fact]

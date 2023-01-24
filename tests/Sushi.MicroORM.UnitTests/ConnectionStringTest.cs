@@ -1,15 +1,12 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sushi.MicroORM.ManualTests
-{
-    [TestClass]
+namespace Sushi.MicroORM.UnitTests
+{   
     public class ConnectionStringTest
-    {   
-        [TestMethod]
+    {
+        [Fact]
         public void GetCachedConnectionString()
         {
             var provider = new ConnectionStringProvider();
@@ -18,10 +15,10 @@ namespace Sushi.MicroORM.ManualTests
             var resultA1 = provider.GetConnectionString(typeof(object));
             var resultA2 = provider.GetConnectionString(typeof(object));
 
-            Assert.AreSame(resultA1, resultA2);
+            Assert.Equal(resultA1, resultA2);
         }
 
-        [TestMethod]
+        [Fact]
         public void ReplaceConnectionString()
         {
             var provider = new ConnectionStringProvider();
@@ -32,8 +29,8 @@ namespace Sushi.MicroORM.ManualTests
             provider.AddMappedConnectionString(typeof(object).ToString(), "b");
             var resultB = provider.GetConnectionString(typeof(object));
 
-            Assert.AreNotEqual(resultA, resultB);
-            Assert.AreEqual("b", resultB);
+            Assert.NotEqual(resultA, resultB);
+            Assert.Equal("b", resultB);
         }
     }
 }

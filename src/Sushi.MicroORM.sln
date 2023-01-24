@@ -9,6 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sushi.MicroORM.ManualTests"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sushi.MicroORM.UnitTests", "..\tests\Sushi.MicroORM.UnitTests\Sushi.MicroORM.UnitTests.csproj", "{E3586975-44EA-42D4-A42B-43588156E656}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0F22C0C2-8AB3-4AF4-B4CF-D0FC680D6D24}"
+	ProjectSection(SolutionItems) = preProject
+		..\readme.md = ..\readme.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

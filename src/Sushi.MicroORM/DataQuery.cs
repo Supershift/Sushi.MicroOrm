@@ -24,8 +24,10 @@ namespace Sushi.MicroORM
         public DataQuery(DataMap map)
         {   
             Map = map;
-            if(Map == null)
-                throw new Exception($"No default mapping defined for class {typeof(T)}. Apply a DataMap attribute to {typeof(T)} or create a datafilter with an instance of a mapping.");            
+            if (Map == null)
+            {
+                throw new Exception($"No mapping defined for class {typeof(T)}. Add a nested class inhereting DataMap to {typeof(T)} or add a DataMap attribute to {typeof(T)}.");
+            }
         }
 
         /// <summary>

@@ -13,5 +13,10 @@ namespace Sushi.MicroORM
         ///  If left emtpy, the ADO.NET default command timeout is used.
         /// </summary>
         public int? DefaultCommandTimeOut { get; set; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="DateTimeKind"/> applied to <see cref="DateTime"/> values when retrieved from the database. Defaults to <see cref="DateTimeKind.Utc"/>.
+        /// </summary>
+        public DateTimeKind DateTimeKind { get; set; } = DateTimeKind.Utc;
     }
 }

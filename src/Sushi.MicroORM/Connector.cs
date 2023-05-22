@@ -141,7 +141,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         {
             var identityColumn = _map.Items.FirstOrDefault(x => x.IsIdentity);
             if (identityValue > 0 && identityColumn != null)
-                ReflectionHelper.SetMemberValue(identityColumn.MemberInfoTree, identityValue, entity);
+                ReflectionHelper.SetMemberValue(identityColumn.MemberInfoTree, identityValue, entity, _options.DateTimeKind);
         }
 
         /// <inheritdoc />

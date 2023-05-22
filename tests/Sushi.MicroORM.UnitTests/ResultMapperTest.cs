@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using Moq;
 using Sushi.MicroORM.Mapping;
 using Sushi.MicroORM.Supporting;
@@ -14,7 +15,7 @@ namespace Sushi.MicroORM.UnitTests
             // arrange
             var map = new MyMap();
             var instance = new MyClass();
-            var resultMapper = new ResultMapper();
+            var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datarecord
             var mockedRecord = new Mock<IDataRecord>();
@@ -38,7 +39,7 @@ namespace Sushi.MicroORM.UnitTests
             // arrange
             var map = new MyMapWithAlias();
             var instance = new MyClass();
-            var resultMapper = new ResultMapper();
+            var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datarecord
             var mockedRecord = new Mock<IDataRecord>();
@@ -59,7 +60,7 @@ namespace Sushi.MicroORM.UnitTests
         [Fact]
         public async Task MapToSingleResultScalarTest()
         {
-            var resultMapper = new ResultMapper();
+            var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datareader
             var mockedReader = new Mock<DbDataReader>();
@@ -78,7 +79,7 @@ namespace Sushi.MicroORM.UnitTests
         [Fact]
         public async Task MapToSingleResultScalarTest_NotFound()
         {
-            var resultMapper = new ResultMapper();
+            var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datareader
             var mockedReader = new Mock<DbDataReader>();
@@ -95,7 +96,7 @@ namespace Sushi.MicroORM.UnitTests
         [Fact]
         public async Task MapToSingleResultScalarTest_TypeMismatch()
         {
-            var resultMapper = new ResultMapper();
+            var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datareader
             var mockedReader = new Mock<DbDataReader>();
@@ -115,7 +116,7 @@ namespace Sushi.MicroORM.UnitTests
         [Fact]
         public async Task MapToMultipleResultsScalarTest()
         {
-            var resultMapper = new ResultMapper();
+            var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datareader
             var mockedReader = new Mock<DbDataReader>();
@@ -139,7 +140,7 @@ namespace Sushi.MicroORM.UnitTests
         [Fact]
         public async Task MapToMultipleResultsScalarTest_TypeMismatch()
         {
-            var resultMapper = new ResultMapper();
+            var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datareader
             var mockedReader = new Mock<DbDataReader>();
@@ -165,7 +166,7 @@ namespace Sushi.MicroORM.UnitTests
         public async Task MapToSingleResultTest()
         {
             var map = new MyMap();            
-            var resultMapper = new ResultMapper();
+            var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datareader
             var mockedReader = new Mock<DbDataReader>();
@@ -188,7 +189,7 @@ namespace Sushi.MicroORM.UnitTests
         public async Task MapToSingleResultTest_DefaultNull()
         {
             var map = new MyMap();
-            var resultMapper = new ResultMapper();
+            var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datareader
             var mockedReader = new Mock<DbDataReader>();
@@ -209,7 +210,7 @@ namespace Sushi.MicroORM.UnitTests
         public async Task MapToSingleResultTest_DefaultInstance()
         {
             var map = new DataMap<MyStruct>();
-            var resultMapper = new ResultMapper();
+            var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datareader
             var mockedReader = new Mock<DbDataReader>();
@@ -230,7 +231,7 @@ namespace Sushi.MicroORM.UnitTests
         public async Task MapToMultipleResultsTest()
         {
             var map = new MyMap();
-            var resultMapper = new ResultMapper();
+            var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datareader
             var mockedReader = new Mock<DbDataReader>();
@@ -252,6 +253,7 @@ namespace Sushi.MicroORM.UnitTests
             Assert.NotEqual(result[0], result[1]);
         }
 
+        // test fakes
         public class MyClass
         {
             public int Id { get; set; }
@@ -275,6 +277,8 @@ namespace Sushi.MicroORM.UnitTests
                 Map(x => x.Name, "Name").Alias("FullName");
             }
         }
+
+        public IOptions<MicroOrmOptions> DefaultOptions = Options.Create(new MicroOrmOptions());
 
         public struct MyStruct { };
     }

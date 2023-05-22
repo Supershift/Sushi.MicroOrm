@@ -18,10 +18,11 @@ namespace Sushi.MicroORM.ManualTests.DAL
                 Id(x => x.ID, "Order_Key");
                 Map(x => x.CustomerID, "Order_CustomerID");
                 Map(x => x.Created, "Order_Created");
+                Map(x => x.Created2, "Order_Created2");
+                Map(x => x.CreatedOffset, "Order_CreatedOffset");
                 Map(x => x.Comments, "Order_Comments");
                 Map(x => x.DeliveryTime, "Order_DeliveryTime");
-                Map(x => x.DeliveryTime2, "Order_DeliveryTime2");
-                Map(x => x.Created2, "Order_Created").ReadOnly();
+                Map(x => x.DeliveryTime2, "Order_DeliveryTime2");                
                 Map(x => x.Amount, "Order_Amount");
                 Map(x => x.Measurement, "Order_Measurement");
                 Map(x => x.DeliveryDate, "Order_DeliveryDate");
@@ -50,6 +51,7 @@ namespace Sushi.MicroORM.ManualTests.DAL
         public int CustomerID;
         public DateTime Created { get; set; }
         public DateTime Created2 { get; set; }
+        public DateTimeOffset CreatedOffset { get; set; }
         public string Comments { get; set; }
         public TimeSpan? DeliveryTime { get; set; }
         public TimeSpan DeliveryTime2 { get; set; }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Options;
 using Sushi.MicroORM.Mapping;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,17 @@ namespace Sushi.MicroORM.Supporting
     /// </summary>
     public class ResultMapper
     {
+        private readonly MicroOrmOptions _options;
+
+        /// <summary>
+        /// Creates a new instance of <see cref="MicroOrmOptions"/>.
+        /// </summary>
+        /// <param name="options"></param>
+        public ResultMapper(IOptions<MicroOrmOptions> options)
+        {
+            _options = options.Value;
+        }
+
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="T"/> using the provided <paramref name="map"/>.
         /// </summary>                  
@@ -117,7 +129,7 @@ namespace Sushi.MicroORM.Supporting
                     if (mappedName.Equals(columnName, StringComparison.CurrentCultureIgnoreCase))
                     {
                         var value = reader.GetValue(columnIndex);
-                        ReflectionHelper.SetMemberValue(item.MemberInfoTree, value, instance);
+                        ReflectionHelper.SetMemberValue(item.MemberInfoTree, value, instance, _options.DateTimeKind);
                         break;
                     }
                 }

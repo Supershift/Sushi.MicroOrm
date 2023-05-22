@@ -92,11 +92,12 @@ namespace Sushi.MicroORM.Supporting
 
         /// <summary>
         /// Sets <paramref name="value"/> on the property defined by <paramref name="memberInfo"/> on <paramref name="entity"/>.
-        /// </summary>
+        /// </summary>        
+        /// <param name="entity"></param>
         /// <param name="memberInfo"></param>
         /// <param name="value"></param>
-        /// <param name="entity"></param>
-        public static void SetMemberValue(MemberInfo memberInfo, object value, object entity)
+        /// <param name="dateTimeKind">If not NULL, <see cref="DateTime"/> values are created with this <see cref="DateTimeKind"/>.</param>
+        public static void SetMemberValue(MemberInfo memberInfo, object value, object entity, DateTimeKind? dateTimeKind)
         {
             // if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)            
             var type = GetMemberType(memberInfo);
@@ -115,14 +116,21 @@ namespace Sushi.MicroORM.Supporting
                 value = Utility.ConvertValueToEnum(value, type);
             }
 
-            // custom support for converting to DateOnly and TimeOnly
-            if(type == typeof(DateOnly) && value is DateTime dt1)
+            // specify datetime kind
+            if (dateTimeKind.HasValue && type == typeof(DateTime) && value is DateTime dt && dt.Kind != dateTimeKind.Value)
             {
+                value = DateTime.SpecifyKind(dt, dateTimeKind.Value);
+            }
+
+            
+            // custom support for converting to DateOnly and TimeOnly
+            if (type == typeof(DateOnly) && value is DateTime dt1)
+            {   
                 value = DateOnly.FromDateTime(dt1);
             }
-            else if(type == typeof(TimeOnly))
+            else if (type == typeof(TimeOnly))
             {
-                switch(value)
+                switch (value)
                 {
                     case DateTime dt2:
                         value = TimeOnly.FromDateTime(dt2);
@@ -131,7 +139,6 @@ namespace Sushi.MicroORM.Supporting
                         value = TimeOnly.FromTimeSpan(ts);
                         break;
                 }
-                
             }
 
             try
@@ -149,8 +156,7 @@ namespace Sushi.MicroORM.Supporting
                 }                
             }
             catch (Exception innerException)
-            {
-                string valueType = value == null ? "unknown (=NULL)" : value.GetType().ToString();
+            {   
                 string message = $"Error while setting the {memberInfo.Name} member with an object of type {value}";
                     
                 throw new Exception(message, innerException);
@@ -163,7 +169,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="memberInfoTree"></param>
         /// <param name="value"></param>
         /// <param name="entity"></param>
-        public static void SetMemberValue(List<MemberInfo> memberInfoTree, object value, object entity)
+        public static void SetMemberValue(List<MemberInfo> memberInfoTree, object value, object entity, DateTimeKind? dateTimeKind)
         {
             if (memberInfoTree == null)
                 throw new ArgumentNullException(nameof(memberInfoTree));
@@ -182,14 +188,14 @@ namespace Sushi.MicroORM.Supporting
                     {
                         var type = GetMemberType(memberInfo);
                         instance = Activator.CreateInstance(type);
-                        SetMemberValue(memberInfo, instance, entity);
+                        SetMemberValue(memberInfo, instance, entity, dateTimeKind);
                     }
                     entity = instance;
                 }
             }
             //now set the db value on the final member
             var lastMemberInfo = memberInfoTree.Last();
-            SetMemberValue(lastMemberInfo, value, entity);
+            SetMemberValue(lastMemberInfo, value, entity, dateTimeKind);
         }
 
         /// <summary>

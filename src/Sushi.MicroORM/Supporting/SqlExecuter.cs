@@ -85,7 +85,7 @@ namespace Sushi.MicroORM.Supporting
 
                 // create command
                 using var command = new SqlCommand(query, connection);
-
+                
                 // set the commands time out
                 if (commandTimeout.HasValue)
                     command.CommandTimeout = commandTimeout.Value;

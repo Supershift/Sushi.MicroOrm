@@ -99,8 +99,7 @@ namespace Sushi.MicroORM.Mapping
             }
 
             if (dataMapType != null)
-            {
-                //MV: I think this instance should be singleton, so there is only one datamap object for each DataMap. Maybe that singleton container should be backed by MemoryCache to avoid memory issues
+            {   
                 var dataMap = (DataMap)System.Activator.CreateInstance(dataMapType);
                 return dataMap;
             }

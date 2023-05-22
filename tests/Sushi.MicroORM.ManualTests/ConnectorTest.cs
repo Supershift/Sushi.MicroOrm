@@ -388,6 +388,8 @@ WHERE Product_Key > @productID";
             {
                 CustomerID = 1,
                 Created = DateTime.UtcNow,
+                Created2 = DateTime.UtcNow,
+                CreatedOffset = DateTimeOffset.Now,
                 DeliveryTime = new TimeSpan(3, 20, 35),
                 DeliveryTime2 = DateTime.UtcNow.TimeOfDay
             };

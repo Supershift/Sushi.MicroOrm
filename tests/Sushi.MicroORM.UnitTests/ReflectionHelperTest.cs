@@ -1,9 +1,4 @@
 ﻿using Sushi.MicroORM.Supporting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.UnitTests
 {
@@ -28,9 +23,111 @@ namespace Sushi.MicroORM.UnitTests
             Assert.Equal(kind, instance.Created.Kind);
         }
 
+        [Fact]
+        public void SetSubProperty_Value()
+        {
+            // arrange
+            var instance = new TestClass();
+            var value = 12;
+            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.SubProperty.SomeValue);
+
+            // act
+            ReflectionHelper.SetMemberValue(memberTree, value, instance, null);
+
+            // assert
+            Assert.NotNull(instance.SubProperty);
+            Assert.Equal(value, instance.SubProperty.SomeValue);
+        }
+
+        [Fact]
+        public void SetSubProperty_NullValue()
+        {
+            // arrange
+            var instance = new TestClass();
+            int? value = null;
+            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.SubProperty.SomeValue);
+
+            // act
+            ReflectionHelper.SetMemberValue(memberTree, value, instance, null);
+
+            // assert
+            Assert.NotNull(instance.SubProperty);
+            Assert.Equal(0, instance.SubProperty.SomeValue);
+        }
+
+        [Fact]
+        public void SetNullableSubProperty_Value()
+        {
+            // arrange
+            var instance = new TestClass();
+            int? value = 12;
+            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.NullableSubProperty.SomeValue);
+
+            // act
+            ReflectionHelper.SetMemberValue(memberTree, value, instance, null);
+
+            // assert
+            Assert.NotNull(instance.NullableSubProperty);
+            Assert.Equal(value, instance.NullableSubProperty.SomeValue);
+        }
+
+        [Fact]
+        public void SetNullableSubProperty_NullValue()
+        {
+            // arrange
+            var instance = new TestClass();
+            int? value = null;
+            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.NullableSubProperty.SomeValue);
+
+            // act
+            ReflectionHelper.SetMemberValue(memberTree, value, instance, null);
+
+            // assert
+            Assert.Null(instance.NullableSubProperty);            
+        }
+
+        [Fact]
+        public void SetNullableSubField_Value()
+        {
+            // arrange
+            var instance = new TestClass();
+            int? value = 12;
+            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.NullableSubField.SomeValue);
+
+            // act
+            ReflectionHelper.SetMemberValue(memberTree, value, instance, null);
+
+            // assert
+            Assert.NotNull(instance.NullableSubField);
+            Assert.Equal(value, instance.NullableSubField.SomeValue);
+        }
+
+        [Fact]
+        public void SetNullableSubField_NullValue()
+        {
+            // arrange
+            var instance = new TestClass();
+            int? value = null;
+            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.NullableSubField.SomeValue);
+
+            // act
+            ReflectionHelper.SetMemberValue(memberTree, value, instance, null);
+
+            // assert
+            Assert.Null(instance.NullableSubField);
+        }
+
         private class TestClass
         {
             public DateTime Created { get; set; }
+            public SubTestClass SubProperty { get; set; }
+            public SubTestClass? NullableSubProperty { get; set; }
+            public SubTestClass? NullableSubField;
+        }
+
+        private class SubTestClass
+        {
+            public int SomeValue { get; set; }
         }
     }
 }

@@ -90,6 +90,66 @@ namespace Sushi.MicroORM.Supporting
             }
         }
 
+
+
+        /// <summary>
+        /// Sets <paramref name="value"/> on the property defined by <paramref name="memberInfoTree"/> on <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="memberInfoTree"></param>
+        /// <param name="value"></param>
+        /// <param name="entity"></param>
+        /// <param name="dateTimeKind">If not NULL, <see cref="DateTime"/> values are created with this <see cref="DateTimeKind"/>.</param>
+        public static void SetMemberValue(List<MemberInfo> memberInfoTree, object value, object entity, DateTimeKind? dateTimeKind)
+        {
+            if (memberInfoTree == null)
+                throw new ArgumentNullException(nameof(memberInfoTree));
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+            if (memberInfoTree.Count == 0)
+                throw new ArgumentException("cannot contain zero items", nameof(memberInfoTree));
+
+            // if the expression points to a nested property (ie. Customer.Address.Street), we need to create the objects along the way
+            if (memberInfoTree.Count > 1)
+            {
+                foreach (var memberInfo in memberInfoTree.GetRange(0, memberInfoTree.Count - 1))
+                {
+                    // get current node value, if null, create a new object
+                    var instance = GetMemberValue(memberInfo, entity);
+                    if (instance == null)
+                    {   
+                        // if it is a non-nullable member AND the value we try to set is not null, we need to create an instance of the type
+                        if (value == null)
+                        {
+                            NullabilityInfoContext context = new();
+                            NullabilityInfo? nullInfo = null;
+                            switch (memberInfo.MemberType)
+                            {
+                                case MemberTypes.Field:
+                                    nullInfo = context.Create((FieldInfo)memberInfo);
+                                    break;
+                                case MemberTypes.Property:
+                                    nullInfo = context.Create((PropertyInfo)memberInfo);
+                                    break;
+                            }
+
+                            if (nullInfo?.WriteState == NullabilityState.Nullable)
+                            {
+                                // it is nullable, we don't need to create an object and we can stop traversing the tree
+                                return;
+                            }
+                        }
+                        var type = GetMemberType(memberInfo);
+                        instance = Activator.CreateInstance(type);
+                        SetMemberValue(memberInfo, instance, entity, dateTimeKind);
+                    }
+                    entity = instance;
+                }
+            }
+            //now set the db value on the final member
+            var lastMemberInfo = memberInfoTree.Last();
+            SetMemberValue(lastMemberInfo, value, entity, dateTimeKind);
+        }
+
         /// <summary>
         /// Sets <paramref name="value"/> on the property defined by <paramref name="memberInfo"/> on <paramref name="entity"/>.
         /// </summary>        
@@ -102,7 +162,7 @@ namespace Sushi.MicroORM.Supporting
             // if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)            
             var type = GetMemberType(memberInfo);
             var underlyingType = Nullable.GetUnderlyingType(type);
-            if(underlyingType != null)
+            if (underlyingType != null)
             {
                 type = underlyingType;
             }
@@ -112,7 +172,7 @@ namespace Sushi.MicroORM.Supporting
                 value = null;
             }
             else
-            {                
+            {
                 value = Utility.ConvertValueToEnum(value, type);
             }
 
@@ -122,10 +182,10 @@ namespace Sushi.MicroORM.Supporting
                 value = DateTime.SpecifyKind(dt, dateTimeKind.Value);
             }
 
-            
+
             // custom support for converting to DateOnly and TimeOnly
             if (type == typeof(DateOnly) && value is DateTime dt1)
-            {   
+            {
                 value = DateOnly.FromDateTime(dt1);
             }
             else if (type == typeof(TimeOnly))
@@ -153,49 +213,14 @@ namespace Sushi.MicroORM.Supporting
                         break;
                     default:
                         throw new ArgumentException($"Only {MemberTypes.Field} and {MemberTypes.Property} are supported.", nameof(memberInfo));
-                }                
-            }
-            catch (Exception innerException)
-            {   
-                string message = $"Error while setting the {memberInfo.Name} member with an object of type {value}";
-                    
-                throw new Exception(message, innerException);
-            }
-        }
-
-        /// <summary>
-        /// Sets <paramref name="value"/> on the property defined by <paramref name="memberInfoTree"/> on <paramref name="entity"/>.
-        /// </summary>
-        /// <param name="memberInfoTree"></param>
-        /// <param name="value"></param>
-        /// <param name="entity"></param>
-        public static void SetMemberValue(List<MemberInfo> memberInfoTree, object value, object entity, DateTimeKind? dateTimeKind)
-        {
-            if (memberInfoTree == null)
-                throw new ArgumentNullException(nameof(memberInfoTree));
-            if (entity == null)
-                throw new ArgumentNullException(nameof(entity));
-            if (memberInfoTree.Count == 0)
-                throw new ArgumentException("cannot contain zero items", nameof(memberInfoTree));
-
-            if (memberInfoTree.Count > 1)
-            {
-                foreach (var memberInfo in memberInfoTree.GetRange(0, memberInfoTree.Count - 1))
-                {
-                    //get current node value, if null, create a new object
-                    var instance = GetMemberValue(memberInfo, entity);
-                    if (instance == null)
-                    {
-                        var type = GetMemberType(memberInfo);
-                        instance = Activator.CreateInstance(type);
-                        SetMemberValue(memberInfo, instance, entity, dateTimeKind);
-                    }
-                    entity = instance;
                 }
             }
-            //now set the db value on the final member
-            var lastMemberInfo = memberInfoTree.Last();
-            SetMemberValue(lastMemberInfo, value, entity, dateTimeKind);
+            catch (Exception innerException)
+            {
+                string message = $"Error while setting the {memberInfo.Name} member with an object of type {value}";
+
+                throw new Exception(message, innerException);
+            }
         }
 
         /// <summary>

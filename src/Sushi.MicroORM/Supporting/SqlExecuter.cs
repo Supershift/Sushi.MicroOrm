@@ -27,6 +27,7 @@ namespace Sushi.MicroORM.Supporting
         public SqlExecuter(ResultMapper resultMapper)
         {
             _resultMapper = resultMapper;
+            _parameterlist = string.Empty;
         }
 
         /// <summary>
@@ -54,14 +55,7 @@ namespace Sushi.MicroORM.Supporting
             }
             else
             {
-                parameter.Value = itemvalue;
-
-                // verify the SqlTypes exception
-                if (itemvalue.GetType().Namespace.ToLower() == "system.data.sqltypes")
-                {
-                    if (itemvalue.ToString().ToLower() == "null")
-                        parameter.Value = DBNull.Value;
-                }
+                parameter.Value = itemvalue;                
             }
 
             _parameterlist += string.Format("{0} = '{1}' ({2})\r\n", name, itemvalue, type.ToString());

@@ -11,6 +11,15 @@ namespace Sushi.MicroORM
     /// </summary>
     public class ConnectionStringProvider
     {
+        /// <summary>
+        /// Creates a new instance of <see cref="ConnectionStringProvider"/>.
+        /// </summary>
+        /// <param name="defaultConnectionString"></param>
+        public ConnectionStringProvider(string defaultConnectionString)
+        {
+            _defaultConnectionString = defaultConnectionString;
+        }
+
         private string _defaultConnectionString;
         /// <summary>
         /// Gets or sets the default connection string which will be used if no type specific connection string is found.
@@ -97,7 +106,7 @@ namespace Sushi.MicroORM
 
                 //find the most specific match
                 //first we search for the fully qualified name. if nothing found, we search for the name minus one part, etc.
-                string connectionString = DefaultConnectionString;
+                string? connectionString = DefaultConnectionString;
                 while (splitName.Count > 0)
                 {
                     string searchPattern = string.Join(".", splitName);
@@ -113,7 +122,7 @@ namespace Sushi.MicroORM
                 }
 
                 //cache result
-                if (IsCachingEnabled)
+                if (connectionString != null && IsCachingEnabled)
                 {
                     CachedConnectionStrings[type] = connectionString;
                 }

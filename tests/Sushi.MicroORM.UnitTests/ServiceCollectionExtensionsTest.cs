@@ -20,7 +20,7 @@ namespace Sushi.MicroORM.UnitTests
             var serviceProvider = serviceCollection.BuildServiceProvider();
 
             // create default connector
-            var connector = serviceProvider.GetService<IConnector<object>>();
+            var connector = serviceProvider.GetService<IConnector<TestFake>>();
 
             Assert.NotNull(connector);
         }

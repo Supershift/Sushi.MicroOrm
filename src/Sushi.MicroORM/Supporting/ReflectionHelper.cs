@@ -41,7 +41,11 @@ namespace Sushi.MicroORM.Supporting
         /// <returns></returns>
         public static Type GetMemberType(List<MemberInfo> memberInfoTree)
         {
-            return GetMemberType(memberInfoTree.LastOrDefault());
+            if(memberInfoTree.Any() == false)
+            {
+                throw new ArgumentException("Cannot provide empty collection", nameof(memberInfoTree));
+            }
+            return GetMemberType(memberInfoTree.Last());
         }
 
         /// <summary>
@@ -50,7 +54,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="memberInfoTree"></param>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public static object GetMemberValue(List<MemberInfo> memberInfoTree, object entity)
+        public static object? GetMemberValue(List<MemberInfo> memberInfoTree, object? entity)
         {
             if (memberInfoTree == null)
                 throw new ArgumentNullException(nameof(memberInfoTree));
@@ -74,7 +78,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="memberInfo"></param>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public static object GetMemberValue(MemberInfo memberInfo, object entity)
+        public static object? GetMemberValue(MemberInfo memberInfo, object entity)
         {
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity));
@@ -99,7 +103,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="value"></param>
         /// <param name="entity"></param>
         /// <param name="dateTimeKind">If not NULL, <see cref="DateTime"/> values are created with this <see cref="DateTimeKind"/>.</param>
-        public static void SetMemberValue(List<MemberInfo> memberInfoTree, object value, object entity, DateTimeKind? dateTimeKind)
+        public static void SetMemberValue(List<MemberInfo> memberInfoTree, object? value, object entity, DateTimeKind? dateTimeKind)
         {
             if (memberInfoTree == null)
                 throw new ArgumentNullException(nameof(memberInfoTree));
@@ -140,6 +144,10 @@ namespace Sushi.MicroORM.Supporting
                         }
                         var type = GetMemberType(memberInfo);
                         instance = Activator.CreateInstance(type);
+                        if(instance == null)
+                        {
+                            throw new Exception("Cannot use types without a parameterless constructor as subtypes.");
+                        }
                         SetMemberValue(memberInfo, instance, entity, dateTimeKind);
                     }
                     entity = instance;
@@ -157,7 +165,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="memberInfo"></param>
         /// <param name="value"></param>
         /// <param name="dateTimeKind">If not NULL, <see cref="DateTime"/> values are created with this <see cref="DateTimeKind"/>.</param>
-        public static void SetMemberValue(MemberInfo memberInfo, object value, object entity, DateTimeKind? dateTimeKind)
+        public static void SetMemberValue(MemberInfo memberInfo, object? value, object entity, DateTimeKind? dateTimeKind)
         {
             // if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)            
             var type = GetMemberType(memberInfo);
@@ -181,7 +189,6 @@ namespace Sushi.MicroORM.Supporting
             {
                 value = DateTime.SpecifyKind(dt, dateTimeKind.Value);
             }
-
 
             // custom support for converting to DateOnly and TimeOnly
             if (type == typeof(DateOnly) && value is DateTime dt1)

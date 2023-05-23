@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Sushi.MicroORM
 {
+    /// <summary>
+    /// Represents configuration options for MicroOrm.
+    /// </summary>
     public class MicroOrmOptions
     {
         /// <summary>

@@ -9,7 +9,7 @@ namespace Sushi.MicroORM.UnitTests
         [Fact]
         public void GetCachedConnectionString()
         {
-            var provider = new ConnectionStringProvider();
+            var provider = new ConnectionStringProvider("d");
 
             provider.AddMappedConnectionString(typeof(object).ToString(), "a");
             var resultA1 = provider.GetConnectionString(typeof(object));
@@ -21,7 +21,7 @@ namespace Sushi.MicroORM.UnitTests
         [Fact]
         public void ReplaceConnectionString()
         {
-            var provider = new ConnectionStringProvider();
+            var provider = new ConnectionStringProvider("d");
             
             provider.AddMappedConnectionString(typeof(object).ToString(), "a");
             var resultA = provider.GetConnectionString(typeof(object));

@@ -33,7 +33,7 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Gets or sets a custom SQL query to be executed. Setting this will make the <see cref="Connector{T}"/> ignore any other query input set, except parameters.
         /// </summary>
-        public string SqlQuery { get; set; }
+        public string? SqlQuery { get; set; }
 
         /// <summary>
         /// Gets an object representing the mapping between class T and database
@@ -48,20 +48,20 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Gets the ORDER BY clause that will be applied to the SQL statement to sort the result set. The column list can be appened using <see cref="AddOrder(Expression{Func{T, object}}, SortOrder)"/>.
         /// </summary>
-        public string OrderBy { get; private set; }
+        public string? OrderBy { get; private set; }
         
         /// <summary>
         /// Gets or sets a <see cref="PagingData"/> object that will be used to add paging to the SQL statement.
         /// </summary>
-        public PagingData Paging { get; set; }
+        public PagingData? Paging { get; set; }
 
         /// <summary>
         /// Gets or sets the connection string to use when executing this query. If left empty, the default connectionstring for <typeparamref name="T"/> will be used.
         /// </summary>
-        public string ConnectionString { get; set; }
+        public string? ConnectionString { get; set; }
 
         /// <summary>
-        /// Get or sets the command timeout to use when executing this query. If left empty, the default command timeout will be used.
+        /// Get or sets the command timeout to use when executing this query. If NULL, the default command timeout will be used.
         /// </summary>
         public int? CommandTimeOut { get; set; }
 
@@ -122,7 +122,7 @@ namespace Sushi.MicroORM
         /// </summary>
         /// <param name="mappingExpression"></param>
         /// <param name="value"></param>        
-        public void Add(Expression<Func<T, object>> mappingExpression, object value)
+        public void Add(Expression<Func<T, object?>> mappingExpression, object value)
         {
             Add(mappingExpression, value, ComparisonOperator.Equals);
         }
@@ -133,7 +133,7 @@ namespace Sushi.MicroORM
         /// <param name="mappingExpression"></param>
         /// <param name="value"></param>
         /// <param name="comparisonOperator"></param>
-        public void Add(Expression<Func<T, object>> mappingExpression, object value, ComparisonOperator comparisonOperator)
+        public void Add(Expression<Func<T, object?>> mappingExpression, object value, ComparisonOperator comparisonOperator)
         {
             var members = ReflectionHelper.GetMemberTree(mappingExpression);
 
@@ -151,7 +151,7 @@ namespace Sushi.MicroORM
         /// <param name="column"></param>
         /// <param name="type"></param>
         /// <param name="value"></param>        
-        public void Add(string column, SqlDbType type, object value)
+        public void Add(string column, SqlDbType type, object? value)
         {
             Add(column, type, value, ComparisonOperator.Equals);
         }
@@ -163,7 +163,7 @@ namespace Sushi.MicroORM
         /// <param name="type"></param>
         /// <param name="value"></param>
         /// <param name="comparisonOperator"></param>
-        public void Add(string column, SqlDbType type, object value, ComparisonOperator comparisonOperator)
+        public void Add(string column, SqlDbType type, object? value, ComparisonOperator comparisonOperator)
         {
             var where = new WhereCondition(column, type, value, comparisonOperator);
             WhereClause.Add(where);
@@ -183,7 +183,7 @@ namespace Sushi.MicroORM
         /// Add a column to the ORDER BY clause that will be used to sort the result set.
         /// </summary>
         /// <param name="memberExpression"></param>        
-        public void AddOrder(Expression<Func<T, object>> memberExpression)
+        public void AddOrder(Expression<Func<T, object?>> memberExpression)
         {
             AddOrder(memberExpression, SortOrder.ASC);
         }
@@ -193,7 +193,7 @@ namespace Sushi.MicroORM
         /// </summary>
         /// <param name="memberExpression"></param>
         /// <param name="sortOrder"></param>
-        public void AddOrder(Expression<Func<T, object>> memberExpression, SortOrder sortOrder)
+        public void AddOrder(Expression<Func<T, object?>> memberExpression, SortOrder sortOrder)
         {
             var members = ReflectionHelper.GetMemberTree(memberExpression);
 

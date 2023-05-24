@@ -77,19 +77,19 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Executes a custom SQL statement defined on <paramref name="query"/> with a return value of <typeparamref name="TScalar"/>. 
         /// </summary>        
-        Task<TScalar> ExecuteScalarAsync<TScalar>(DataQuery<T> query);
+        Task<TScalar?> ExecuteScalarAsync<TScalar>(DataQuery<T> query);
         /// <summary>
         /// Executes a custom SQL statement defined on <paramref name="query"/> with a return value of <typeparamref name="TScalar"/>. 
         /// </summary>        
-        Task<TScalar> ExecuteScalarAsync<TScalar>(DataQuery<T> query, CancellationToken cancellationToken);
+        Task<TScalar?> ExecuteScalarAsync<TScalar>(DataQuery<T> query, CancellationToken cancellationToken);
         /// <summary>
         /// Executes a custom SQL statement defined on <paramref name="query"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="query"/>.
         /// </summary>        
-        Task<List<TResult>> ExecuteSetAsync<TResult>(DataQuery<T> query);
+        Task<List<TResult?>> ExecuteSetAsync<TResult>(DataQuery<T> query);
         /// <summary>
         /// Executes a custom SQL statement defined on <paramref name="query"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="query"/>.
         /// </summary>
-        Task<List<TResult>> ExecuteSetAsync<TResult>(DataQuery<T> query, CancellationToken cancellationToken);
+        Task<List<TResult?>> ExecuteSetAsync<TResult>(DataQuery<T> query, CancellationToken cancellationToken);
         /// <summary>
         /// Gets all records from the database, using <paramref name="query"/> to build a where clause.
         /// </summary>
@@ -101,11 +101,11 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Gets the first record from the resultset, using <paramref name="query"/> to build a where clause for <typeparamref name="T"/>.
         /// </summary>
-        Task<T> GetFirstAsync(DataQuery<T> query);
+        Task<T?> GetFirstAsync(DataQuery<T> query);
         /// <summary>
         /// Gets the first record from the resultset, using <paramref name="query"/> to build a where clause for <typeparamref name="T"/>.
         /// </summary>
-        Task<T> GetFirstAsync(DataQuery<T> query, CancellationToken cancellationToken);
+        Task<T?> GetFirstAsync(DataQuery<T> query, CancellationToken cancellationToken);
         /// <summary>
         /// Inserts <typeparamref name="T"/> in the database.
         /// </summary>

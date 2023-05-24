@@ -17,15 +17,15 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Gets or sets a custom SQL statement to use as condition.
         /// </summary>
-        public string SqlText { get; set; }
+        public string? SqlText { get; set; }
         /// <summary>
         /// Gets or sets the name of the column to which this predicate applies.
         /// </summary>
-        public string Column { get; set; }
+        public string? Column { get; set; }
         /// <summary>
         /// Gets or sets the value to which <see cref="Column"/> is tested.
         /// </summary>
-        public object Value { get; set; }        
+        public object? Value { get; set; }        
         /// <summary>
         /// Get or sets the <see cref="SqlDbType"/> of <see cref="Column"/>. This will also be the <see cref="SqlDbType"/> of the parameter generated to define <see cref="Value"/>.
         /// </summary>
@@ -51,13 +51,13 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Initializes a new instance of <see cref="WhereCondition"/> where the predicate is built using the specified <paramref name="column"/> and <paramref name="value"/>.
         /// </summary>
-        public WhereCondition(string column, SqlDbType type, object value, ComparisonOperator comparisonOperator)
+        public WhereCondition(string column, SqlDbType type, object? value, ComparisonOperator comparisonOperator)
             : this(column, type, value, 0, comparisonOperator) { }
 
         /// <summary>
         /// Initializes a new instance of <see cref="WhereCondition"/> where the predicate is built using the specified <paramref name="column"/> and <paramref name="value"/>.
         /// </summary>
-        public WhereCondition(string column, SqlDbType type, object value, int length, ComparisonOperator comparisonOperator)
+        public WhereCondition(string column, SqlDbType type, object? value, int length, ComparisonOperator comparisonOperator)
         {
             Column = column;
             SqlType = type;         

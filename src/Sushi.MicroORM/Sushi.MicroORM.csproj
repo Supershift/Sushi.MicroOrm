@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>3.0.0-b2</Version>
+    <Version>3.0.0-b3</Version>
     <Authors>Mark de Vries, Marc Molenwijk</Authors>
     <Company>Supershift B.V.</Company>    
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>    

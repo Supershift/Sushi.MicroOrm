@@ -30,9 +30,9 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="T"/> using the provided <paramref name="map"/>.
         /// </summary>                  
-        public async Task<T> MapToSingleResultAsync<T>(DbDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new() 
+        public async Task<T?> MapToSingleResultAsync<T>(DbDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new() 
         {
-            T result;
+            T? result;
             // read the first row from the result
             bool recordFound = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
             if (recordFound)
@@ -53,7 +53,7 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="TResult"/>
         /// </summary>                  
-        public async Task<TResult> MapToSingleResultScalarAsync<TResult>(DbDataReader reader, CancellationToken cancellationToken) 
+        public async Task<TResult?> MapToSingleResultScalarAsync<TResult>(DbDataReader reader, CancellationToken cancellationToken) 
         {
             //read the first row from the result
             bool recordFound = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
@@ -91,9 +91,9 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Converts the first column of all rows found in <paramref name="reader"/> to an object of type <typeparamref name="TResult"/>
         /// </summary>                  
-        public async Task<QueryListResult<TResult>> MapToMultipleResultsScalarAsync<TResult>(DbDataReader reader, CancellationToken cancellationToken)
+        public async Task<QueryListResult<TResult?>> MapToMultipleResultsScalarAsync<TResult>(DbDataReader reader, CancellationToken cancellationToken)
         {
-            var result = new QueryListResult<TResult>();
+            var result = new QueryListResult<TResult?>();
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 //read the first column of the first row
@@ -108,13 +108,16 @@ namespace Sushi.MicroORM.Supporting
             return result;
         }
 
-        internal void SetResultValuesToObject<T, TResult>(IDataRecord reader, DataMap<T> map, TResult instance) where T : new() where TResult : new()
+        internal void SetResultValuesToObject<T, TResult>(IDataRecord reader, DataMap<T> map, TResult instance) where T : new() where TResult : new() 
         {
+            if (instance == null) 
+                throw new ArgumentNullException(nameof(instance));
+            
             // for each mapped member on the instance, go through the result set and find a column with the expected name
             for (int i = 0; i < map.Items.Count; i++)
             {
                 var item = map.Items[i];
-
+                
                 // which name is expected in the result set by the mapped item
                 string mappedName = item.Column;
                 if (!string.IsNullOrWhiteSpace(item.Alias))

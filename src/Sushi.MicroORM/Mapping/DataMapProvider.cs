@@ -48,22 +48,14 @@ namespace Sushi.MicroORM.Mapping
         }
 
         /// <summary>
-        /// Returns an instance of DataMap<typeparamref name="T"/> for <typeparamref name="T"/> if declared. If not, null is returned
+        /// Returns an instance of DataMap<typeparamref name="T"/> for <typeparamref name="T"/> if declared.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public DataMap GetMapForType<T>() where T : new()
+        public DataMap<T> GetMapForType<T>() where T : new()
         {
-            var objectType = typeof(T);
-            return GetMapForType(objectType);
-        }
-        /// <summary>
-        /// Returns an instance of DataMap for <param name="type"></param> if declared. If not, null is returned
-        /// </summary>        
-        /// <returns></returns>
-        public DataMap GetMapForType(System.Type type)
-        {
-            Type dataMapType = null;
+            var type = typeof(T);            
+            Type? dataMapType = null;
             if (DataMapTypes.ContainsKey(type))
             {
                 dataMapType = DataMapTypes[type];
@@ -100,17 +92,18 @@ namespace Sushi.MicroORM.Mapping
 
             if (dataMapType != null)
             {   
-                var dataMap = (DataMap)System.Activator.CreateInstance(dataMapType);
-                return dataMap;
+                var dataMap = System.Activator.CreateInstance(dataMapType) as DataMap<T>;
+                if(dataMap != null)
+                    return dataMap;
             }
-            else
-                return null;
+
+            throw new Exception($"No DataMap defined for type {typeof(T)}");
         }
         /// <summary>
         /// Checks if type<param name="type"/> has a DataMapAttribute defining. Returns null if no attribute found
         /// </summary>
         /// <returns></returns>
-        public static Type RetrieveMapFromAttributeOnType(System.Type type)
+        public static Type? RetrieveMapFromAttributeOnType(System.Type type)
         {
             var dataMapAttribute = Attribute.GetCustomAttribute(type, typeof(DataMapAttribute)) as DataMapAttribute;
             if (dataMapAttribute != null)

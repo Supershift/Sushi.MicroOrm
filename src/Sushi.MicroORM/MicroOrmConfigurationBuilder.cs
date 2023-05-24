@@ -24,6 +24,6 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Gets or sets the callback used to configure <see cref="MicroOrmOptions"/>.
         /// </summary>
-        public Action<MicroOrmOptions> Options { get; set; }
+        public Action<MicroOrmOptions>? Options { get; set; }
     }
 }

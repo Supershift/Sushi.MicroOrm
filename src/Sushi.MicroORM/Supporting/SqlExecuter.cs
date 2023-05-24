@@ -27,12 +27,13 @@ namespace Sushi.MicroORM.Supporting
         public SqlExecuter(ResultMapper resultMapper)
         {
             _resultMapper = resultMapper;
+            _parameterlist = string.Empty;
         }
 
         /// <summary>
         /// Adds a parameter to the SQL command.
         /// </summary>        
-        private void SetParameter(SqlCommand command, string name, object itemvalue, SqlDbType type, int length, ParameterDirection direction, string typeName)
+        private void SetParameter(SqlCommand command, string name, object? itemvalue, SqlDbType type, int length, ParameterDirection direction, string? typeName)
         {
             // if we already have the parameter, ignore the call
             if (command.Parameters.Contains(name)) return;
@@ -54,14 +55,7 @@ namespace Sushi.MicroORM.Supporting
             }
             else
             {
-                parameter.Value = itemvalue;
-
-                // verify the SqlTypes exception
-                if (itemvalue.GetType().Namespace.ToLower() == "system.data.sqltypes")
-                {
-                    if (itemvalue.ToString().ToLower() == "null")
-                        parameter.Value = DBNull.Value;
-                }
+                parameter.Value = itemvalue;                
             }
 
             _parameterlist += string.Format("{0} = '{1}' ({2})\r\n", name, itemvalue, type.ToString());
@@ -100,7 +94,7 @@ namespace Sushi.MicroORM.Supporting
                 await connection.OpenAsync().ConfigureAwait(false);
 
                 // execute the command                
-                SqlDataReader reader = null;
+                SqlDataReader? reader = null;
 
                 try
                 {
@@ -113,7 +107,7 @@ namespace Sushi.MicroORM.Supporting
                             if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
                             {
                                 var singleResult = await _resultMapper.MapToSingleResultAsync(reader, map, cancellationToken).ConfigureAwait(false);
-                                result = new SqlStatementResult<TResult>((TResult)(object)singleResult);
+                                result = new SqlStatementResult<TResult>((TResult?)(object?)singleResult);
                             }
                             else
                             {
@@ -132,10 +126,10 @@ namespace Sushi.MicroORM.Supporting
                                 // map the contents of the reader to a result
                                 var multipleResults = await _resultMapper.MapToMultipleResultsAsync(reader, map, cancellationToken).ConfigureAwait(false);
                                 // cast to TResult
-                                var castedResults = new QueryListResult<TResult>();
+                                var castedResults = new QueryListResult<TResult?>();
                                 foreach (var singleResult in multipleResults)
                                 {
-                                    castedResults.Add((TResult)(object)singleResult);
+                                    castedResults.Add((TResult?)(object?)singleResult);
                                 }
 
                                 // check if there is a 2nd result set with total number of rows for paging

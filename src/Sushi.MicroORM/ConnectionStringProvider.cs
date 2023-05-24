@@ -11,6 +11,15 @@ namespace Sushi.MicroORM
     /// </summary>
     public class ConnectionStringProvider
     {
+        /// <summary>
+        /// Creates a new instance of <see cref="ConnectionStringProvider"/>.
+        /// </summary>
+        /// <param name="defaultConnectionString"></param>
+        public ConnectionStringProvider(string defaultConnectionString)
+        {
+            _defaultConnectionString = defaultConnectionString;
+        }
+
         private string _defaultConnectionString;
         /// <summary>
         /// Gets or sets the default connection string which will be used if no type specific connection string is found.

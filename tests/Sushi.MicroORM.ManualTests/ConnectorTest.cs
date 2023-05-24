@@ -381,7 +381,7 @@ FROM cat_Products";
                 Console.WriteLine(productType == null ? "NULL" : productType.ToString());
             }
 
-            Assert.AreEqual(5, productTypes.Count);
+            Assert.AreEqual(4, productTypes.Count);
         }
 
         [TestMethod]
@@ -401,7 +401,8 @@ WHERE Product_Key > @productID";
             {
                 Console.WriteLine(productType == null ? "NULL" : productType.ToString());
             }
-            Assert.AreEqual(4, productTypes.Count);
+            Assert.AreEqual(3, productTypes.Count);
+            Assert.AreEqual(productTypes.Count, productTypes.Distinct().Count());
         }
 
         [TestMethod]

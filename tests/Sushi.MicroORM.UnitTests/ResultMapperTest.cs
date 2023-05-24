@@ -102,6 +102,25 @@ namespace Sushi.MicroORM.UnitTests
         }
 
         [Fact]
+        public async Task MapToSingleResultScalarTest_NullableEnum()
+        {
+            var resultMapper = new ResultMapper(DefaultOptions);
+
+            // create mocked datareader
+            var mockedReader = new Mock<DbDataReader>();
+            mockedReader.SetupSequence(x => x.ReadAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true)
+                .ReturnsAsync(false);
+            mockedReader.Setup(x => x.GetValue(0)).Returns((int)TestEnum.Green);
+
+            // act
+            var result = await resultMapper.MapToSingleResultScalarAsync<TestEnum?>(mockedReader.Object, CancellationToken.None);
+
+            // assert
+            Assert.Equal(TestEnum.Green, result);
+        }
+
+        [Fact]
         public async Task MapToSingleResultScalarTest_NotFound()
         {
             var resultMapper = new ResultMapper(DefaultOptions);

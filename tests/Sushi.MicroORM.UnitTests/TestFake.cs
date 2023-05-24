@@ -21,4 +21,12 @@ namespace Sushi.MicroORM.UnitTests
         public int Id { get; set; }
         public string? Name { get; set; }
     }
+
+    public enum TestEnum
+    {
+        Red = 1,
+        Blue = 2,
+        Green = 3,
+        Yellow = 4
+    }
 }

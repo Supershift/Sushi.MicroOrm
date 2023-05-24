@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -53,20 +54,13 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="TResult"/>
         /// </summary>                  
-        public async Task<TResult?> MapToSingleResultScalarAsync<TResult>(DbDataReader reader, CancellationToken cancellationToken) 
+        public async Task<TResult?> MapToSingleResultScalarAsync<TResult>(DbDataReader reader, CancellationToken cancellationToken)
         {
-            //read the first row from the result
-            bool recordFound = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
-            if (recordFound)
-            {
-                //read the first column of the first row
-                var value = reader.GetValue(0);
-                //does it have the correct type?
-                if (value is TResult)
-                    return (TResult)value;                
-            }
-            
-            return default(TResult);
+            var result = await MapToMultipleResultsScalarAsync<TResult>(reader, cancellationToken);
+            if (result.Any())
+                return result[0];
+            else
+                return default;
         }
 
         /// <summary>
@@ -94,10 +88,31 @@ namespace Sushi.MicroORM.Supporting
         public async Task<QueryListResult<TResult?>> MapToMultipleResultsScalarAsync<TResult>(DbDataReader reader, CancellationToken cancellationToken)
         {
             var result = new QueryListResult<TResult?>();
+
+            // get target type
+            var targetType = typeof(TResult);
+            var underlyingType = Nullable.GetUnderlyingType(targetType);
+            if (underlyingType != null)
+            {
+                targetType = underlyingType;
+            }
+
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 //read the first column of the first row
                 var value = reader.GetValue(0);
+
+                // map DbNull values and enums
+                if (value == DBNull.Value)
+                {
+                    value = null;
+                }
+                else if (targetType.IsEnum)
+                {
+                    // if the target type is an enum, we need to convert the value to the enum's type
+                    value = Utility.ConvertValueToEnum(value, targetType);
+                }
+
                 //does it have the correct type?
                 if (value is TResult)
                     result.Add((TResult)value);

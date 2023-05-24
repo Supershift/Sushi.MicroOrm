@@ -235,7 +235,7 @@ namespace Sushi.MicroORM.Supporting
         /// </summary>
         /// <param name="expression"></param>
         /// <returns></returns>
-        public static List<MemberInfo> GetMemberTree<T>(Expression<Func<T, object>> expression)
+        public static List<MemberInfo> GetMemberTree<T>(Expression<Func<T, object?>> expression)
         {
             if (expression == null)
                 throw new ArgumentNullException(nameof(expression));

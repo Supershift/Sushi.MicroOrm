@@ -42,8 +42,20 @@ namespace Sushi.MicroORM.Supporting
         /// <returns></returns>
         /// <exception cref="InvalidQueryException"></exception>
         public SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query, 
-            TMapped entity, bool isIdentityInsert) where TMapped: new()
+            TMapped? entity, bool isIdentityInsert) where TMapped: new()
         {
+            // validate input parameters
+            switch (statementType)
+            {
+                case DMLStatementType.Insert:
+                case DMLStatementType.Update:
+                case DMLStatementType.InsertOrUpdate:
+                    // these all require an entity to be provided
+                    if (entity == null)
+                        throw new ArgumentNullException(nameof(entity), $"Must be filled for statement type: {statementType}");
+                    break;
+            }
+            
             //validate if the supplied mapping has everything needed to generate queries
             if (statementType != DMLStatementType.CustomQuery)
                 map.ValidateMappingForGeneratedQueries();
@@ -56,11 +68,11 @@ namespace Sushi.MicroORM.Supporting
                 case DMLStatementType.Select:
                     ApplySelectToStatement(result, map, query);                                        
                     break;
-                case DMLStatementType.Insert:
-                    ApplyInsertToStatement(result, map, query, entity, isIdentityInsert);                                        
+                case DMLStatementType.Insert:                    
+                    ApplyInsertToStatement(result, map, query, entity!, isIdentityInsert);                                        
                     break;
                 case DMLStatementType.Update:
-                    ApplyUpdateToStatement(result, map, query, entity);                    
+                    ApplyUpdateToStatement(result, map, query, entity!);                    
                     break;
                 case DMLStatementType.Delete:
                     ApplyDeleteToStatement(result, query);
@@ -69,7 +81,7 @@ namespace Sushi.MicroORM.Supporting
                     AddWhereClauseToStatement(result, query);
                     break;
                 case DMLStatementType.InsertOrUpdate:
-                    ApplyInsertOrUpdateToStatement(result, map, query, entity, isIdentityInsert);
+                    ApplyInsertOrUpdateToStatement(result, map, query, entity!, isIdentityInsert);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -142,18 +154,17 @@ END";
             statement.DmlClause = "SELECT ";
             if (statement.ResultCardinality == SqlStatementResultCardinality.SingleRow)
                 statement.DmlClause += "TOP(1) ";
-            else if (query?.MaxResults != null)
+            else if (query.MaxResults != null)
                 statement.DmlClause += $"TOP({query.MaxResults}) ";
 
             // generate the column list, ie. MyColumn1, MyColumn2, MyColumn3 + MyColumn4 AS MyAlias
             statement.DmlClause += string.Join(",", map.Items.Select(x => x.ColumnSelectListName));
 
-            // set order by from query
-            if (query != null)
-                statement.OrderByClause = query.OrderBy;
+            // set order by from query            
+            statement.OrderByClause = query.OrderBy;
 
             // add offset to order by if paging is supplied
-            if (query?.Paging != null && query?.Paging?.NumberOfRows > 0)
+            if (query.Paging != null && query.Paging?.NumberOfRows > 0)
             {
                 statement.AddPagingRowCountStatement = true;
 

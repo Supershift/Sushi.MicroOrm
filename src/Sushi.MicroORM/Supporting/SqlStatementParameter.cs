@@ -17,12 +17,12 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="value"></param>
         /// <param name="type"></param>
         /// <param name="length"></param>
-        public SqlStatementParameter(string name, object value, SqlDbType type, int length) : this(name, value, type, length, null) { }
+        public SqlStatementParameter(string name, object? value, SqlDbType type, int length) : this(name, value, type, length, null) { }
 
         /// <summary>
         /// Creates a new instance of <see cref="SqlStatementParameter"/>.
         /// </summary>
-        public SqlStatementParameter(string name, object value, SqlDbType type, int length, string typeName)
+        public SqlStatementParameter(string name, object? value, SqlDbType type, int length, string? typeName)
         {
             Name = name;
             Value = value;
@@ -50,7 +50,7 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Gets or sets the value of the parameter.
         /// </summary>
-        public object Value { get; set; }
+        public object? Value { get; set; }
         /// <summary>
         /// Gets or sets the <see cref="SqlDbType"/> of the parameter. The <see cref="Value"/> must be compatible with this type.
         /// </summary>
@@ -62,6 +62,6 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Gets or sets a custom type name. Can be used for user defined types.
         /// </summary>
-        public string TypeName { get; set; }
+        public string? TypeName { get; set; }
     }
 }

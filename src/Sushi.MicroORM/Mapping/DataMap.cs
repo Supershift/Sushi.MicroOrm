@@ -36,7 +36,7 @@ namespace Sushi.MicroORM.Mapping
         /// <summary>
         /// Gets the name of the table in the database to which class T is mapped
         /// </summary>
-        public string TableName { get; protected set; }
+        public string TableName { get; protected set; } = string.Empty;
 
         /// <summary>
         /// Sets the name of the table in the database to which class T is mapped
@@ -68,9 +68,7 @@ namespace Sushi.MicroORM.Mapping
         {
             if (string.IsNullOrWhiteSpace(TableName))
                 throw new Exception("This mapping cannot be used to generate queries because no tablename is defined. Use Map.Table() to specify a tablename.");
-        }
-
-        
+        }        
     }
 
     /// <summary>
@@ -94,11 +92,10 @@ namespace Sushi.MicroORM.Mapping
         /// <param name="memberExpression"></param>
         /// <param name="columnName"></param>        
         /// <returns></returns>
-        public DataMapItemSetter Id(Expression<Func<T, object>> memberExpression, string columnName)
+        public DataMapItemSetter Id(Expression<Func<T, object?>> memberExpression, string columnName)
         {
             DataMapItem dbcol = new DataMapItem
-            {
-                Sender = this,
+            {   
                 Column = columnName,
                 IsPrimaryKey = true,
                 IsIdentity = true                
@@ -120,11 +117,10 @@ namespace Sushi.MicroORM.Mapping
         /// <param name="memberExpression"></param>
         /// <param name="columnName"></param>
         /// <returns></returns>
-        public DataMapItemSetter Map(Expression<Func<T, object>> memberExpression, string columnName)
+        public DataMapItemSetter Map(Expression<Func<T, object?>> memberExpression, string columnName)
         { 
             DataMapItem dbcol = new DataMapItem
-            {
-                Sender = this,
+            {   
                 Column = columnName                
             };
 

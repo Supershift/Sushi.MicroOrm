@@ -64,6 +64,7 @@ namespace Sushi.MicroORM.ManualTests
 
             var order = await _connectorOrders.GetFirstAsync(filter);
 
+            Assert.IsNotNull(order);
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
             Assert.AreEqual(id, order?.ID);
@@ -80,6 +81,7 @@ namespace Sushi.MicroORM.ManualTests
 
             var order = await _connectorOrders.GetFirstAsync(query);
 
+            Assert.IsNotNull(order);
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
             Assert.IsTrue(order?.ID == id);
@@ -99,6 +101,7 @@ namespace Sushi.MicroORM.ManualTests
 
             var order = await _connectorOrders.GetFirstAsync(query);
             
+            Assert.IsNotNull(order);
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
             Assert.IsTrue(order?.ID == id);
@@ -113,6 +116,7 @@ namespace Sushi.MicroORM.ManualTests
             query.Add(x => x.ID, productID);
             var product = await connector.GetFirstAsync(query);
 
+            Assert.IsNotNull(product);
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(product, Newtonsoft.Json.Formatting.Indented));
 
             Assert.IsTrue(product.MetaData.Identification.GUID != Guid.Empty);
@@ -203,7 +207,7 @@ namespace Sushi.MicroORM.ManualTests
             Console.WriteLine("Total number of rows: " + orders.TotalNumberOfRows);
             Console.WriteLine("Total number of pages: " + orders.TotalNumberOfPages);
 
-            Assert.IsTrue(orders.Count == request.Paging.NumberOfRows);            
+            Assert.IsTrue(orders.Count == request.Paging?.NumberOfRows);            
             Assert.IsTrue(orders.TotalNumberOfPages.HasValue);
             Assert.IsTrue(orders.TotalNumberOfRows.HasValue);
         }
@@ -321,6 +325,7 @@ WHERE Product_Key = @productID";
             var query2 = _connectorProducts.CreateQuery();
             query2.Add(x => x.ID, productID);
             var product = await _connectorProducts.GetFirstAsync(query2);
+            Assert.IsNotNull(product);
             Assert.AreEqual(name, product.MetaData.Name);
         }
 
@@ -401,11 +406,12 @@ WHERE Product_Key > @productID";
         [TestMethod]
         public async Task SaveExistingAsync()
         {
-            //save the order
+            // get and save the order
             var query = _connectorOrders.CreateQuery();
             query.Add(x => x.ID, 20);
             var order = await _connectorOrders.GetFirstAsync(query);
 
+            Assert.IsNotNull(order);
             string newComments = DateTime.UtcNow.ToString();
 
             order.Comments = newComments;
@@ -416,6 +422,7 @@ WHERE Product_Key > @productID";
             //retrieve order again from database
             order = await _connectorOrders.GetFirstAsync(query);
 
+            Assert.IsNotNull(order);
             Assert.AreEqual(newComments, order.Comments);
         }
 
@@ -582,6 +589,7 @@ WHERE Product_Key > @productID";
             var filter = connector.CreateQuery();
             filter.Add(x => x.GUID, identifier.GUID);
             var newIdentifier = await connector.GetFirstAsync(filter);
+            Assert.IsNotNull(newIdentifier);
 
             //update it
             newIdentifier.Batch = Guid.NewGuid();
@@ -625,6 +633,7 @@ WHERE Product_Key > @productID";
             filter.Add(x => x.SecondID, 1);
             var result = await connector.GetFirstAsync(filter);
 
+            Assert.IsNotNull(result);
             Assert.AreEqual(compositeKey.SomeValue, result.SomeValue);
         }
 
@@ -635,7 +644,7 @@ WHERE Product_Key > @productID";
             query.SqlQuery = "WAITFOR DELAY '00:00:05';";
             query.CommandTimeOut = 2;
 
-            Exception exception = null;
+            Exception? exception = null;
             try
             {
                 await _connectorOrders.ExecuteNonQueryAsync(query);

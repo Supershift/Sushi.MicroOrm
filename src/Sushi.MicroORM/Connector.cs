@@ -139,6 +139,11 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
 
         internal void ApplyIdentityColumnToEntity(T entity, int identityValue)
         {
+            // validate input
+            if(entity == null)
+                throw new ArgumentNullException(nameof(entity));
+
+            // use reflection to set the identity value on the entity's property mapped as identity column
             var identityColumn = _map.Items.FirstOrDefault(x => x.IsIdentity);
             if (identityValue > 0 && identityColumn != null)
                 ReflectionHelper.SetMemberValue(identityColumn.MemberInfoTree, identityValue, entity, _options.DateTimeKind);
@@ -200,13 +205,13 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <inheritdoc />
-        public async Task<T> GetFirstAsync(DataQuery<T> query)
+        public async Task<T?> GetFirstAsync(DataQuery<T> query)
         {
             return await GetFirstAsync(query, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public async Task<T> GetFirstAsync(DataQuery<T> query, CancellationToken cancellationToken)
+        public async Task<T?> GetFirstAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
             var statement = _sqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.Select, SqlStatementResultCardinality.SingleRow, _map, query);
 
@@ -226,6 +231,8 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <inheritdoc />
         public async Task<QueryListResult<T>> GetAllAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
+            var result = new QueryListResult<T>();
+
             // generate the sql statement            
             var statementType = DMLStatementType.Select;
             if (!string.IsNullOrWhiteSpace(query.SqlQuery))
@@ -235,18 +242,28 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             // execute and get response
             var statementResult = await ExecuteSqlStatementAsync<T>(statement, query.ConnectionString, query.CommandTimeOut, cancellationToken).ConfigureAwait(false);
 
+            // map result
+            if(statementResult.MultipleResults != null)
+            {
+                foreach(var item in statementResult.MultipleResults)
+                {
+                    if(item != null)
+                        result.Add(item);
+                }
+            }
+
             // if total number of rows is set apply it to the query's paging object
             if (query?.Paging != null && statementResult.TotalNumberOfRows.HasValue)
             {
-                statementResult.MultipleResults.TotalNumberOfRows = statementResult.TotalNumberOfRows;
+                result.TotalNumberOfRows = statementResult.TotalNumberOfRows;
                 if (query.Paging.NumberOfRows > 0)
                 {
-                    statementResult.MultipleResults.TotalNumberOfPages = (int)Math.Ceiling((double)statementResult.MultipleResults.TotalNumberOfRows.Value / query.Paging.NumberOfRows);
+                    result.TotalNumberOfPages = (int)Math.Ceiling((double)result.TotalNumberOfRows.Value / query.Paging.NumberOfRows);
                 }
             }
 
             // return result
-            return statementResult.MultipleResults;
+            return result;
         }
 
         /// <inheritdoc />
@@ -292,16 +309,16 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <inheritdoc />
-        public async Task<TScalar> ExecuteScalarAsync<TScalar>(DataQuery<T> query)
+        public async Task<TScalar?> ExecuteScalarAsync<TScalar>(DataQuery<T> query)
         {
             return await ExecuteScalarAsync<TScalar>(query, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public async Task<TScalar> ExecuteScalarAsync<TScalar>(DataQuery<T> query, CancellationToken cancellationToken)
+        public async Task<TScalar?> ExecuteScalarAsync<TScalar>(DataQuery<T> query, CancellationToken cancellationToken)
         {
             //generate the sql statement
-            var statement = _sqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, _map, query);
+            var statement = _sqlStatementGenerator.GenerateSqlStatment(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow, _map, query);
 
             //execute and get response
             var statementResult = await ExecuteSqlStatementAsync<TScalar>(statement, query.ConnectionString, query.CommandTimeOut, cancellationToken).ConfigureAwait(false);
@@ -311,21 +328,22 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <inheritdoc />
-        public async Task<List<TResult>> ExecuteSetAsync<TResult>(DataQuery<T> query)
+        public async Task<List<TResult?>> ExecuteSetAsync<TResult>(DataQuery<T> query)
         {
             return await ExecuteSetAsync<TResult>(query, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public async Task<List<TResult>> ExecuteSetAsync<TResult>(DataQuery<T> query, CancellationToken cancellationToken)
+        public async Task<List<TResult?>> ExecuteSetAsync<TResult>(DataQuery<T> query, CancellationToken cancellationToken)
         {
             // generate statement
             var statement = _sqlStatementGenerator.GenerateSqlStatment<T>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.MultipleRows, _map, query);
 
             // execute statement and map response
-            var result = await ExecuteSqlStatementAsync<TResult>(statement, query.ConnectionString, query.CommandTimeOut, cancellationToken).ConfigureAwait(false);
+            var statementResult = await ExecuteSqlStatementAsync<TResult>(statement, query.ConnectionString, query.CommandTimeOut, cancellationToken).ConfigureAwait(false);
+            var result = statementResult.MultipleResults ?? new List<TResult?>();
 
-            return result.MultipleResults;
+            return result;
         }
 
         /// <inheritdoc />

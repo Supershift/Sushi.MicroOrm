@@ -22,17 +22,16 @@ namespace Sushi.MicroORM.Supporting
         /// Creates a new instance of <see cref="SqlStatementResult{TResult}"/> with type <see cref="SqlStatementResultCardinality.MultipleRows"/>.
         /// </summary>
         /// <param name="results"></param>
-        public SqlStatementResult(QueryListResult<TResult> results)
+        public SqlStatementResult(QueryListResult<TResult?> results)
         {
             ResultCardinality = SqlStatementResultCardinality.MultipleRows;
-
             MultipleResults = results;
         }
 
         /// <summary>
         /// Creates a new instance of <see cref="SqlStatementResult{TResult}"/> with type <see cref="SqlStatementResultCardinality.MultipleRows"/>.
         /// </summary>        
-        public SqlStatementResult(QueryListResult<TResult> results, int? totalNumberOfRows) : this(results)
+        public SqlStatementResult(QueryListResult<TResult?> results, int? totalNumberOfRows) : this(results)
         {
             TotalNumberOfRows = totalNumberOfRows;
         }
@@ -40,7 +39,7 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Creates a new instance of <see cref="SqlStatementResult{TResult}"/> with type set to <see cref="SqlStatementResultCardinality.SingleRow"/>.
         /// </summary>                
-        public SqlStatementResult(TResult result)
+        public SqlStatementResult(TResult? result)
         {
             ResultCardinality = SqlStatementResultCardinality.SingleRow;
             SingleResult = result;
@@ -55,12 +54,12 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Gets the mapped result for the sql statement if <see cref="ResultCardinality"/> is set to <see cref="SqlStatementResultCardinality.SingleRow"/>.
         /// </summary>
-        public TResult SingleResult { get; private set; }        
+        public TResult? SingleResult { get; private set; }        
 
         /// <summary>
         /// Gets a collection of mapped results for the sql statement if <see cref="ResultCardinality"/> is set to <see cref="SqlStatementResultCardinality.MultipleRows" />.
         /// </summary>
-        public QueryListResult<TResult> MultipleResults { get; private set; }
+        public QueryListResult<TResult?>? MultipleResults { get; private set; }
 
         /// <summary>
         /// Gets a value indicating the total number of rows for a query if paging was applied to that query.

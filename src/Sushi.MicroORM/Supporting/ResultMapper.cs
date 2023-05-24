@@ -108,13 +108,16 @@ namespace Sushi.MicroORM.Supporting
             return result;
         }
 
-        internal void SetResultValuesToObject<T, TResult>(IDataRecord reader, DataMap<T> map, TResult instance) where T : new() where TResult : new()
+        internal void SetResultValuesToObject<T, TResult>(IDataRecord reader, DataMap<T> map, TResult instance) where T : new() where TResult : new() 
         {
+            if (instance == null) 
+                throw new ArgumentNullException(nameof(instance));
+            
             // for each mapped member on the instance, go through the result set and find a column with the expected name
             for (int i = 0; i < map.Items.Count; i++)
             {
                 var item = map.Items[i];
-
+                
                 // which name is expected in the result set by the mapped item
                 string mappedName = item.Column;
                 if (!string.IsNullOrWhiteSpace(item.Alias))

@@ -34,44 +34,44 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Gets or sets the DML clause of the statement, ie. SELECT MyColumn, UPDATE MyTable, etc.
         /// </summary>
-        public string DmlClause { get; set; }
+        public string? DmlClause { get; set; }
 
         /// <summary>
         /// Gets or sets the INTO clause of an INSERT statement, ie. INTO MyTable(MyColumn1, MyColumn2).
         /// </summary>
-        public string InsertIntoClause { get; set; }
+        public string? InsertIntoClause { get; set; }
         /// <summary>
         /// Gets or sets the VALUES clause of an INSERT statement, ie. VALUES (@myValue1, @myValue2).
         /// </summary>
-        public string InsertValuesClause { get; set; }
+        public string? InsertValuesClause { get; set; }
         /// <summary>
         /// Get or sets the SET clause of an UPDATE statement, ie. SET MyColumn1 = @myValue1, MyColumn2 = @myValue2.
         /// </summary>
-        public string UpdateSetClause { get; set; }
+        public string? UpdateSetClause { get; set; }
         /// <summary>
         /// Gets or sets the output clause of the statement, ie. OUTPUT Inserted.MyColumn.
         /// </summary>
-        public string OutputClause { get; set; }
+        public string? OutputClause { get; set; }
 
         /// <summary>
         /// Gets or sets the where clause of the statment, ie. WHERE MyColumn = @myParameter.
         /// </summary>
-        public string WhereClause { get; set; }
+        public string? WhereClause { get; set; }
 
         /// <summary>
         /// Gets or sets the from clause of the statement, ie. FROM MyTable.
         /// </summary>
-        public string FromClause { get; set; }
+        public string? FromClause { get; set; }
 
         /// <summary>
         /// Gets or sets the order by clause of the statement, ie. ORDER BY MyColumn1 ASC, MyColumn2 DESC.
         /// </summary>
-        public string OrderByClause { get; set; }
+        public string? OrderByClause { get; set; }
 
         /// <summary>
         /// Gets or sets a custom sql statement to be executed. Can be anything, ie. EXEC myStoredProcedure @myParam, SELECT * FROM MyTable, etc.
         /// </summary>
-        public string CustomSqlStatement { get; set; }
+        public string? CustomSqlStatement { get; set; }
 
         /// <summary>
         /// Gets a collection of <see cref="SqlStatementParameter"/> objects describing the parameters used in the statement.

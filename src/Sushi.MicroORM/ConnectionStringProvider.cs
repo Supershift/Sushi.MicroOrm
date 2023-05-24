@@ -106,7 +106,7 @@ namespace Sushi.MicroORM
 
                 //find the most specific match
                 //first we search for the fully qualified name. if nothing found, we search for the name minus one part, etc.
-                string? connectionString = DefaultConnectionString;
+                string connectionString = DefaultConnectionString;
                 while (splitName.Count > 0)
                 {
                     string searchPattern = string.Join(".", splitName);
@@ -122,7 +122,7 @@ namespace Sushi.MicroORM
                 }
 
                 //cache result
-                if (connectionString != null && IsCachingEnabled)
+                if (IsCachingEnabled)
                 {
                     CachedConnectionStrings[type] = connectionString;
                 }

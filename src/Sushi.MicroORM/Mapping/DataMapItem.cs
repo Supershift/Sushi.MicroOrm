@@ -12,19 +12,15 @@ namespace Sushi.MicroORM.Mapping
     /// Represents the mapping between a property or field and a database column.
     /// </summary>
     public class DataMapItem
-    {
-        /// <summary>
-        /// Gets ot set the sending datamap entity.
-        /// </summary>
-        public DataMap Sender { get; set; }
+    {   
         /// <summary>
         /// Gets or set the column mapped to this item.
         /// </summary>
-        public string Column { get; set; }
+        public string Column { get; set; } = string.Empty;
         /// <summary>
         /// Gets or set the alias of the mapped column.
         /// </summary>
-        public string Alias { get; set; }
+        public string Alias { get; set; } = string.Empty;
         /// <summary>
         /// Gets or sets <see cref="MemberInfo"/> about the mapped field or property.
         /// </summary>

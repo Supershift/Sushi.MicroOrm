@@ -17,11 +17,11 @@ namespace Sushi.MicroORM.ManualTests.DAL
                 Id(x => x.ID, "Product_Key").Identity();
                 Map(x => x.MetaData.Name, "Product_Name").SqlType(System.Data.SqlDbType.NVarChar);
                 Map(x => x.MetaData.Description, "Product_Description").SqlType(System.Data.SqlDbType.VarChar);
-                Map(x => x.Price, "Product_Price");
-                Map(x => x.MetaData.Identification.ExternalID, "Product_ExternalID");
+                Map(x => x.Price, "Product_Price");                
                 Map(x => x.MetaData.Identification.BarCode, "Product_BarCode");
                 Map(x => x.MetaData.Identification.GUID, "Product_Guid");
                 Map(x => x.MetaData.ProductTypeID, "Product_ProductTypeID");
+                Map(x => x.ExternalIdentification.ExternalID, "Product_ExternalID");
             }
         }
 
@@ -35,15 +35,20 @@ namespace Sushi.MicroORM.ManualTests.DAL
         }
 
         public class Identification
-        {
-            public int? ExternalID { get; set; }
+        {            
             public byte[] BarCode { get; set; }
             public Guid GUID { get; set; }
+        }
+
+        public class Identification2
+        {
+            public int? ExternalID { get; set; }
         }
 
         public int ID { get; set; }        
         public decimal Price { get; set; }
         public ProductMetaData MetaData { get; set; }
+        public Identification2? ExternalIdentification { get; set; }
 
         public enum ProducType
         {

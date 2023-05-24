@@ -168,34 +168,28 @@ namespace Sushi.MicroORM.Supporting
         public static void SetMemberValue(MemberInfo memberInfo, object? value, object entity, DateTimeKind? dateTimeKind)
         {
             // if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)            
-            var type = GetMemberType(memberInfo);
-            var underlyingType = Nullable.GetUnderlyingType(type);
+            var targetType = GetMemberType(memberInfo);
+            var underlyingType = Nullable.GetUnderlyingType(targetType);
             if (underlyingType != null)
             {
-                type = underlyingType;
+                targetType = underlyingType;
             }
 
-            if (value == DBNull.Value)
-            {
-                value = null;
-            }
-            else
-            {
-                value = Utility.ConvertValueToEnum(value, type);
-            }
+            // if the target type is an enum, we need to convert the value to the enum's type
+            value = Utility.ConvertValueToEnum(value, targetType);            
 
             // specify datetime kind
-            if (dateTimeKind.HasValue && type == typeof(DateTime) && value is DateTime dt && dt.Kind != dateTimeKind.Value)
+            if (dateTimeKind.HasValue && targetType == typeof(DateTime) && value is DateTime dt && dt.Kind != dateTimeKind.Value)
             {
                 value = DateTime.SpecifyKind(dt, dateTimeKind.Value);
             }
 
             // custom support for converting to DateOnly and TimeOnly
-            if (type == typeof(DateOnly) && value is DateTime dt1)
+            if (targetType == typeof(DateOnly) && value is DateTime dt1)
             {
                 value = DateOnly.FromDateTime(dt1);
             }
-            else if (type == typeof(TimeOnly))
+            else if (targetType == typeof(TimeOnly))
             {
                 switch (value)
                 {

@@ -71,7 +71,7 @@ namespace Sushi.MicroORM
         /// <returns></returns>
         public static object? ConvertValueToEnum(object? value, Type type)
         {
-            // if the type is an enum, we need to convert the value to the enum's type
+            
             if (type.IsEnum && value != null)
             {
                 value = Enum.ToObject(type, value);

@@ -1,4 +1,5 @@
-﻿using Sushi.MicroORM.Supporting;
+﻿using Castle.Core.Logging;
+using Sushi.MicroORM.Supporting;
 
 namespace Sushi.MicroORM.UnitTests
 {

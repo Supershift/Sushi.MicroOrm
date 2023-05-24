@@ -117,9 +117,27 @@ namespace Sushi.MicroORM.ManualTests
             var product = await connector.GetFirstAsync(query);
 
             Assert.IsNotNull(product);
+            
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(product, Newtonsoft.Json.Formatting.Indented));
 
             Assert.IsTrue(product.MetaData.Identification.GUID != Guid.Empty);
+            Assert.IsNotNull(product.ExternalIdentification?.ExternalID);
+        }
+
+        [TestMethod]
+        public async Task GetSingleMultilevel_Nullable()
+        {
+            int productID = 5;
+            var connector = CreateConnector<Product>();
+            var query = connector.CreateQuery();
+            query.Add(x => x.ID, productID);
+            var product = await connector.GetFirstAsync(query);
+
+            Assert.IsNotNull(product);
+            
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(product, Newtonsoft.Json.Formatting.Indented));
+
+            Assert.IsNull(product.ExternalIdentification);            
         }
 
         [TestMethod]
@@ -544,12 +562,11 @@ WHERE Product_Key > @productID";
                     Name = "New insert",
                     Identification = new Product.Identification()
                     {
-                        ExternalID = null,
                         BarCode = Encoding.UTF8.GetBytes("SKU-12345678")
                     }
                 },
                 Price = 12.50M,
-                
+
             };
             await _connectorProducts.InsertAsync(product);
         }

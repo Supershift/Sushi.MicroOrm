@@ -132,6 +132,13 @@ namespace Sushi.MicroORM.Supporting
                     if (mappedName.Equals(columnName, StringComparison.CurrentCultureIgnoreCase))
                     {
                         var value = reader.GetValue(columnIndex);
+
+                        // convert DBNull to null
+                        if (value == DBNull.Value)
+                        {
+                            value = null;
+                        }
+
                         ReflectionHelper.SetMemberValue(item.MemberInfoTree, value, instance, _options.DateTimeKind);
                         break;
                     }

@@ -13,8 +13,8 @@ namespace Sushi.MicroORM.UnitTests
         public void SetResultValuesToObjectTest()
         {
             // arrange
-            var map = new TestFake.TestFakeMap();
-            var instance = new TestFake();
+            var map = new TestClass.TestClassMap();
+            var instance = new TestClass();
             var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datarecord
@@ -37,8 +37,8 @@ namespace Sushi.MicroORM.UnitTests
         public void SetResultValuesToObjectTest_DbNullValue()
         {
             // arrange
-            var map = new TestFake.TestFakeMap();
-            var instance = new TestFake();
+            var map = new TestClass.TestClassMap();
+            var instance = new TestClass();
             var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datarecord
@@ -63,7 +63,7 @@ namespace Sushi.MicroORM.UnitTests
         {
             // arrange
             var map = new MyMapWithAlias();
-            var instance = new TestFake();
+            var instance = new TestClass();
             var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datarecord
@@ -209,7 +209,7 @@ namespace Sushi.MicroORM.UnitTests
         [Fact]
         public async Task MapToSingleResultTest()
         {
-            var map = new TestFake.TestFakeMap();            
+            var map = new TestClass.TestClassMap();            
             var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datareader
@@ -226,13 +226,13 @@ namespace Sushi.MicroORM.UnitTests
 
             // assert
             Assert.NotNull(result);
-            Assert.IsType<TestFake>(result);
+            Assert.IsType<TestClass>(result);
         }
 
         [Fact]
         public async Task MapToSingleResultTest_DefaultNull()
         {
-            var map = new TestFake.TestFakeMap();
+            var map = new TestClass.TestClassMap();
             var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datareader
@@ -274,7 +274,7 @@ namespace Sushi.MicroORM.UnitTests
         [Fact]
         public async Task MapToMultipleResultsTest()
         {
-            var map = new TestFake.TestFakeMap();
+            var map = new TestClass.TestClassMap();
             var resultMapper = new ResultMapper(DefaultOptions);
 
             // create mocked datareader
@@ -298,7 +298,7 @@ namespace Sushi.MicroORM.UnitTests
         }
 
         // test fakes
-        public class MyMapWithAlias : DataMap<TestFake>
+        public class MyMapWithAlias : DataMap<TestClass>
         {
             public MyMapWithAlias()
             {

@@ -118,6 +118,20 @@ namespace Sushi.MicroORM.UnitTests
             Assert.Null(instance.NullableSubField);
         }
 
+        [Fact]
+        public void SetMutabableRecordProperty()
+        {
+            // arrange
+            var instance = new TestRecord() { MutableValue = 10};
+            var memberTree = ReflectionHelper.GetMemberTree<TestRecord>(x => x.MutableValue);
+
+            // act
+            ReflectionHelper.SetMemberValue(memberTree, 29, instance, null);
+
+            // assert
+            Assert.Equal(29, instance.MutableValue);
+        }
+
         private class TestClass
         {
             public DateTime Created { get; set; }
@@ -129,6 +143,6 @@ namespace Sushi.MicroORM.UnitTests
         private class SubTestClass
         {
             public int SomeValue { get; set; }
-        }
+        }        
     }
 }

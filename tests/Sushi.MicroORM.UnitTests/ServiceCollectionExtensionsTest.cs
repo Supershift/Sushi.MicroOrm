@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Sushi.MicroORM.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace Sushi.MicroORM.UnitTests
         public void RegisterConnectorDependenciesTest()
         {
             string connectionString = "Server=.;Initial Catalog=db;User ID=user;Password=pass;";
-            
+
             IServiceCollection serviceCollection = new ServiceCollection();
             serviceCollection.AddMicroORM(connectionString);
             var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -49,10 +50,10 @@ namespace Sushi.MicroORM.UnitTests
             IServiceCollection serviceCollection = new ServiceCollection();
 
             bool isConfigBuilderCalled = false;
-            serviceCollection.AddMicroORM(connectionString, c=>
+            serviceCollection.AddMicroORM(connectionString, c =>
             {
                 isConfigBuilderCalled = true;
-            }); 
+            });
             var serviceProvider = serviceCollection.BuildServiceProvider();
 
             // get connection string provider
@@ -66,7 +67,7 @@ namespace Sushi.MicroORM.UnitTests
         public void ConfigurationBuilderTest_MicroOrmOptions()
         {
             IServiceCollection serviceCollection = new ServiceCollection();
-            
+
             serviceCollection.AddMicroORM("", c =>
             {
                 c.Options = o =>
@@ -82,6 +83,25 @@ namespace Sushi.MicroORM.UnitTests
             // assert            
             Assert.NotNull(options.Value);
             Assert.Equal(45, options.Value.DefaultCommandTimeOut);
+        }
+
+        [Fact]
+        public void ConfigurationBuilderTest_AddsMappingsFromProfiles()
+        {
+            IServiceCollection serviceCollection = new ServiceCollection();
+
+            serviceCollection.AddMicroORM("", c =>
+            {
+                c.AddDataMapProfile<TestProfile>();
+            });
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            // get datamap provider
+            var provider = serviceProvider.GetRequiredService<DataMapProvider>();
+
+            // assert
+            var mapping = provider.GetMapForType<TestClass>();
+            Assert.IsType<TestMap>(mapping);
         }
 
         [Fact]
@@ -104,6 +124,16 @@ namespace Sushi.MicroORM.UnitTests
             // check default connection string is set
             Assert.NotNull(configConnectionStringProvider);
             Assert.Equal(configConnectionStringProvider, connectionStringProvider);
+        }
+
+        private class TestMap : DataMap<TestClass> { }
+
+        private class TestProfile : DataMapProfile
+        {
+            public TestProfile()
+            {
+                AddMapping<TestClass, TestMap>();
+            }
         }
     }
 }

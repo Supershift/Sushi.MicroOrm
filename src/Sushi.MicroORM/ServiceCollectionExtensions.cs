@@ -23,7 +23,9 @@ namespace Sushi.MicroORM
         {   
             services.TryAddTransient(typeof(IConnector<>), typeof(Connector<>));
 
-            services.TryAddSingleton<DataMapProvider>();
+            // create datamap provider
+            var dataMapProvider = new DataMapProvider();
+            services.TryAddSingleton<DataMapProvider>(dataMapProvider);
 
             services.TryAddTransient<SqlExecuter>();
             services.TryAddTransient<ResultMapper>();
@@ -44,6 +46,15 @@ namespace Sushi.MicroORM
                 if(microOrmBuilder.Options != null)
                 {
                     optionsBuilder.Configure(microOrmBuilder.Options);
+                }
+
+                // add mappings from profiles if provided
+                foreach (var profile in microOrmBuilder.Profiles)
+                {
+                    foreach (var mapping in profile.DataMapTypes)
+                    {
+                        dataMapProvider.AddMapping(mapping.Key, mapping.Value);
+                    }
                 }
             }
 

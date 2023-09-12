@@ -20,13 +20,13 @@ namespace Sushi.MicroORM.Mapping
         public IReadOnlyDictionary<Type,Type> DataMapTypes { get { return _dataMapTypes; } }
 
         /// <summary>
-        /// Sets the DataMap <typeparamref name="Y"/> to use when resolving queries for <typeparamref name="T"/>
+        /// Sets the DataMap <typeparamref name="TMap"/> to use when resolving queries for <typeparamref name="TTarget"/>
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="Y"></typeparam>
-        public void AddMapping<T, Y>() where T : new() where Y : DataMap<T>, new()
+        /// <typeparam name="TTarget"></typeparam>
+        /// <typeparam name="TMap"></typeparam>
+        public void AddMapping<TTarget, TMap>() where TTarget : new() where TMap : DataMap<TTarget>, new()
         {
-            _dataMapTypes[typeof(T)] = typeof(Y);
+            _dataMapTypes[typeof(TTarget)] = typeof(TMap);
         }
     }
 }

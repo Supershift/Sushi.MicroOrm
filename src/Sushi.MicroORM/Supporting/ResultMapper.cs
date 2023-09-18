@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,7 +40,15 @@ namespace Sushi.MicroORM.Supporting
             if (recordFound)
             {
                 // map the columns of the first row to the result, using the map
-                result = (T)Activator.CreateInstance(typeof(T), true)!;
+                try
+                {
+                    result = (T)Activator.CreateInstance(typeof(T), true)!;
+                }
+                catch(Exception e)
+                {
+                    throw new ArgumentException("Please use parameterless constructor.", typeof(T).Name);
+                }
+
                 SetResultValuesToObject(reader, map, result);
             }
             else

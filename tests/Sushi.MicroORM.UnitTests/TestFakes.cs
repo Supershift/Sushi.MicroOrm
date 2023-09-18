@@ -43,6 +43,26 @@ namespace Sushi.MicroORM.UnitTests
         public string? Name { get; set; }
     }
 
+    public class TestClassNonParameterlessConstructor
+    {
+        public TestClassNonParameterlessConstructor(int a)
+        {
+
+        }
+
+        public class TestClassMap : DataMap<TestClassNonParameterlessConstructor>
+        {
+            public TestClassMap()
+            {
+                Id(x => x.Id, "ID");
+                Map(x => x.Name, "Name");
+            }
+        }
+
+        public int Id { get; set; }
+        public string? Name { get; set; }
+    }
+
     public record class TestRecord
     {
         public class TestRecordMap : DataMap<TestRecord>

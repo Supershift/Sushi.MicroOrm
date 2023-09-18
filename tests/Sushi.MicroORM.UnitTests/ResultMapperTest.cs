@@ -261,6 +261,7 @@ namespace Sushi.MicroORM.UnitTests
             var mockedReader = new Mock<DbDataReader>();
 
             mockedReader.SetupSequence(x => x.ReadAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true)
                 .ReturnsAsync(false);
 
             mockedReader.SetupGet(x => x.FieldCount).Returns(0);
@@ -269,7 +270,8 @@ namespace Sushi.MicroORM.UnitTests
             var result = await resultMapper.MapToSingleResultAsync(mockedReader.Object, map, CancellationToken.None);
 
             // assert
-            Assert.Null(result);
+            Assert.NotNull(result);
+            Assert.IsType<TestClassPrivateConstructor>(result);
         }
 
         [Fact]

@@ -24,7 +24,7 @@ namespace Sushi.MicroORM.Mapping
         /// </summary>
         /// <typeparam name="TTarget"></typeparam>
         /// <typeparam name="TMap"></typeparam>
-        public void AddMapping<TTarget, TMap>() where TTarget : new() where TMap : DataMap<TTarget>, new()
+        public void AddMapping<TTarget, TMap>() where TTarget : new() where TMap : DataMap<TTarget>
         {
             _dataMapTypes[typeof(TTarget)] = typeof(TMap);
         }

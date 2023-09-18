@@ -250,6 +250,28 @@ namespace Sushi.MicroORM.UnitTests
             Assert.Null(result);            
         }
 
+
+        [Fact]
+        public async Task MapToSingleResultTest_PrivateConstructor()
+        {
+            var map = new TestClassPrivateConstructor.TestClassMap();
+            var resultMapper = new ResultMapper(DefaultOptions);
+
+            // create mocked datareader
+            var mockedReader = new Mock<DbDataReader>();
+
+            mockedReader.SetupSequence(x => x.ReadAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+
+            mockedReader.SetupGet(x => x.FieldCount).Returns(0);
+
+            // act
+            var result = await resultMapper.MapToSingleResultAsync(mockedReader.Object, map, CancellationToken.None);
+
+            // assert
+            Assert.Null(result);
+        }
+
         [Fact]
         public async Task MapToSingleResultTest_DefaultInstance()
         {

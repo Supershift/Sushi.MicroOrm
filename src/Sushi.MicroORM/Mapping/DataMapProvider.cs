@@ -22,7 +22,7 @@ namespace Sushi.MicroORM.Mapping
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="Y"></typeparam>
-        public void AddMapping<T, Y>() where T : new() where Y : DataMap<T>, new()
+        public void AddMapping<T, Y>() where Y : DataMap<T>
         {
             DataMapTypes[typeof(T)] = typeof(Y);            
         }
@@ -52,7 +52,7 @@ namespace Sushi.MicroORM.Mapping
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public DataMap<T> GetMapForType<T>() where T : new()
+        public DataMap<T> GetMapForType<T>()
         {
             var type = typeof(T);            
             Type? dataMapType = null;

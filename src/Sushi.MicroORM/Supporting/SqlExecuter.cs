@@ -65,7 +65,7 @@ namespace Sushi.MicroORM.Supporting
         /// Executes the <paramref name="sqlStatement"/> and adds the result to a <see cref="SqlStatementResult{TResult}"/>.
         /// </summary>        
         public async Task<SqlStatementResult<TResult>> ExecuteAsync<T, TResult>(SqlStatement<T> sqlStatement, string connectionString, int? commandTimeout, 
-            DataMap<T> map, CancellationToken cancellationToken) where T : new()
+            DataMap<T> map, CancellationToken cancellationToken)
         {
             SqlStatementResult<TResult> result;
 

@@ -75,7 +75,7 @@ namespace Sushi.MicroORM.Mapping
     /// Represents the mapping between database objects and code objects.
     /// </summary>
     /// <typeparam name="T">Class to map with SQL table and columns.</typeparam>
-    public class DataMap<T> : DataMap where T : new()
+    public class DataMap<T> : DataMap
     {
         /// <summary>
         /// Initializes a new instance of <see cref="DataMap{T}"/>.

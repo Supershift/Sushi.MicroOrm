@@ -254,6 +254,8 @@ namespace Sushi.MicroORM.UnitTests
         [Fact]
         public async Task MapToSingleResultTest_PrivateConstructor()
         {
+
+            var anInstance = (TestClassPrivateConstructor)Activator.CreateInstance(typeof(TestClassPrivateConstructor), true);
             var map = new TestClassPrivateConstructor.TestClassMap();
             var resultMapper = new ResultMapper(DefaultOptions);
 

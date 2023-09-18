@@ -39,7 +39,7 @@ namespace Sushi.MicroORM.Supporting
             if (recordFound)
             {
                 // map the columns of the first row to the result, using the map
-                result = Activator.CreateInstance<T>();
+                result = (T)Activator.CreateInstance(typeof(T), true)!;
                 SetResultValuesToObject(reader, map, result);
             }
             else
@@ -74,7 +74,7 @@ namespace Sushi.MicroORM.Supporting
             //read all rows from the first resultset
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                T instance = Activator.CreateInstance<T>();
+                T instance = (T)Activator.CreateInstance(typeof(T))!;
                 SetResultValuesToObject(reader, map, instance);
                 result.Add(instance);                
             }            

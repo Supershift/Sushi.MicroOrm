@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Sushi.MicroORM.Mapping
 {
@@ -10,24 +11,20 @@ namespace Sushi.MicroORM.Mapping
     {
 
         public void Scan(System.Reflection.Assembly[] assemblyList, DataMapProvider dataMapProvider)
-        {
-            Type? dataMapType = null;
-
+        {           
             foreach (var assembly in assemblyList)
             {
-                var types = assembly.GetTypes();
-                foreach (var type in types)
-                {
-                    var nestedTypes = type.GetNestedTypes();
+                var instances = assembly.GetExportedTypes();
 
-                    foreach (var nestedType in nestedTypes)
+                foreach (var instance in instances)
+                {
+                    if (instance.IsSubclassOf(typeof(DataMap)))
                     {
-                        if (nestedType.IsSubclassOf(typeof(DataMap)))
-                        {
-                            dataMapType = nestedType;
-                            dataMapProvider.AddMapping(type, dataMapType);
-                            break;
-                        }
+                        var datamapInstance = Activator.CreateInstance(instance);
+
+                        var propertyInfo = instance.GetProperty("MappedType");
+                        var mappedTypeValue = propertyInfo!.GetValue(datamapInstance, null);
+                        dataMapProvider.AddMapping((Type)mappedTypeValue!, instance);
                     }
                 }
             }

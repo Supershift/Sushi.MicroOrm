@@ -23,24 +23,14 @@ namespace Sushi.MicroORM.FakeAssemblyTests
         public string? Name { get; set; }
     }
 
-    public record class TestRecord
+
+    public class TestClassMap2 : DataMap<TestRecord>
     {
-        public class TestRecordMap : DataMap<TestRecord>
-        {
-            public TestRecordMap()
-            {
-                Map(x => x.MutableValue, "Value");
-            }
-        }        
-        
-        public int MutableValue { get; set; }
+
     }
 
-    public enum TestEnum
+    public record TestRecord
     {
-        Red = 1,
-        Blue = 2,
-        Green = 3,
-        Yellow = 4
+
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Sushi.MicroORM.Mapping;
 using System.Reflection;
 using static Sushi.MicroORM.FakeAssemblyTests.TestClass;
-using static Sushi.MicroORM.FakeAssemblyTests.TestRecord;
 
 namespace Sushi.MicroORM.FakeAssemblyTests
 {
@@ -12,7 +11,7 @@ namespace Sushi.MicroORM.FakeAssemblyTests
         public void AssemblyScannerTest()
         {
 
-            Assembly asm = typeof(TestMap).Assembly;
+            Assembly asm = typeof(TestClass).Assembly;
 
             System.Reflection.Assembly[] array = new System.Reflection.Assembly[1];
             array[0] = asm;
@@ -26,10 +25,8 @@ namespace Sushi.MicroORM.FakeAssemblyTests
 
             Assert.NotNull(testClassResult);
             Assert.NotNull(testRecordResult);
-            Assert.True(testClassResult is TestClassMap);
-            Assert.True(testRecordResult is TestRecordMap);
+            Assert.True(testClassResult is DataMap<TestClass>);
+            Assert.True(testRecordResult is DataMap<TestRecord>);
         }
-
-        private class TestMap : DataMap<TestClass> { }
     }
 }

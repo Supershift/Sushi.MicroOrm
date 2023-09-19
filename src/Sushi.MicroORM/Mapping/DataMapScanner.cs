@@ -14,18 +14,16 @@ namespace Sushi.MicroORM.Mapping
         {           
             foreach (var assembly in assemblyList)
             {
-                var instances = assembly.GetExportedTypes();
+                var dataMapTypes = assembly.GetExportedTypes().Where(x => x.IsSubclassOf(typeof(DataMap))); 
 
-                foreach (var instance in instances)
+                foreach (var dataMapType in dataMapTypes)
                 {
-                    if (instance.IsSubclassOf(typeof(DataMap)))
-                    {
-                        var datamapInstance = Activator.CreateInstance(instance);
+                    var instance = Activator.CreateInstance(dataMapType);
 
-                        var propertyInfo = instance.GetProperty("MappedType");
-                        var mappedTypeValue = propertyInfo!.GetValue(datamapInstance, null);
-                        dataMapProvider.AddMapping((Type)mappedTypeValue!, instance);
-                    }
+                    var propertyInfo = dataMapType.GetProperty("MappedType");
+                    var mappedTypeValue = propertyInfo!.GetValue(instance, null);
+
+                    dataMapProvider.AddMapping((Type)mappedTypeValue!, dataMapType);
                 }
             }
         }

@@ -31,7 +31,7 @@ namespace Sushi.MicroORM.Mapping
         /// <summary>
         /// Gets or sets the <see cref="Type"/> of the class for which this <see cref="DataMap"/> defines a mapping.
         /// </summary>
-        protected Type MappedType { get; set; }
+        public Type MappedType { get; protected set; }
 
         /// <summary>
         /// Gets the name of the table in the database to which class T is mapped

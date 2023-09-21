@@ -44,9 +44,9 @@ namespace Sushi.MicroORM.Supporting
                 {
                     result = (T)Activator.CreateInstance(typeof(T), true)!;
                 }
-                catch(Exception e)
+                catch(Exception ex)
                 {
-                    throw new ArgumentException("Please use parameterless constructor.", typeof(T).Name);
+                    throw new Exception($"Cannot create instance of {typeof(T).Name}. Please add a parameterless constructor.", ex);
                 }
 
                 SetResultValuesToObject(reader, map, result);

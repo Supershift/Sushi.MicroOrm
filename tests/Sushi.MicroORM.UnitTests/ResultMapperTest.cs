@@ -275,8 +275,7 @@ namespace Sushi.MicroORM.UnitTests
 
         [Fact]
         public async Task MapToSingleResultTest_NonParameterlessConstructor_Exception()
-        {
-            var expectedExceptionMsg = $"Please use parameterless constructor. (Parameter '{nameof(TestClassNonParameterlessConstructor)}')";
+        {   
             var map = new TestClassNonParameterlessConstructor.TestClassMap();
             var resultMapper = new ResultMapper(DefaultOptions);
 
@@ -290,11 +289,11 @@ namespace Sushi.MicroORM.UnitTests
             mockedReader.SetupGet(x => x.FieldCount).Returns(0);
 
             // act
-            Func<Task> act = async () => await resultMapper.MapToSingleResultAsync(mockedReader.Object, map, CancellationToken.None);
+            var act = async () => await resultMapper.MapToSingleResultAsync(mockedReader.Object, map, CancellationToken.None);
 
             // assert
-            ArgumentException exception = await Assert.ThrowsAsync<ArgumentException>(act);
-            Assert.Equal(expectedExceptionMsg, exception.Message);
+            var exception = await Assert.ThrowsAsync<Exception>(act);
+            Assert.NotNull(exception.InnerException);
         }
 
         [Fact]

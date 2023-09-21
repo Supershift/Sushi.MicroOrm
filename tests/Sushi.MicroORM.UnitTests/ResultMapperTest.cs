@@ -251,6 +251,53 @@ namespace Sushi.MicroORM.UnitTests
         }
 
         [Fact]
+        public async Task MapToSingleResultTest_PrivateConstructor()
+        {
+            var map = new TestClassPrivateConstructor.TestClassMap();
+            var resultMapper = new ResultMapper(DefaultOptions);
+
+            // create mocked datareader
+            var mockedReader = new Mock<DbDataReader>();
+
+            mockedReader.SetupSequence(x => x.ReadAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true)
+                .ReturnsAsync(false);
+
+            mockedReader.SetupGet(x => x.FieldCount).Returns(0);
+
+            // act
+            var result = await resultMapper.MapToSingleResultAsync(mockedReader.Object, map, CancellationToken.None);
+
+            // assert
+            Assert.NotNull(result);
+            Assert.IsType<TestClassPrivateConstructor>(result);
+        }
+
+        [Fact]
+        public async Task MapToSingleResultTest_NonParameterlessConstructor_Exception()
+        {
+            var expectedExceptionMsg = $"Please use parameterless constructor. (Parameter '{nameof(TestClassNonParameterlessConstructor)}')";
+            var map = new TestClassNonParameterlessConstructor.TestClassMap();
+            var resultMapper = new ResultMapper(DefaultOptions);
+
+            // create mocked datareader
+            var mockedReader = new Mock<DbDataReader>();
+
+            mockedReader.SetupSequence(x => x.ReadAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true)
+                .ReturnsAsync(false);
+
+            mockedReader.SetupGet(x => x.FieldCount).Returns(0);
+
+            // act
+            Func<Task> act = async () => await resultMapper.MapToSingleResultAsync(mockedReader.Object, map, CancellationToken.None);
+
+            // assert
+            ArgumentException exception = await Assert.ThrowsAsync<ArgumentException>(act);
+            Assert.Equal(expectedExceptionMsg, exception.Message);
+        }
+
+        [Fact]
         public async Task MapToSingleResultTest_DefaultInstance()
         {
             var map = new DataMap<MyStruct>();

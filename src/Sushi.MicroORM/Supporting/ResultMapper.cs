@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,7 +32,7 @@ namespace Sushi.MicroORM.Supporting
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="T"/> using the provided <paramref name="map"/>.
         /// </summary>                  
-        public async Task<T?> MapToSingleResultAsync<T>(DbDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new() 
+        public async Task<T?> MapToSingleResultAsync<T>(DbDataReader reader, DataMap<T> map, CancellationToken cancellationToken)
         {
             T? result;
             // read the first row from the result
@@ -39,7 +40,15 @@ namespace Sushi.MicroORM.Supporting
             if (recordFound)
             {
                 // map the columns of the first row to the result, using the map
-                result = new T();
+                try
+                {
+                    result = (T)Activator.CreateInstance(typeof(T), true)!;
+                }
+                catch(Exception e)
+                {
+                    throw new ArgumentException("Please use parameterless constructor.", typeof(T).Name);
+                }
+
                 SetResultValuesToObject(reader, map, result);
             }
             else
@@ -68,13 +77,13 @@ namespace Sushi.MicroORM.Supporting
         /// If <paramref name="reader"/> contains a second resultset, it is expected to contain a scalar value that will be used to set <see cref="PagingData.NumberOfRows"/>.
         /// </summary>
         /// <typeparam name="T"></typeparam>             
-        public async Task<QueryListResult<T>> MapToMultipleResultsAsync<T>(DbDataReader reader, DataMap<T> map, CancellationToken cancellationToken) where T : new()
+        public async Task<QueryListResult<T>> MapToMultipleResultsAsync<T>(DbDataReader reader, DataMap<T> map, CancellationToken cancellationToken)
         {
             var result = new QueryListResult<T>();
             //read all rows from the first resultset
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                T instance = new T();
+                T instance = (T)Activator.CreateInstance(typeof(T))!;
                 SetResultValuesToObject(reader, map, instance);
                 result.Add(instance);                
             }            
@@ -123,7 +132,7 @@ namespace Sushi.MicroORM.Supporting
             return result;
         }
 
-        internal void SetResultValuesToObject<T, TResult>(IDataRecord reader, DataMap<T> map, TResult instance) where T : new() where TResult : new() 
+        internal void SetResultValuesToObject<T, TResult>(IDataRecord reader, DataMap<T> map, TResult instance)
         {
             if (instance == null) 
                 throw new ArgumentNullException(nameof(instance));

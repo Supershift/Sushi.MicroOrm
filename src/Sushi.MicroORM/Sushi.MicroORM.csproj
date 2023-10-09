@@ -12,7 +12,8 @@
     <PackageProjectUrl>https://github.com/Supershift/Sushi.MicroOrm</PackageProjectUrl>    
     <RepositoryUrl>https://github.com/Supershift/Sushi.MicroOrm</RepositoryUrl>    
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>    
-    <PackageIcon>logo.png</PackageIcon>        
+    <PackageIcon>logo.png</PackageIcon>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.0.1" />

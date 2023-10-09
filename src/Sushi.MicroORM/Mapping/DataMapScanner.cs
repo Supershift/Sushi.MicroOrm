@@ -7,9 +7,16 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace Sushi.MicroORM.Mapping
 {
-    public class DataMapScanner
+    /// <summary>
+    /// Provides methods to scan assemblies for <see cref="DataMap"/> implementations.
+    /// </summary>
+    internal class DataMapScanner
     {
-
+        /// <summary>
+        /// Scans the specified assemblies for <see cref="DataMap"/> implementations and adds them to the datamap provider.
+        /// </summary>
+        /// <param name="assemblyList"></param>
+        /// <param name="dataMapProvider"></param>
         public void Scan(System.Reflection.Assembly[] assemblyList, DataMapProvider dataMapProvider)
         {           
             foreach (var assembly in assemblyList)

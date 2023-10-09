@@ -10,16 +10,12 @@ namespace Sushi.MicroORM
     /// Represents the result to a query which returned multiple entities.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class QueryListResult<T> : List<T> 
+    public class QueryListResult<T> : List<T>, IPagingResult
     {
-        /// <summary>
-        /// After a query is performed the total number of rows for the supplied where clause is set here.
-        /// </summary>
+        /// <inheritdoc/>
         public int? TotalNumberOfRows { get; set; }
 
-        /// <summary>
-        /// After a query is performed the total number of pages based on the supplied maximum number of rows is set here.
-        /// </summary>
+        /// <inheritdoc/>        
         public int? TotalNumberOfPages { get; set; }
     }
 }

@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Sushi.MicroORM.FakeAssembly\Sushi.MicroORM.FakeAssembly.csproj" />
     <ProjectReference Include="..\..\src\Sushi.MicroORM\Sushi.MicroORM.csproj" />
   </ItemGroup>
 

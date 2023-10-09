@@ -5,6 +5,7 @@ using Sushi.MicroORM.Supporting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,12 +15,21 @@ namespace Sushi.MicroORM
     /// Extension methods for configuring <see cref="Sushi.MicroORM"/> services.
     /// </summary>
     public static class ServiceCollectionExtensions
-    {
+    {   
         /// <summary>
         /// Adds a default implementation for the <see cref="Connector{T}"/> service.
         /// </summary>        
         /// <returns></returns>
-        public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString, Action<MicroOrmConfigurationBuilder>? config = null) 
+        public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString, params Assembly[] assemblies)
+        {
+            return AddMicroORM(services, defaultConnectionString, null, assemblies);
+        }
+
+        /// <summary>
+        /// Adds a default implementation for the <see cref="Connector{T}"/> service.
+        /// </summary>        
+        /// <returns></returns>
+        public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString, Action<MicroOrmConfigurationBuilder>? config, params Assembly[] assemblies) 
         {   
             services.TryAddTransient(typeof(IConnector<>), typeof(Connector<>));
 
@@ -56,6 +66,13 @@ namespace Sushi.MicroORM
                         dataMapProvider.AddMapping(mapping.Key, mapping.Value);
                     }
                 }
+            }
+
+            // scan assemblies
+            if (assemblies != null && assemblies.Length > 0)
+            {
+                var dataMapScanner = new DataMapScanner();
+                dataMapScanner.Scan(assemblies, dataMapProvider);
             }
 
             return services;

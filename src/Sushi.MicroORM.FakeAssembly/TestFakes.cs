@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sushi.MicroORM.FakeAssemblyTests
+namespace Sushi.MicroORM.FakeAssembly
 {
     public class TestClass
     {

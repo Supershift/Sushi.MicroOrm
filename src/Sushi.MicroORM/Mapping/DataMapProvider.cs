@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -34,8 +35,8 @@ namespace Sushi.MicroORM.Mapping
         /// <param name="dataMap"></param>
         public void AddMapping(Type classToMap, Type dataMap)
         {
-            //check if class to map has a default, parameterless constructor
-            if (classToMap.GetConstructor(Type.EmptyTypes) == null)
+            //check if class to map has a default, parameterless constructor            
+            if (classToMap.GetConstructor(System.Reflection.BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, Type.EmptyTypes) == null)
                 throw new ArgumentException($"{classToMap} does not have a parameterless constructor", nameof(classToMap));
 
             //check if dataMap is of type DataMap<classToMap>

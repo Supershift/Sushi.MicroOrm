@@ -9,7 +9,7 @@ namespace Sushi.MicroORM
     /// Defines methods to retrieve database records and return them as objects, based on provided mapping.
     /// </summary>
     /// <typeparam name="T">Type to convert database recrods to</typeparam>
-    public interface IConnector<T> where T : new()
+    public interface IConnector<T>
     {
         /// <summary>
         /// Inserts a collection of entities of <typeparamref name="T"/> using Sql Bulk Copy. The SqlDbType defined on the column attributes is ignored. Instead, the Sql Type is derived from the .NET type of the mapped properties.

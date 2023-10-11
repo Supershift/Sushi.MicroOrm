@@ -679,7 +679,7 @@ WHERE Product_Key > @productID";
             Assert.AreEqual(-2, number);
         }
 
-        private IConnector<T> CreateConnector<T>() where T : new()
+        private IConnector<T> CreateConnector<T>()
         {
             return _serviceProvider.GetRequiredService<IConnector<T>>();
         }

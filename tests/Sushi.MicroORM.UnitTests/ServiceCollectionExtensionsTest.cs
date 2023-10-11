@@ -27,6 +27,21 @@ namespace Sushi.MicroORM.UnitTests
         }
 
         [Fact]
+        public void RegisterConnectorDependenciesTest_WithPrivateConstructor()
+        {
+            string connectionString = "Server=.;Initial Catalog=db;User ID=user;Password=pass;";
+
+            IServiceCollection serviceCollection = new ServiceCollection();
+            serviceCollection.AddMicroORM(connectionString);
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            // create default connector
+            var connector = serviceProvider.GetService<IConnector<TestClassPrivateConstructor>>();
+
+            Assert.NotNull(connector);
+        }
+
+        [Fact]
         public void DefaultConnectionStringTest()
         {
             string connectionString = "Server=.;Initial Catalog=db;User ID=user;Password=pass;";

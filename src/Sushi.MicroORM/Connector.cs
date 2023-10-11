@@ -18,7 +18,7 @@ namespace Sushi.MicroORM
     /// Retrieves database records and returns them as objects, based on provided mapping.
     /// </summary>
     /// <typeparam name="T">Type to convert database recrods to</typeparam>
-    public class Connector<T> : IConnector<T> where T : new()
+    public class Connector<T> : IConnector<T>
     {
         private readonly ConnectionStringProvider _connectionStringProvider;
         private readonly SqlStatementGenerator _sqlStatementGenerator;

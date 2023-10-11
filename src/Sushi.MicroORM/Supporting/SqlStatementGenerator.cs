@@ -24,7 +24,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="query"></param>        
         /// <returns></returns>
         /// <exception cref="InvalidQueryException"></exception>
-        public SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query) where TMapped : new()
+        public SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query)
         {
             return GenerateSqlStatment(statementType, resultType, map, query, default, false);
         }
@@ -42,7 +42,7 @@ namespace Sushi.MicroORM.Supporting
         /// <returns></returns>
         /// <exception cref="InvalidQueryException"></exception>
         public SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query, 
-            TMapped? entity, bool isIdentityInsert) where TMapped: new()
+            TMapped? entity, bool isIdentityInsert)
         {
             // validate input parameters
             switch (statementType)
@@ -93,14 +93,14 @@ namespace Sushi.MicroORM.Supporting
             return result;
         }
 
-        private SqlStatement<T> ApplyDeleteToStatement<T>(SqlStatement<T> statement, DataQuery<T> query) where T : new()
+        private SqlStatement<T> ApplyDeleteToStatement<T>(SqlStatement<T> statement, DataQuery<T> query)
         {
             statement.DmlClause = "DELETE ";
             AddWhereClauseToStatement(statement, query);
             return statement;
         }
 
-        private SqlStatement<T> ApplyInsertOrUpdateToStatement<T>(SqlStatement<T> statement, DataMap<T> map, DataQuery<T> query, T entity, bool isIdentityInsert) where T : new()
+        private SqlStatement<T> ApplyInsertOrUpdateToStatement<T>(SqlStatement<T> statement, DataMap<T> map, DataQuery<T> query, T entity, bool isIdentityInsert)
         {
             // this generates two seperate statements which need to be merged into one statement which uses an IF EXIST / ELSE
             // generate insert
@@ -126,7 +126,7 @@ END";
             return statement;
         }
 
-        private SqlStatement<T> ApplyUpdateToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> query, T entity) where T : new()
+        private SqlStatement<T> ApplyUpdateToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> query, T entity)
         {
             statement.DmlClause = $"UPDATE {map.TableName}";
             // generate the set clause for all columns that are not readonly, and add the parameter to the statement
@@ -148,7 +148,7 @@ END";
             return statement;
         }
 
-        private SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> query) where T: new()
+        private SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> query)
         {
             // set opening statement
             statement.DmlClause = "SELECT ";
@@ -186,7 +186,7 @@ END";
             return statement;
         }
 
-        private SqlStatement<T> ApplyInsertToStatement<T>(SqlStatement<T> statement, DataMap<T> map, DataQuery<T> query, T entity, bool isIdentityInsert) where T : new()
+        private SqlStatement<T> ApplyInsertToStatement<T>(SqlStatement<T> statement, DataMap<T> map, DataQuery<T> query, T entity, bool isIdentityInsert)
         {
             //generate opening statement
             statement.DmlClause = $"INSERT";
@@ -231,7 +231,7 @@ END";
         /// <param name="sqlStament"></param>
         /// <param name="query"></param>
         /// <returns></returns>
-        private SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> sqlStament, DataQuery<T> query) where T: new()
+        private SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> sqlStament, DataQuery<T> query)
         {
             // get custom sql parameters from query and add to result
             if (query?.SqlParameters != null)

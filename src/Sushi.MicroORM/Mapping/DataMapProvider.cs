@@ -35,8 +35,8 @@ namespace Sushi.MicroORM.Mapping
         public void AddMapping(Type classToMap, Type dataMap)
         {
             //check if class to map has a default, parameterless constructor
-            if (classToMap.GetConstructor(Type.EmptyTypes) == null)
-                throw new ArgumentException($"{classToMap} does not have a parameterless constructor", nameof(classToMap));
+           // if (classToMap.GetConstructor(Type.EmptyTypes) == null)
+               // throw new ArgumentException($"{classToMap} does not have a parameterless constructor", nameof(classToMap));
 
             //check if dataMap is of type DataMap<classToMap>
             if (dataMap.IsSubclassOf(typeof(DataMap)) == false)

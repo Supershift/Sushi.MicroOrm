@@ -16,7 +16,7 @@ namespace Sushi.MicroORM
     /// Provides methods to build a SQL statement for use with <see cref="Connector{T}"/>.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class DataQuery<T> where T : new()
+    public class DataQuery<T>
     {
         /// <summary>
         /// Creates an instance of <see cref="DataQuery{T}"/> using the specified mapping.

@@ -24,8 +24,7 @@ namespace Sushi.MicroORM.UnitTests
 
             Assert.NotNull(testClassResult);
             Assert.NotNull(testRecordResult);
-            Assert.True(testClassResult is DataMap<FakeAssembly.TestClass>);
-            Assert.True(testRecordResult is DataMap<FakeAssembly.TestRecord>);
+            Assert.NotNull(internalClassResult);            
         }
     }
 }

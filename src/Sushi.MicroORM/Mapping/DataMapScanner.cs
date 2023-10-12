@@ -21,7 +21,7 @@ namespace Sushi.MicroORM.Mapping
         {           
             foreach (var assembly in assemblyList)
             {
-                var dataMapTypes = assembly.GetExportedTypes().Where(x => x.IsSubclassOf(typeof(DataMap))); 
+                var dataMapTypes = assembly.GetTypes().Where(x => x.IsSubclassOf(typeof(DataMap))); 
 
                 foreach (var dataMapType in dataMapTypes)
                 {

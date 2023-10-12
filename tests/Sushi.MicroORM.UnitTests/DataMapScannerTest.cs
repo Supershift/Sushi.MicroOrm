@@ -20,6 +20,7 @@ namespace Sushi.MicroORM.UnitTests
             dataMapScanner.Scan(array, dataMapProvider);
             var testClassResult = dataMapProvider.GetMapForType<FakeAssembly.TestClass>();
             var testRecordResult = dataMapProvider.GetMapForType<FakeAssembly.TestRecord>();
+            var internalClassResult = dataMapProvider.GetMapForType<FakeAssembly.InternalClass>();
 
             Assert.NotNull(testClassResult);
             Assert.NotNull(testRecordResult);

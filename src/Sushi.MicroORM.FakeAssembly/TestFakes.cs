@@ -26,10 +26,20 @@ namespace Sushi.MicroORM.FakeAssembly
 
     public class TestClassMap2 : DataMap<TestRecord>
     {
-
+        
     }
 
     public record TestRecord
+    {
+
+    }
+
+    internal class InternalMap : DataMap<InternalClass>
+    {
+
+    }
+
+    internal class InternalClass
     {
 
     }

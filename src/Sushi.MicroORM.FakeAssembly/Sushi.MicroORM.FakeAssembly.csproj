@@ -12,5 +12,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Sushi.MicroORM\Sushi.MicroORM.csproj" />
   </ItemGroup>
-
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>Sushi.MicroORM.UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 </Project>

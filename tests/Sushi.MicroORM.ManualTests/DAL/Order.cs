@@ -10,6 +10,11 @@ namespace Sushi.MicroORM.ManualTests.DAL
     [DataMap(typeof(OrderMap))]    
     public class Order
     {
+        internal Order()
+        {
+            
+        }
+
         public class OrderMap : DataMap<Order>
         {
             public OrderMap()
@@ -52,7 +57,7 @@ namespace Sushi.MicroORM.ManualTests.DAL
         public DateTime Created { get; set; }
         public DateTime Created2 { get; set; }
         public DateTimeOffset CreatedOffset { get; set; }
-        public string Comments { get; set; }
+        public string Comments { get; set; } = null!;
         public TimeSpan? DeliveryTime { get; set; }
         public TimeSpan DeliveryTime2 { get; set; }
         public decimal? Amount { get; set; }

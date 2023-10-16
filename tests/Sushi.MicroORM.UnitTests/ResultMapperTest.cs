@@ -343,6 +343,32 @@ namespace Sushi.MicroORM.UnitTests
             Assert.NotEqual(result[0], result[1]);
         }
 
+        [Fact]
+        public async Task MapToMultipleResultsTest_PrivateConstructor()
+        {
+            var map = new TestClassPrivateConstructor.TestClassMap();
+            var resultMapper = new ResultMapper(DefaultOptions);
+
+            // create mocked datareader
+            var mockedReader = new Mock<DbDataReader>();
+
+            mockedReader.SetupSequence(x => x.ReadAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true)
+                .ReturnsAsync(true)
+                .ReturnsAsync(false);
+
+            mockedReader.SetupGet(x => x.FieldCount).Returns(0);
+
+            // act
+            var result = await resultMapper.MapToMultipleResultsAsync(mockedReader.Object, map, CancellationToken.None);
+
+            // assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+            Assert.All(result, Assert.NotNull);
+            Assert.NotEqual(result[0], result[1]);
+        }
+
         // test fakes
         public class MyMapWithAlias : DataMap<TestClass>
         {

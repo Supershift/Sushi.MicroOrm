@@ -83,7 +83,7 @@ namespace Sushi.MicroORM.Supporting
             //read all rows from the first resultset
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                T instance = (T)Activator.CreateInstance(typeof(T))!;
+                T instance = (T)Activator.CreateInstance(typeof(T), true)!;
                 SetResultValuesToObject(reader, map, instance);
                 result.Add(instance);                
             }            

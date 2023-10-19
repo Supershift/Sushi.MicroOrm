@@ -93,7 +93,7 @@ namespace Sushi.MicroORM.Mapping
 
             if (dataMapType != null)
             {   
-                var dataMap = System.Activator.CreateInstance(dataMapType) as DataMap<T>;
+                var dataMap = System.Activator.CreateInstance(dataMapType, true) as DataMap<T>;
                 if(dataMap != null)
                     return dataMap;
             }

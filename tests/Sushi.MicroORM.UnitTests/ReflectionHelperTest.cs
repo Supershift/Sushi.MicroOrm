@@ -62,7 +62,7 @@ namespace Sushi.MicroORM.UnitTests
             // arrange
             var instance = new TestClass();
             int? value = 12;
-            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.NullableSubProperty.SomeValue);
+            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.NullableSubProperty!.SomeValue);
 
             // act
             ReflectionHelper.SetMemberValue(memberTree, value, instance, null);
@@ -78,7 +78,7 @@ namespace Sushi.MicroORM.UnitTests
             // arrange
             var instance = new TestClass();
             int? value = null;
-            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.NullableSubProperty.SomeValue);
+            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.NullableSubProperty!.SomeValue);
 
             // act
             ReflectionHelper.SetMemberValue(memberTree, value, instance, null);
@@ -93,7 +93,7 @@ namespace Sushi.MicroORM.UnitTests
             // arrange
             var instance = new TestClass();
             int? value = 12;
-            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.NullableSubField.SomeValue);
+            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.NullableSubField!.SomeValue);
 
             // act
             ReflectionHelper.SetMemberValue(memberTree, value, instance, null);
@@ -109,7 +109,7 @@ namespace Sushi.MicroORM.UnitTests
             // arrange
             var instance = new TestClass();
             int? value = null;
-            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.NullableSubField.SomeValue);
+            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.NullableSubField!.SomeValue);
 
             // act
             ReflectionHelper.SetMemberValue(memberTree, value, instance, null);
@@ -135,13 +135,20 @@ namespace Sushi.MicroORM.UnitTests
         private class TestClass
         {
             public DateTime Created { get; set; }
-            public SubTestClass SubProperty { get; set; }
+            public SubTestClass SubProperty { get; set; } = null!;
             public SubTestClass? NullableSubProperty { get; set; }
-            public SubTestClass? NullableSubField;
+            public SubTestClass? NullableSubField = null;
         }
 
         private class SubTestClass
         {
+            private SubTestClass() { }
+
+            public SubTestClass(int someValue)
+            {
+                SomeValue = someValue;
+            }
+
             public int SomeValue { get; set; }
         }        
     }

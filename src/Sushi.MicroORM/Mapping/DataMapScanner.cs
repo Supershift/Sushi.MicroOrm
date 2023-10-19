@@ -25,7 +25,7 @@ namespace Sushi.MicroORM.Mapping
 
                 foreach (var dataMapType in dataMapTypes)
                 {
-                    var instance = Activator.CreateInstance(dataMapType);
+                    var instance = Activator.CreateInstance(dataMapType, true);
 
                     var propertyInfo = dataMapType.GetProperty("MappedType");
                     var mappedTypeValue = propertyInfo!.GetValue(instance, null);

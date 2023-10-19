@@ -143,7 +143,7 @@ namespace Sushi.MicroORM.Supporting
                             }
                         }
                         var type = GetMemberType(memberInfo);
-                        instance = Activator.CreateInstance(type);
+                        instance = Activator.CreateInstance(type, true);
                         if(instance == null)
                         {
                             throw new Exception("Cannot use types without a parameterless constructor as subtypes.");

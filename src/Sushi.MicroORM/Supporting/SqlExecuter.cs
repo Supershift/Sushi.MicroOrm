@@ -10,24 +10,24 @@ using Microsoft.Data.SqlClient;
 using System.Data.Common;
 using System.Windows.Input;
 using Sushi.MicroORM.Mapping;
+using Sushi.MicroORM.Exceptions;
 
 namespace Sushi.MicroORM.Supporting
 {
     /// <summary>
-    /// Executes <see cref="SqlStatement{TMapped}"/>.
+    /// Executes <see cref="SqlStatement"/>.
     /// </summary>
     public class SqlExecuter
     {   
-        private string _parameterlist;
         private readonly ResultMapper _resultMapper;
-
+        private readonly ExceptionHandler _exceptionHandler;
         /// <summary>
         /// Creates a new instance of <see cref="SqlExecuter"/>.
         /// </summary>
         public SqlExecuter(ResultMapper resultMapper)
         {
-            _resultMapper = resultMapper;
-            _parameterlist = string.Empty;
+            _resultMapper = resultMapper;            
+            _exceptionHandler = new ExceptionHandler();
         }
 
         /// <summary>
@@ -57,14 +57,12 @@ namespace Sushi.MicroORM.Supporting
             {
                 parameter.Value = itemvalue;                
             }
-
-            _parameterlist += string.Format("{0} = '{1}' ({2})\r\n", name, itemvalue, type.ToString());
         }
 
         /// <summary>
         /// Executes the <paramref name="sqlStatement"/> and adds the result to a <see cref="SqlStatementResult{TResult}"/>.
         /// </summary>        
-        public async Task<SqlStatementResult<TResult>> ExecuteAsync<T, TResult>(SqlStatement<T> sqlStatement, string connectionString, int? commandTimeout, 
+        public async Task<SqlStatementResult<TResult>> ExecuteAsync<T, TResult>(SqlStatement sqlStatement, string connectionString, int? commandTimeout, 
             DataMap<T> map, CancellationToken cancellationToken)
         {
             SqlStatementResult<TResult> result;
@@ -73,13 +71,13 @@ namespace Sushi.MicroORM.Supporting
             var query = sqlStatement.ToString();
 
             try
-            {   
+            {
                 // open connection
                 using var connection = new SqlConnection(connectionString);
 
                 // create command
                 using var command = new SqlCommand(query, connection);
-                
+
                 // set the commands time out
                 if (commandTimeout.HasValue)
                     command.CommandTimeout = commandTimeout.Value;
@@ -167,31 +165,21 @@ namespace Sushi.MicroORM.Supporting
                 }
                 finally
                 {
-                    if(reader != null) 
+                    if (reader != null)
                     {
                         await reader.DisposeAsync().ConfigureAwait(false);
                     }
                 }
             }
-            catch (TaskCanceledException) { throw; }
+            catch (TaskCanceledException) { throw; }            
             catch (Exception ex)
             {
-                throw new Exception(GetErrorText(query, ex.Message), ex);
-            }
-            finally
-            {
-                //Log();
+                throw _exceptionHandler.Handle(ex, sqlStatement);
             }
 
             return result;
         }
 
-        private string GetErrorText(string query, string error)
-        {
-            return string.Format("Error while executing\r\n{0}\r\n{1}\r\n{2}",
-                query,
-                _parameterlist,
-                error);
-        }
+        
     }
 }

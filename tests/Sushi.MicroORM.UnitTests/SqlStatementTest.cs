@@ -13,7 +13,7 @@ namespace Sushi.MicroORM.UnitTests
         public void ToStringTest_Select()
         {
             // arrange
-            var statement = new SqlStatement<object>(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows);
+            var statement = new SqlStatement(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows);
             statement.DmlClause = "SELECT *";
             statement.FromClause = "FROM MyTable";
             statement.WhereClause = "WHERE ID > 10";            
@@ -33,7 +33,7 @@ WHERE ID > 10";
         public void ToStringTest_SelectOrderBy()
         {
             // arrange
-            var statement = new SqlStatement<object>(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows);
+            var statement = new SqlStatement(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows);
             statement.DmlClause = "SELECT *";
             statement.FromClause = "FROM MyTable";
             statement.WhereClause = "WHERE ID > 10";
@@ -55,7 +55,7 @@ ORDER BY ID";
         public void ToStringTest_SelectWithPaging()
         {
             // arrange
-            var statement = new SqlStatement<object>(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows);
+            var statement = new SqlStatement(DMLStatementType.Select, SqlStatementResultCardinality.MultipleRows);
             statement.DmlClause = "SELECT *";
             statement.FromClause = "FROM MyTable";
             statement.WhereClause = "WHERE ID > 10";
@@ -81,7 +81,7 @@ WHERE ID > 10";
         public void ToStringTest_Insert()
         {
             // arrange
-            var statement = new SqlStatement<object>(DMLStatementType.Insert, SqlStatementResultCardinality.None);
+            var statement = new SqlStatement(DMLStatementType.Insert, SqlStatementResultCardinality.None);
             statement.DmlClause = "INSERT";
             statement.InsertIntoClause = "INTO MyTable(ID,Name)";
             statement.OutputClause = $"OUTPUT inserted.ID";
@@ -105,7 +105,7 @@ DEFAULT VALUES";
         public void ToStringTest_Update()
         {
             // arrange
-            var statement = new SqlStatement<object>(DMLStatementType.Update, SqlStatementResultCardinality.None);
+            var statement = new SqlStatement(DMLStatementType.Update, SqlStatementResultCardinality.None);
             statement.DmlClause = "UPDATE MyTable";
             statement.UpdateSetClause = "SET Name = 'Test'";
             statement.OutputClause = $"OUTPUT inserted.ID";
@@ -130,7 +130,7 @@ WHERE ID = 10";
         public void ToStringTest_CustomQuery()
         {
             // arrange
-            var statement = new SqlStatement<object>(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow);
+            var statement = new SqlStatement(DMLStatementType.CustomQuery, SqlStatementResultCardinality.SingleRow);
             statement.CustomSqlStatement = @"UPDATE MyTable
 SET Name = 'Test'
 FROM MyTable

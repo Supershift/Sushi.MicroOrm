@@ -6,12 +6,11 @@ namespace Sushi.MicroORM.Supporting
 {
     /// <summary>
     /// Represents a SQL statement to be executed against a database.
-    /// </summary>
-    /// <typeparam name="TMapped">The mapped type that was used to generate the statement.</typeparam>    
-    public class SqlStatement<TMapped>
+    /// </summary>    
+    public class SqlStatement
     {        
         /// <summary>
-        /// Creates a new instance of <see cref="SqlStatement{TMapped}"/>.
+        /// Creates a new instance of <see cref="SqlStatement"/>.
         /// </summary>
         /// <param name="dmlStatement"></param>
         /// <param name="resultCardinality"></param>

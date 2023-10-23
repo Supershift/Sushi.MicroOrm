@@ -10,12 +10,12 @@ using System.Text;
 namespace Sushi.MicroORM.Supporting
 {
     /// <summary>
-    /// Provides methods to generate instance of <see cref="SqlStatement{TMapped}"/>.
+    /// Provides methods to generate instance of <see cref="SqlStatement"/>.
     /// </summary>
     public class SqlStatementGenerator
     {
         /// <summary>
-        /// Generates an instance of <see cref="SqlStatement{TMapped}"/>.
+        /// Generates an instance of <see cref="SqlStatement"/>.
         /// </summary>
         /// <typeparam name="TMapped"></typeparam>        
         /// <param name="statementType"></param>
@@ -24,13 +24,13 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="query"></param>        
         /// <returns></returns>
         /// <exception cref="InvalidQueryException"></exception>
-        public SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query)
+        public SqlStatement GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query)
         {
             return GenerateSqlStatment(statementType, resultType, map, query, default, false);
         }
 
         /// <summary>
-        /// Generates an instance of <see cref="SqlStatement{TMapped}"/>. Use this overload to pass an entity to insert or update.
+        /// Generates an instance of <see cref="SqlStatement"/>. Use this overload to pass an entity to insert or update.
         /// </summary>
         /// <typeparam name="TMapped"></typeparam>        
         /// <param name="statementType"></param>
@@ -41,7 +41,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="isIdentityInsert"></param>
         /// <returns></returns>
         /// <exception cref="InvalidQueryException"></exception>
-        public SqlStatement<TMapped> GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query, 
+        public SqlStatement GenerateSqlStatment<TMapped>(DMLStatementType statementType, SqlStatementResultCardinality resultType, DataMap<TMapped> map, DataQuery<TMapped> query, 
             TMapped? entity, bool isIdentityInsert)
         {
             // validate input parameters
@@ -60,7 +60,7 @@ namespace Sushi.MicroORM.Supporting
             if (statementType != DMLStatementType.CustomQuery)
                 map.ValidateMappingForGeneratedQueries();
 
-            var result = new SqlStatement<TMapped>(statementType, resultType) { CustomSqlStatement = query.SqlQuery };
+            var result = new SqlStatement(statementType, resultType) { CustomSqlStatement = query.SqlQuery };
             
             //create the DML clause and optionally the order by clause of the query            
             switch (statementType)
@@ -93,14 +93,14 @@ namespace Sushi.MicroORM.Supporting
             return result;
         }
 
-        private SqlStatement<T> ApplyDeleteToStatement<T>(SqlStatement<T> statement, DataQuery<T> query)
+        private SqlStatement ApplyDeleteToStatement<T>(SqlStatement statement, DataQuery<T> query)
         {
             statement.DmlClause = "DELETE ";
             AddWhereClauseToStatement(statement, query);
             return statement;
         }
 
-        private SqlStatement<T> ApplyInsertOrUpdateToStatement<T>(SqlStatement<T> statement, DataMap<T> map, DataQuery<T> query, T entity, bool isIdentityInsert)
+        private SqlStatement ApplyInsertOrUpdateToStatement<T>(SqlStatement statement, DataMap<T> map, DataQuery<T> query, T entity, bool isIdentityInsert)
         {
             // this generates two seperate statements which need to be merged into one statement which uses an IF EXIST / ELSE
             // generate insert
@@ -126,7 +126,7 @@ END";
             return statement;
         }
 
-        private SqlStatement<T> ApplyUpdateToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> query, T entity)
+        private SqlStatement ApplyUpdateToStatement<T>(SqlStatement statement, DataMap map, DataQuery<T> query, T entity)
         {
             statement.DmlClause = $"UPDATE {map.TableName}";
             // generate the set clause for all columns that are not readonly, and add the parameter to the statement
@@ -148,7 +148,7 @@ END";
             return statement;
         }
 
-        private SqlStatement<T> ApplySelectToStatement<T>(SqlStatement<T> statement, DataMap map, DataQuery<T> query)
+        private SqlStatement ApplySelectToStatement<T>(SqlStatement statement, DataMap map, DataQuery<T> query)
         {
             // set opening statement
             statement.DmlClause = "SELECT ";
@@ -186,7 +186,7 @@ END";
             return statement;
         }
 
-        private SqlStatement<T> ApplyInsertToStatement<T>(SqlStatement<T> statement, DataMap<T> map, DataQuery<T> query, T entity, bool isIdentityInsert)
+        private SqlStatement ApplyInsertToStatement<T>(SqlStatement statement, DataMap<T> map, DataQuery<T> query, T entity, bool isIdentityInsert)
         {
             //generate opening statement
             statement.DmlClause = $"INSERT";
@@ -226,12 +226,12 @@ END";
         }
         
         /// <summary>
-        /// Sets <see cref="SqlStatement{TMapped}.WhereClause"/> and <see cref="SqlStatement{TMapped}.Parameters"/> based on values supplied in <paramref name="query"/>.
+        /// Sets <see cref="SqlStatement.WhereClause"/> and <see cref="SqlStatement.Parameters"/> based on values supplied in <paramref name="query"/>.
         /// </summary>        
         /// <param name="sqlStament"></param>
         /// <param name="query"></param>
         /// <returns></returns>
-        private SqlStatement<T> AddWhereClauseToStatement<T>(SqlStatement<T> sqlStament, DataQuery<T> query)
+        private SqlStatement AddWhereClauseToStatement<T>(SqlStatement sqlStament, DataQuery<T> query)
         {
             // get custom sql parameters from query and add to result
             if (query?.SqlParameters != null)

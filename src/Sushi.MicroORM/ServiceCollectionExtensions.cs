@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Sushi.MicroORM.Exceptions;
 using Sushi.MicroORM.Mapping;
 using Sushi.MicroORM.Supporting;
 using System;
@@ -37,9 +38,11 @@ namespace Sushi.MicroORM
             var dataMapProvider = new DataMapProvider();
             services.TryAddSingleton<DataMapProvider>(dataMapProvider);
 
+            // add dependencies
             services.TryAddTransient<SqlExecuter>();
             services.TryAddTransient<ResultMapper>();
             services.TryAddTransient<SqlStatementGenerator>();
+            services.TryAddTransient<IExceptionHandler, ExceptionHandler>();
 
             var connectionStringProvider = new ConnectionStringProvider(defaultConnectionString);            
             services.TryAddSingleton(connectionStringProvider);

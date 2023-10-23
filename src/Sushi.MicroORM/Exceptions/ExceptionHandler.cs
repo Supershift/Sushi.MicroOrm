@@ -12,7 +12,7 @@ namespace Sushi.MicroORM.Exceptions
     /// <summary>
     /// Provides methods to handle exceptions thrown when executing commands against the database.
     /// </summary>
-    public class ExceptionHandler
+    public class ExceptionHandler : IExceptionHandler
     {
         /// <summary>
         /// Creates an exception based on info found on <paramref name="ex"/>. If possible, the exception will be more specialized than the original exception.
@@ -26,7 +26,7 @@ namespace Sushi.MicroORM.Exceptions
             string errorMessage;
             if (sqlStatement != null)
             {
-                var parameters = string.Join(Environment.NewLine, sqlStatement.Parameters.Select(x=>$"{x.Name} = '{x.Value}' ({x.Type})"));                
+                var parameters = string.Join(Environment.NewLine, sqlStatement.Parameters.Select(x => $"{x.Name} = '{x.Value}' ({x.Type})"));
                 errorMessage = $"Error while executing\r\n{sqlStatement}\r\n{parameters}\r\n{ex.Message}";
             }
             else
@@ -50,6 +50,6 @@ namespace Sushi.MicroORM.Exceptions
             return new Exception(errorMessage, ex);
         }
 
-        
+
     }
 }

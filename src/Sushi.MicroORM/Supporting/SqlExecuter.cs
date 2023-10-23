@@ -20,14 +20,14 @@ namespace Sushi.MicroORM.Supporting
     public class SqlExecuter
     {   
         private readonly ResultMapper _resultMapper;
-        private readonly ExceptionHandler _exceptionHandler;
+        private readonly IExceptionHandler _exceptionHandler;
         /// <summary>
         /// Creates a new instance of <see cref="SqlExecuter"/>.
         /// </summary>
-        public SqlExecuter(ResultMapper resultMapper)
+        public SqlExecuter(ResultMapper resultMapper, IExceptionHandler exceptionHandler)
         {
-            _resultMapper = resultMapper;            
-            _exceptionHandler = new ExceptionHandler();
+            _resultMapper = resultMapper;
+            _exceptionHandler = exceptionHandler;
         }
 
         /// <summary>

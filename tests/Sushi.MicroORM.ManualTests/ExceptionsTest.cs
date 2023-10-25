@@ -82,5 +82,19 @@ namespace Sushi.MicroORM.ManualTests
             // assert            
             await Assert.ThrowsExceptionAsync<ConstraintViolationException>(act);
         }
+
+        [TestMethod]
+        public async Task BulkInsert_UniqueIndexViolation()
+        {
+            // arrange
+            var connector = _serviceProvider.GetRequiredService<IConnector<UniqueValue>>();
+            var uniqueValue = new UniqueValue(Guid.NewGuid(), 1234);
+
+            // act
+            var act = async () => await connector.BulkInsertAsync(new [] { uniqueValue });
+
+            // assert
+            await Assert.ThrowsExceptionAsync<UniqueIndexViolationException>(act);
+        }
     }
 }

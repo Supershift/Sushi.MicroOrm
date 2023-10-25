@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
+using Sushi.MicroORM.Exceptions;
 using Sushi.MicroORM.Mapping;
 using Sushi.MicroORM.Supporting;
 using System;
@@ -23,6 +24,7 @@ namespace Sushi.MicroORM
         private readonly ConnectionStringProvider _connectionStringProvider;
         private readonly SqlStatementGenerator _sqlStatementGenerator;
         private readonly SqlExecuter _sqlExecuter;
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly MicroOrmOptions _options;
 
         /// <summary>
@@ -38,12 +40,14 @@ namespace Sushi.MicroORM
             IOptions<MicroOrmOptions> options,
             DataMapProvider dataMapProvider,
             SqlStatementGenerator sqlStatementGenerator,
-            SqlExecuter sqlExecuter)
+            SqlExecuter sqlExecuter,
+            IExceptionHandler exceptionHandler)
         {
             _connectionStringProvider = connectionStringProvider;
             _options = options.Value;
             _sqlStatementGenerator = sqlStatementGenerator;
             _sqlExecuter = sqlExecuter;
+            _exceptionHandler = exceptionHandler;
             _map = dataMapProvider.GetMapForType<T>();
         }
         
@@ -361,6 +365,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         /// <inheritdoc />
         public async Task BulkInsertAsync(IEnumerable<T> entities, bool isIdentityInsert, SqlBulkCopyOptions sqlBulkCopyOptions, CancellationToken cancellationToken)
         {
+            // todo: move all this logic away from connector to dedicated bulk insert objects, into meaningful testable methods
             if (entities?.Any() != true)
                 return;
 
@@ -409,7 +414,15 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             }
 
             bulkCopy.DestinationTableName = dataTable.TableName;
-            await bulkCopy.WriteToServerAsync(dataTable, cancellationToken);
+            try
+            {
+                await bulkCopy.WriteToServerAsync(dataTable, cancellationToken);
+            }
+            catch (TaskCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                throw _exceptionHandler.Handle(ex, null);
+            }
         }
     }
 }

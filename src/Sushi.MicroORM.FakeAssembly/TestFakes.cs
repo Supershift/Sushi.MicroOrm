@@ -18,7 +18,7 @@ namespace Sushi.MicroORM.FakeAssembly
                 Map(x => x.Name, "Name");
             }
         }
-        
+
         public int Id { get; set; }
         public string? Name { get; set; }
     }
@@ -26,7 +26,7 @@ namespace Sushi.MicroORM.FakeAssembly
 
     public class TestClassMap2 : DataMap<TestRecord>
     {
-        
+
     }
 
     public record TestRecord
@@ -40,6 +40,16 @@ namespace Sushi.MicroORM.FakeAssembly
     }
 
     internal class InternalClass
+    {
+
+    }
+
+    internal abstract class BaseMap<T> : DataMap<T>
+    {
+
+    }
+
+    internal class GenericMap<T> : DataMap<object>
     {
 
     }

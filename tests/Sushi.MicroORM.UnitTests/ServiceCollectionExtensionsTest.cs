@@ -19,7 +19,7 @@ namespace Sushi.MicroORM.UnitTests
             IServiceCollection serviceCollection = new ServiceCollection();
             serviceCollection.AddMicroORM(connectionString);
             var serviceProvider = serviceCollection.BuildServiceProvider();
-
+            
             // create default connector
             var connector = serviceProvider.GetService<IConnector<TestClass>>();
 

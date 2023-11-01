@@ -14,6 +14,7 @@ namespace Sushi.MicroORM.Mapping
     {
         /// <summary>
         /// Scans the specified assemblies for <see cref="DataMap"/> implementations and adds them to the datamap provider.
+        /// Note: DataMaps containing generic parameters are ignored.
         /// </summary>
         /// <param name="assemblyList"></param>
         /// <param name="dataMapProvider"></param>
@@ -21,12 +22,12 @@ namespace Sushi.MicroORM.Mapping
         {           
             foreach (var assembly in assemblyList)
             {
-                var dataMapTypes = assembly.GetTypes().Where(x => x.IsSubclassOf(typeof(DataMap))); 
+                var dataMapTypes = assembly.GetTypes().Where(x => x.IsSubclassOf(typeof(DataMap)) && !x.IsAbstract && !x.ContainsGenericParameters); 
 
                 foreach (var dataMapType in dataMapTypes)
                 {
                     var instance = Activator.CreateInstance(dataMapType, true);
-
+                   
                     var propertyInfo = dataMapType.GetProperty("MappedType");
                     var mappedTypeValue = propertyInfo!.GetValue(instance, null);
 

@@ -170,6 +170,17 @@ namespace Sushi.MicroORM
         }
 
         /// <summary>
+        /// Shorthand method to add a predicate to the WHERE clause where <paramref name="value"/> is evaluated with a LIKE operator, e.g. WHERE column LIKE '%value%'.
+        /// The '%' characters are automatically added to <paramref name="value"/>.
+        /// </summary>
+        /// <param name="mappingExpression"></param>
+        /// <param name="value"></param>
+        public void AddLike(Expression<Func<T, object?>> mappingExpression, string value)
+        {
+            Add(mappingExpression, $"%{value}%", ComparisonOperator.Like);
+        }
+
+        /// <summary>
         /// Adds a plain text SQL search condition to the WHERE clause. 
         /// </summary>
         /// <param name="customSql"></param>

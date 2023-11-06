@@ -302,6 +302,21 @@ namespace Sushi.MicroORM.ManualTests
         }
 
         [TestMethod]
+        public async Task GetWhereLikeAsync()
+        {
+            var request = _connectorProducts.CreateQuery();
+
+            request.AddLike(x => x.MetaData.Name, "aser");
+            var products = await _connectorProducts.GetAllAsync(request);
+            foreach (var product in products)
+            {
+                Console.WriteLine($"{product.ID} - {product.MetaData.Name}");
+            }
+
+            Assert.IsTrue(products.Count == 1);
+        }
+
+        [TestMethod]
         public async Task GetWhereGreaterThanStringAsync()
         {
             var filter = _connectorProducts.CreateQuery();

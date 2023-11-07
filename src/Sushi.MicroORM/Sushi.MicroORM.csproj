@@ -3,7 +3,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>3.1.0-b9</Version>
+    <Version>3.1.0-b10</Version>
     <Authors>Supershift B.V.</Authors>    
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>    
     <Description>Simple and high performance micro-ORM. Supports SQL Azure and SQL Server 2012 and higher.</Description>    

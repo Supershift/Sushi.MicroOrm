@@ -61,6 +61,11 @@ namespace Sushi.MicroORM
         public string? ConnectionString { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating if this query is a read-only statements. If true, execution can be optimized by using a read-only connection if available on the connection string.
+        /// </summary>
+        public bool IsReadOnly { get; set; }
+
+        /// <summary>
         /// Get or sets the command timeout to use when executing this query. If NULL, the default command timeout will be used.
         /// </summary>
         public int? CommandTimeOut { get; set; }

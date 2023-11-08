@@ -49,10 +49,10 @@ namespace Sushi.MicroORM.Mapping
         }
 
         /// <summary>
-        /// Returns an instance of DataMap<typeparamref name="T"/> for <typeparamref name="T"/> if declared.
+        /// Returns an instance of DataMap<typeparamref name="T"/> for <typeparamref name="T"/> if declared or throws an exception if none found.
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
+        /// <returns></returns>        
         public DataMap<T> GetMapForType<T>()
         {
             var type = typeof(T);            

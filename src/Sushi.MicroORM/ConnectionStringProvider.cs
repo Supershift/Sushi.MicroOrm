@@ -15,16 +15,17 @@ namespace Sushi.MicroORM
         /// Creates a new instance of <see cref="ConnectionStringProvider"/>.
         /// </summary>
         /// <param name="defaultConnectionString"></param>
-        public ConnectionStringProvider(string defaultConnectionString)
+        public ConnectionStringProvider(ConnectionString defaultConnectionString)
         {
             _defaultConnectionString = defaultConnectionString;
         }
 
-        private string _defaultConnectionString;
+        private ConnectionString _defaultConnectionString;
+        
         /// <summary>
         /// Gets or sets the default connection string which will be used if no type specific connection string is found.
         /// </summary>
-        public string DefaultConnectionString
+        public ConnectionString DefaultConnectionString
         {
             get
             {
@@ -45,18 +46,18 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Gets a collection of connection strings per typename.
         /// </summary>
-        protected ConcurrentDictionary<string, string> MappedConnectionStrings { get; } = new ConcurrentDictionary<string, string>();
-        
+        protected ConcurrentDictionary<string, ConnectionString> MappedConnectionStrings { get; } = new();
+
         /// <summary>
         /// Gets a collection of connection strings per resolved typename.
         /// </summary>
-        protected ConcurrentDictionary<Type, string> CachedConnectionStrings { get; } = new ConcurrentDictionary<Type, string>();
+        protected ConcurrentDictionary<Type, ConnectionString> CachedConnectionStrings { get; } = new();
 
 
         /// <summary>
         /// Adds or updates the connection string for <typeparamref name="T"/>.
         /// </summary>        
-        public void AddMappedConnectionString<T>(string connectionString)
+        public void AddMappedConnectionString<T>(ConnectionString connectionString)
         {
             AddMappedConnectionString(typeof(T).ToString(), connectionString);
         }
@@ -64,7 +65,7 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Adds or updates the connection string for <paramref name="type"/>.
         /// </summary>        
-        public void AddMappedConnectionString(Type type, string connectionString)
+        public void AddMappedConnectionString(Type type, ConnectionString connectionString)
         {
             AddMappedConnectionString(type.ToString(), connectionString);
         }
@@ -74,7 +75,7 @@ namespace Sushi.MicroORM
         /// </summary>
         /// <param name="typeName"></param>
         /// <param name="connectionString"></param>
-        public void AddMappedConnectionString(string typeName, string connectionString)
+        public void AddMappedConnectionString(string typeName, ConnectionString connectionString)
         {
             // add the connection string to the backing store            
             MappedConnectionStrings[typeName] = connectionString;
@@ -88,7 +89,7 @@ namespace Sushi.MicroORM
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public string GetConnectionString(Type type)
+        public ConnectionString GetConnectionString(Type type)
         {
             if (MappedConnectionStrings.Count > 0)
             {
@@ -106,7 +107,7 @@ namespace Sushi.MicroORM
 
                 //find the most specific match
                 //first we search for the fully qualified name. if nothing found, we search for the name minus one part, etc.
-                string connectionString = DefaultConnectionString;
+                var connectionString = DefaultConnectionString;
                 while (splitName.Count > 0)
                 {
                     string searchPattern = string.Join(".", splitName);

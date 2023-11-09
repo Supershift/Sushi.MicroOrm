@@ -673,14 +673,14 @@ WHERE Product_Key > @productID";
         [TestMethod]
         public async Task CustomTimeOut()
         {
-            var query = _connectorOrders.CreateQuery();
+            var query = _connectorProducts.CreateQuery();
             query.SqlQuery = "WAITFOR DELAY '00:00:05';";
             query.CommandTimeOut = 2;
 
             Exception? exception = null;
             try
             {
-                await _connectorOrders.ExecuteNonQueryAsync(query);
+                await _connectorProducts.ExecuteNonQueryAsync(query);
             }
             catch(Exception ex)
             {

@@ -9,8 +9,46 @@ namespace Sushi.MicroORM
     /// Defines methods to interact with database records using objects, based on an object-relational mapping.
     /// </summary>
     /// <typeparam name="T">Type to convert database recrods to</typeparam>
-    public interface IConnector<T> : IReadOnlyConnector<T>
+    public interface IConnector<T> 
     {
+        /// <summary>
+        /// Executes a custom SQL statement defined on <paramref name="query"/> with a return value of <typeparamref name="TScalar"/>. 
+        /// </summary>        
+        Task<TScalar?> ExecuteScalarAsync<TScalar>(DataQuery<T> query);
+        /// <summary>
+        /// Executes a custom SQL statement defined on <paramref name="query"/> with a return value of <typeparamref name="TScalar"/>. 
+        /// </summary>        
+        Task<TScalar?> ExecuteScalarAsync<TScalar>(DataQuery<T> query, CancellationToken cancellationToken);
+        /// <summary>
+        /// Executes a custom SQL statement defined on <paramref name="query"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="query"/>.
+        /// </summary>        
+        Task<List<TResult?>> ExecuteSetAsync<TResult>(DataQuery<T> query);
+        /// <summary>
+        /// Executes a custom SQL statement defined on <paramref name="query"/>. The first column of each row is added to the result. Parameters can be defined on <paramref name="query"/>.
+        /// </summary>
+        Task<List<TResult?>> ExecuteSetAsync<TResult>(DataQuery<T> query, CancellationToken cancellationToken);
+        /// <summary>
+        /// Gets all records from the database, using <paramref name="query"/> to build a where clause.
+        /// </summary>
+        Task<QueryListResult<T>> GetAllAsync(DataQuery<T> query);
+        /// <summary>
+        /// Gets all records from the database, using <paramref name="query"/> to build a where clause.
+        /// </summary>
+        Task<QueryListResult<T>> GetAllAsync(DataQuery<T> query, CancellationToken cancellationToken);
+        /// <summary>
+        /// Gets the first record from the resultset, using <paramref name="query"/> to build a where clause for <typeparamref name="T"/>.
+        /// </summary>
+        Task<T?> GetFirstAsync(DataQuery<T> query);
+        /// <summary>
+        /// Gets the first record from the resultset, using <paramref name="query"/> to build a where clause for <typeparamref name="T"/>.
+        /// </summary>
+        Task<T?> GetFirstAsync(DataQuery<T> query, CancellationToken cancellationToken);
+        /// <summary>
+        /// Creates a new instance of <see cref="DataQuery{T}"/>. 
+        /// </summary>
+        /// <returns></returns>
+        DataQuery<T> CreateQuery();
+
         /// <summary>
         /// Inserts a collection of entities of <typeparamref name="T"/> using Sql Bulk Copy. The SqlDbType defined on the column attributes is ignored. Instead, the Sql Type is derived from the .NET type of the mapped properties.
         /// A list of supported types can be found here: https://msdn.microsoft.com/en-us/library/system.data.datacolumn.datatype(v=vs.110).aspx

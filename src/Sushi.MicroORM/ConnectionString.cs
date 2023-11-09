@@ -24,7 +24,7 @@ namespace Sushi.MicroORM
         /// Creates a new instance of <see cref="ConnectionString"/> with only a <see cref="Primary"/> value.
         /// </summary>
         /// <param name="value"></param>
-        public static implicit operator ConnectionString(string value) => new ConnectionString(value);
+        public static implicit operator ConnectionString(string value) => new ConnectionString(value, null);
 
         /// <summary>
         /// Gets the primary connection string, which can be used for reads and writes.
@@ -35,26 +35,5 @@ namespace Sushi.MicroORM
         /// Gets a read-only connection string, which can be used for reads only.
         /// </summary>
         public string? ReadOnly { get; private set; }
-    }
-
-    /// <summary>
-    /// A set of connection strings for a Sql Azure database.
-    /// </summary>
-    public record SqlAzureConnectionString : ConnectionString
-    {
-        /// <summary>
-        /// Creates a new instance of <see cref="ConnectionString"/>.
-        /// </summary>        
-        public SqlAzureConnectionString(string primary, bool generateReadOnly) : base(primary, generateReadOnly ? GenerateReadOnly(primary) : null)
-        {
-            
-        }
-
-        private static string GenerateReadOnly(string connectionString) 
-        {
-            if (!connectionString.EndsWith(';')) connectionString += ';';
-            connectionString  += "ApplicationIntent=ReadOnly;";
-            return connectionString;
-        }
     }
 }

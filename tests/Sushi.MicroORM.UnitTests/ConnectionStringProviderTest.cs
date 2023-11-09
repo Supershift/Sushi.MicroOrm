@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Sushi.MicroORM.UnitTests
 {   
-    public class ConnectionStringTest
+    public class ConnectionStringProviderTest
     {
         [Fact]
         public void GetCachedConnectionString()

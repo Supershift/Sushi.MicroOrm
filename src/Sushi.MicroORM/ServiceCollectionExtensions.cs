@@ -21,7 +21,7 @@ namespace Sushi.MicroORM
         /// Adds a default implementation for the <see cref="Connector{T}"/> service.
         /// </summary>        
         /// <returns></returns>
-        public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString, params Assembly[] assemblies)
+        public static IServiceCollection AddMicroORM(this IServiceCollection services, ConnectionString defaultConnectionString, params Assembly[] assemblies)
         {
             return AddMicroORM(services, defaultConnectionString, null, assemblies);
         }
@@ -30,9 +30,10 @@ namespace Sushi.MicroORM
         /// Adds a default implementation for the <see cref="Connector{T}"/> service.
         /// </summary>        
         /// <returns></returns>
-        public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString, Action<MicroOrmConfigurationBuilder>? config, params Assembly[] assemblies) 
+        public static IServiceCollection AddMicroORM(this IServiceCollection services, ConnectionString defaultConnectionString, Action<MicroOrmConfigurationBuilder>? config, params Assembly[] assemblies) 
         {   
-            services.TryAddTransient(typeof(IConnector<>), typeof(Connector<>));
+            services.TryAddTransient(typeof(IConnector<>), typeof(Connector<>));            
+            services.TryAddTransient<IQueryFactory, QueryFactory>();
 
             // create datamap provider
             var dataMapProvider = new DataMapProvider();
@@ -43,6 +44,7 @@ namespace Sushi.MicroORM
             services.TryAddTransient<ResultMapper>();
             services.TryAddTransient<SqlStatementGenerator>();
             services.TryAddTransient<IExceptionHandler, ExceptionHandler>();
+            
 
             var connectionStringProvider = new ConnectionStringProvider(defaultConnectionString);            
             services.TryAddSingleton(connectionStringProvider);

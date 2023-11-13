@@ -32,7 +32,7 @@ namespace Sushi.MicroORM.ManualTests
             .Build();
 
             // get connection strings
-            string connectionString = configuration.GetConnectionString("TestDatabase");
+            var connectionString = new SqlServerConnectionString(configuration.GetConnectionString("TestDatabase")!, true);
             var connectionString2 = configuration.GetConnectionString("Customers");
             var connectionString3 = configuration.GetConnectionString("Addresses");
 
@@ -63,6 +63,25 @@ namespace Sushi.MicroORM.ManualTests
             filter.Add(x => x.ID, id);
 
             var order = await _connectorOrders.GetFirstAsync(filter);
+
+            Assert.IsNotNull(order);
+            Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
+
+            Assert.AreEqual(id, order?.ID);
+        }
+
+        [TestMethod]
+        public async Task GetSingleByFilterAsync_ReadOnly()
+        {
+            int id = 2;
+
+            var query = _connectorOrders.CreateQuery();
+            
+            query.IsReadOnly = true;
+            
+            query.Add(x => x.ID, id);
+
+            var order = await _connectorOrders.GetFirstAsync(query);
 
             Assert.IsNotNull(order);
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -673,14 +692,14 @@ WHERE Product_Key > @productID";
         [TestMethod]
         public async Task CustomTimeOut()
         {
-            var query = _connectorOrders.CreateQuery();
+            var query = _connectorProducts.CreateQuery();
             query.SqlQuery = "WAITFOR DELAY '00:00:05';";
             query.CommandTimeOut = 2;
 
             Exception? exception = null;
             try
             {
-                await _connectorOrders.ExecuteNonQueryAsync(query);
+                await _connectorProducts.ExecuteNonQueryAsync(query);
             }
             catch(Exception ex)
             {

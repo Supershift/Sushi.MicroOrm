@@ -16,7 +16,17 @@ namespace Sushi.MicroORM
     /// Extension methods for configuring <see cref="Sushi.MicroORM"/> services.
     /// </summary>
     public static class ServiceCollectionExtensions
-    {   
+    {
+        /// <summary>
+        /// Adds a default implementation for the <see cref="Connector{T}"/> service.
+        /// </summary>        
+        /// <returns></returns>
+        [Obsolete("Use methods with ConnectionString objects instead")]
+        public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString, params Assembly[] assemblies)
+        {
+            return AddMicroORM(services, new ConnectionString(defaultConnectionString, null), null, assemblies);
+        }
+
         /// <summary>
         /// Adds a default implementation for the <see cref="Connector{T}"/> service.
         /// </summary>        
@@ -24,6 +34,16 @@ namespace Sushi.MicroORM
         public static IServiceCollection AddMicroORM(this IServiceCollection services, ConnectionString defaultConnectionString, params Assembly[] assemblies)
         {
             return AddMicroORM(services, defaultConnectionString, null, assemblies);
+        }
+
+        /// <summary>
+        /// Adds a default implementation for the <see cref="Connector{T}"/> service.
+        /// </summary>        
+        /// <returns></returns>        
+        [Obsolete("Use methods with ConnectionString objects instead")]
+        public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString, Action<MicroOrmConfigurationBuilder>? config, params Assembly[] assemblies)
+        {
+            return AddMicroORM(services, new ConnectionString(defaultConnectionString, null), config, assemblies);
         }
 
         /// <summary>

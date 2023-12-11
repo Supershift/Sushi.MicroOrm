@@ -89,18 +89,15 @@ namespace Sushi.MicroORM.Supporting
                 }
 
                 // open connection
-                await connection.OpenAsync().ConfigureAwait(false);
+                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                // execute the command                
-                SqlDataReader? reader = null;
-
-                try
+                // execute the command                                
+                switch (sqlStatement.ResultCardinality)
                 {
-                    switch (sqlStatement.ResultCardinality)
-                    {
-                        case SqlStatementResultCardinality.SingleRow:
-                            // execute the command, which will return a reader
-                            reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                    case SqlStatementResultCardinality.SingleRow:
+                        // execute the command, which will return a reader
+                        using (var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+                        {
                             // if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
                             if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
                             {
@@ -113,11 +110,12 @@ namespace Sushi.MicroORM.Supporting
                                 var scalarResult = await _resultMapper.MapToSingleResultScalarAsync<TResult>(reader, cancellationToken).ConfigureAwait(false);
                                 result = new SqlStatementResult<TResult>(scalarResult);
                             }
-                            break;
-                        case SqlStatementResultCardinality.MultipleRows:
-                            // execute the command, which will return a reader
-                            reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-
+                        }
+                        break;
+                    case SqlStatementResultCardinality.MultipleRows:
+                        // execute the command, which will return a reader
+                        using (var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+                        {
                             // if the result type of the statement is the same, or inherits, the mapped type T, use the map to create a result object
                             if (typeof(TResult) == typeof(T) || typeof(TResult).IsSubclassOf(typeof(T)))
                             {
@@ -153,25 +151,18 @@ namespace Sushi.MicroORM.Supporting
 
                                 result = new SqlStatementResult<TResult>(multipleResults, numberOfRows);
                             }
-                            break;
-                        case SqlStatementResultCardinality.None:
-                            // execute the command
-                            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-                            result = new SqlStatementResult<TResult>();
-                            break;
-                        default:
-                            throw new NotImplementedException();
-                    }
-                }
-                finally
-                {
-                    if (reader != null)
-                    {
-                        await reader.DisposeAsync().ConfigureAwait(false);
-                    }
+                        }
+                        break;
+                    case SqlStatementResultCardinality.None:
+                        // execute the command
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                        result = new SqlStatementResult<TResult>();
+                        break;
+                    default:
+                        throw new NotImplementedException();
                 }
             }
-            catch (TaskCanceledException) { throw; }            
+            catch (TaskCanceledException) { throw; }
             catch (Exception ex)
             {
                 throw _exceptionHandler.Handle(ex, sqlStatement);

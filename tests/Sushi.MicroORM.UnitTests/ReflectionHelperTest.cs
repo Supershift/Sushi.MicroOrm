@@ -5,6 +5,21 @@ namespace Sushi.MicroORM.UnitTests
 {
     public class ReflectionHelperTest
     {
+        [Fact]
+        public void SetDoubleFromDecimal()
+        {
+            // arrange
+            var instance = new TestClass();
+            decimal value = 12.46M;
+            var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.DoubleValue);
+
+            // act
+            ReflectionHelper.SetMemberValue(memberTree, value, instance, null);
+
+            // assert            
+            Assert.Equal(decimal.ToDouble(value), instance.DoubleValue);
+        }
+
         [Theory]
         [InlineData(DateTimeKind.Utc)]
         [InlineData(DateTimeKind.Unspecified)]
@@ -138,6 +153,7 @@ namespace Sushi.MicroORM.UnitTests
             public SubTestClass SubProperty { get; set; } = null!;
             public SubTestClass? NullableSubProperty { get; set; }
             public SubTestClass? NullableSubField = null;
+            public double? DoubleValue { get; set; }
         }
 
         private class SubTestClass

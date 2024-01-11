@@ -184,8 +184,13 @@ namespace Sushi.MicroORM.Supporting
                 value = DateTime.SpecifyKind(dt, dateTimeKind.Value);
             }
 
+            // convert between double/decimal
+            if (targetType == typeof(double) && value is decimal d)
+            {
+                value = Convert.ToDouble(d);
+            }
             // custom support for converting to DateOnly and TimeOnly
-            if (targetType == typeof(DateOnly) && value is DateTime dt1)
+            else if (targetType == typeof(DateOnly) && value is DateTime dt1)
             {
                 value = DateOnly.FromDateTime(dt1);
             }

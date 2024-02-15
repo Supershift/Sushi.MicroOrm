@@ -4,7 +4,6 @@ using Sushi.MicroORM.Tests.DAL;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
@@ -15,7 +14,7 @@ namespace Sushi.MicroORM.Tests
     {
         [AssemblyInitialize]
         public static void Init(TestContext context)
-        {   
+        {
             var configuration = new ConfigurationBuilder()
             .AddUserSecrets(Assembly.GetExecutingAssembly(), optional: true)
             .AddEnvironmentVariables()
@@ -29,8 +28,6 @@ namespace Sushi.MicroORM.Tests
 
             var connectionString3 = configuration.GetConnectionString("Addresses");
             DatabaseConfiguration.AddMappedConnectionString(typeof(DAL.Customers.Address), connectionString3);
-
-            
         }
 
         [TestMethod]
@@ -64,7 +61,7 @@ namespace Sushi.MicroORM.Tests
         {
             var ConnectorOrders = new Connector<Order>()
             {
-                 FetchSingleMode = FetchSingleMode.ReturnDefaultWhenNotFound
+                FetchSingleMode = FetchSingleMode.ReturnDefaultWhenNotFound
             };
             int id = -1;
 
@@ -120,7 +117,7 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public void FetchSingleBySql()
         {
-            int id = 3;            
+            int id = 3;
 
             string sql = $"SELECT Order_Key, Order_Created FROM cat_Orders WHERE Order_Key = {id}"; //this is BAD PRACTICE! always use parameters
 
@@ -136,8 +133,6 @@ namespace Sushi.MicroORM.Tests
         public void FetchSingleBySqlAndFilter()
         {
             int id = 3;
-
-            
 
             string sql = $"SELECT * FROM cat_Orders WHERE Order_Key = @orderID"; //this is BAD PRACTICE! always use parameters
 
@@ -157,7 +152,7 @@ namespace Sushi.MicroORM.Tests
         {
             int productID = 1;
             var product = Product.FetchSingle(productID);
-            
+
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(product, Newtonsoft.Json.Formatting.Indented));
 
             Assert.IsTrue(product.MetaData.Identification.GUID != Guid.Empty);
@@ -167,14 +162,14 @@ namespace Sushi.MicroORM.Tests
         public void FetchAll()
         {
             var ConnectorOrders = new Connector<Order>();
-            
+
             var orders = ConnectorOrders.FetchAll();
-            foreach(var order in orders)
+            foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
             }
 
-            Assert.IsTrue(orders.Count > 0);            
+            Assert.IsTrue(orders.Count > 0);
         }
 
         [TestMethod]
@@ -182,7 +177,7 @@ namespace Sushi.MicroORM.Tests
         {
             int maxResults = 2;
 
-            var connector = new Connector<Order>();            
+            var connector = new Connector<Order>();
             var query = connector.CreateQuery();
             query.MaxResults = maxResults;
             var orders = connector.FetchAll(query);
@@ -200,7 +195,7 @@ namespace Sushi.MicroORM.Tests
                 var orders = connector.FetchAll(request);
                 Assert.Fail();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 if (!ex.Message.Contains("no table"))
                     Assert.Fail();
@@ -241,7 +236,7 @@ namespace Sushi.MicroORM.Tests
             query.AddOrder(x => x.ID, SortOrder.DESC);
             query.MaxResults = 2;
             var orders = ConnectorOrders.FetchAll(query);
-            
+
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
@@ -335,7 +330,6 @@ namespace Sushi.MicroORM.Tests
 
             var query = ConnectorProducts.CreateQuery();
 
-
             query.Add(x => x.MetaData.Description, "", ComparisonOperator.GreaterThan);
             var products = ConnectorProducts.FetchAll(query);
             foreach (var product in products)
@@ -352,7 +346,7 @@ namespace Sushi.MicroORM.Tests
             var connector = new Connector<Product>();
 
             var query = connector.CreateQuery();
-            query.AddSql("LEN(Product_Name) > @length");            
+            query.AddSql("LEN(Product_Name) > @length");
             query.AddParameter("@length", 12);
             query.Add(x => x.Price, 1, ComparisonOperator.GreaterThanOrEquals);
             var products = connector.FetchAll(query);
@@ -372,7 +366,7 @@ namespace Sushi.MicroORM.Tests
             query.AddSql("Product_ProductTypeID = @productTypeID");
             int? productTypeID = null;
             query.AddParameter("@productTypeID", productTypeID);
-            
+
             var products = connector.FetchAll(query);
             foreach (var product in products)
             {
@@ -425,19 +419,19 @@ WHERE Product_Key = @productID";
             query.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
             var count = ConnectorProducts.ExecuteScalar<int>(sqlText, query);
             Console.WriteLine(count);
-            Assert.AreEqual(1, count);            
+            Assert.AreEqual(1, count);
         }
 
         [TestMethod]
         public void ExecuteSet()
         {
             var ConnectorProducts = new Connector<Product>();
-            string name = DateTime.UtcNow.Ticks.ToString();            
+            string name = DateTime.UtcNow.Ticks.ToString();
             var query = @"
 SELECT DISTINCT(Product_ProductTypeID)
 FROM cat_Products";
-                        
-            var productTypes = ConnectorProducts.ExecuteSet<Product.ProducType?>(query);
+
+            var productTypes = ConnectorProducts.ExecuteSet<Product.ProductType?>(query);
 
             foreach (var productType in productTypes)
             {
@@ -459,9 +453,9 @@ FROM cat_Products
 WHERE Product_Key > @productID";
             var query = new DataQuery<Product>();
             query.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
-            var productTypes = ConnectorProducts.ExecuteSet<Product.ProducType?>(sqlText, query);
-            
-            foreach(var productType in productTypes)
+            var productTypes = ConnectorProducts.ExecuteSet<Product.ProductType?>(sqlText, query);
+
+            foreach (var productType in productTypes)
             {
                 Console.WriteLine(productType == null ? "NULL" : productType.ToString());
             }
@@ -493,8 +487,7 @@ WHERE Product_Key > @productID";
 
             //save the order
             var order = ConnectorOrders.FetchSingle(20);
-            
-            
+
             string newComments = DateTime.UtcNow.ToString();
 
             order.Comments = newComments;
@@ -504,7 +497,6 @@ WHERE Product_Key > @productID";
 
             //retrieve order again from database
             order = ConnectorOrders.FetchSingle(20);
-
 
             Assert.AreEqual(newComments, order.Comments);
         }
@@ -544,7 +536,7 @@ WHERE Product_Key > @productID";
             connector.InsertOrUpdate(identifier);
 
             //check if the object exists now
-            var query = connector.CreateQuery();            
+            var query = connector.CreateQuery();
             query.Add(x => x.GUID, identifier.GUID);
             var newIdentifier = connector.FetchSingle(query);
 
@@ -575,7 +567,6 @@ WHERE Product_Key > @productID";
             //retrieve updated object
             var updatedIdentifier = connector.FetchSingle(query);
 
-
             Assert.IsNotNull(updatedIdentifier);
             Assert.AreEqual(newIdentifier.Batch, updatedIdentifier.Batch);
         }
@@ -598,7 +589,6 @@ WHERE Product_Key > @productID";
                     }
                 },
                 Price = 12.50M,
-                
             };
             ConnectorProducts.Insert(product);
         }
@@ -625,7 +615,7 @@ WHERE Product_Key > @productID";
                 SomeValue = Guid.NewGuid().ToString()
             };
             var connector = new Connector<CompositeKey>();
-            connector.Insert(compositeKey);            
+            connector.Insert(compositeKey);
         }
 
         [TestMethod]
@@ -688,7 +678,7 @@ WHERE Product_Key > @productID";
 
             //assign unique ID to orders so we can check if all items were inserterd
             var uniqueID = Guid.NewGuid().ToString();
-            for (int i = 0; i<numberOfRows;i++)
+            for (int i = 0; i < numberOfRows; i++)
             {
                 var order = new Order()
                 {
@@ -723,8 +713,8 @@ WHERE Product_Key > @productID";
             {
                 var order = new Identifier()
                 {
-                     GUID = Guid.NewGuid(),
-                      Batch = uniqueID
+                    GUID = Guid.NewGuid(),
+                    Batch = uniqueID
                 };
                 identifiers.Add(order);
             }
@@ -732,7 +722,7 @@ WHERE Product_Key > @productID";
             var connector = new Connector<Identifier>();
             connector.BulkInsert(identifiers, true);
 
-            //retrieve 
+            //retrieve
             var query = connector.CreateQuery();
             query.Add(x => x.Batch, uniqueID);
             var retrievedRows = connector.FetchAll(query);
@@ -759,7 +749,7 @@ WHERE Product_Key > @productID";
             }
 
             var connector = new Connector<CompositeKey>();
-            connector.BulkInsert(rows);            
+            connector.BulkInsert(rows);
         }
 
         [TestMethod]
@@ -831,8 +821,6 @@ WHERE Product_Key > @productID";
                 DatabaseConfiguration.Log = (string s) => { logMessage = s; };
 
                 var order = ConnectorOrders.FetchSingle(id);
-
-
 
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 

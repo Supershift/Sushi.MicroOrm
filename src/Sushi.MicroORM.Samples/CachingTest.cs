@@ -1,14 +1,11 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Sushi.MicroORM.Samples.DAL;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Sushi.MicroORM.Samples
 {
     [TestClass]
     public class CachingTest
-    {   
+    {
         [TestMethod]
         public void FetchSingle()
         {
@@ -45,7 +42,7 @@ namespace Sushi.MicroORM.Samples
 
         [TestMethod]
         public void FetchAll()
-        {            
+        {
             var connector = new Caching.CachedConnector<Order>();
             var filter = connector.CreateDataFilter();
             //get first instance (will be server by the database)
@@ -60,11 +57,11 @@ namespace Sushi.MicroORM.Samples
 
         [TestMethod]
         public void FetchAllBySql()
-        {            
+        {
             string query = "SELECT * FROM cat_Orders";
 
             var connector = new Caching.CachedConnector<Order>();
-            
+
             //get first instance (will be server by the database)
             var result = connector.FetchAll(query);
 
@@ -83,7 +80,7 @@ namespace Sushi.MicroORM.Samples
             //get first instance (will be served by the database)
             var result = connector.FetchSingle(id);
 
-            //delete an instance 
+            //delete an instance
             var deleteFilter = connector.CreateDataFilter();
             deleteFilter.Add(x => x.ID, -1);
             connector.Delete(deleteFilter);

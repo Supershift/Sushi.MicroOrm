@@ -1,10 +1,5 @@
 ﻿using Sushi.MicroORM.Mapping;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM
 {
@@ -17,6 +12,7 @@ namespace Sushi.MicroORM
         /// Returns the Default for a class when no record found (which is in most cases NULL)
         /// </summary>
         ReturnDefaultWhenNotFound,
+
         /// <summary>
         /// Returns a new instance for a class when no record found
         /// </summary>
@@ -29,16 +25,16 @@ namespace Sushi.MicroORM
     public static class DatabaseConfiguration
     {
         /// <summary>
-        /// Sets the default database connection string to use when connecting to a database. 
+        /// Sets the default database connection string to use when connecting to a database.
         /// </summary>
         /// <param name="defaultConnectionString"></param>
         public static void SetDefaultConnectionString(string defaultConnectionString)
         {
-            ConnectionStringProvider.DefaultConnectionString = defaultConnectionString;            
+            ConnectionStringProvider.DefaultConnectionString = defaultConnectionString;
         }
 
         /// <summary>
-        /// Add an alternative database connection string which is resolved on the fully qualified typename of the dataobject. 
+        /// Add an alternative database connection string which is resolved on the fully qualified typename of the dataobject.
         /// </summary>
         /// <param name="type"></param>
         /// <param name="connectionString"></param>
@@ -58,23 +54,24 @@ namespace Sushi.MicroORM
                 throw new ArgumentNullException(nameof(typeName), "cannot be null or whitespace");
             ConnectionStringProvider.AddConnectionString(typeName, connectionString);
         }
-                
+
         /// <summary>
         /// Gets or sets a value indicating if connetionstrings are cached for types. This is only used if multiple connection strings are provided through the AddMappedConnectionString method. Default value is true.
         /// </summary>
         public static bool IsConnectionStringCachingEnabled { get; set; } = true;
-        
+
         /// <summary>
-        /// Gets or sets the behavior for connector's FetchSingle methods in case a record is not found in the database. 
+        /// Gets or sets the behavior for connector's FetchSingle methods in case a record is not found in the database.
         /// Default behavior is ReturnDefaultWhenNotFound.
         /// </summary>
         [Obsolete("Use Connector.FetchSingleMode")]
         public static FetchSingleMode FetchSingleMode { get; set; } = FetchSingleMode.ReturnDefaultWhenNotFound;
-        
+
         /// <summary>
         /// Gets the provider for the data map.
         /// </summary>
         public static DataMapProvider DataMapProvider { get; } = new DataMapProvider();
+
         internal static ConnectionStringProvider ConnectionStringProvider { get; } = new ConnectionStringProvider();
 
         /// <summary>

@@ -1,7 +1,4 @@
 ﻿using Sushi.MicroORM.Mapping;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Sushi.MicroORM.Tests.DAL.Customers
 {
@@ -14,7 +11,7 @@ namespace Sushi.MicroORM.Tests.DAL.Customers
             {
                 Table("cat_Customers");
                 Id(x => x.ID, "Customer_Key");
-                Map(x => x.Name, "Customer_Name");                
+                Map(x => x.Name, "Customer_Name");
             }
         }
 

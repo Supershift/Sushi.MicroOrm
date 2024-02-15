@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Text;
 
 namespace Sushi.MicroORM.Supporting
 {
@@ -31,34 +29,38 @@ namespace Sushi.MicroORM.Supporting
             TypeName = typeName;
 
             // convert value if type is not supported by SqlDataClient
-            switch(Value)
+            switch (Value)
             {
                 case DateOnly dateOnly:
                     Value = dateOnly.ToDateTime(TimeOnly.MinValue);
                     break;
+
                 case TimeOnly timeOnly:
                     Value = timeOnly.ToTimeSpan();
                     break;
             }
-            
         }
 
         /// <summary>
         /// Gets or sets the name of the parameter, ie. @myParameter.
         /// </summary>
         public string Name { get; set; }
+
         /// <summary>
         /// Gets or sets the value of the parameter.
         /// </summary>
         public object Value { get; set; }
+
         /// <summary>
         /// Gets or sets the <see cref="SqlDbType"/> of the parameter. The <see cref="Value"/> must be compatible with this type.
         /// </summary>
         public SqlDbType Type { get; set; }
+
         /// <summary>
         /// Gets or sets the length of the parameter. This is optional in most cases.
         /// </summary>
         public int Length { get; set; }
+
         /// <summary>
         /// Gets or sets a custom type name. Can be used for user defined types.
         /// </summary>

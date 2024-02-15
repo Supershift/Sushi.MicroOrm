@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Sushi.MicroORM
 {
@@ -12,6 +10,7 @@ namespace Sushi.MicroORM
     public class ConnectionStringProvider
     {
         private string _defaultConnectionString;
+
         /// <summary>
         /// Gets or sets the default connection string which will be used if no type specific connection string is found.
         /// </summary>
@@ -32,7 +31,7 @@ namespace Sushi.MicroORM
         /// Gets a collection of connection strings per typename.
         /// </summary>
         protected ConcurrentDictionary<string, string> MappedConnectionStrings { get; } = new ConcurrentDictionary<string, string>();
-        
+
         /// <summary>
         /// Gets a collection of connection strings per resolved typename.
         /// </summary>
@@ -45,10 +44,10 @@ namespace Sushi.MicroORM
         /// <param name="connectionString"></param>
         public void AddConnectionString(string typeName, string connectionString)
         {
-            // add the connection string to the backing store            
+            // add the connection string to the backing store
             MappedConnectionStrings[typeName] = connectionString;
 
-            // clear cache 
+            // clear cache
             CachedConnectionStrings.Clear();
         }
 
@@ -66,7 +65,7 @@ namespace Sushi.MicroORM
                 if (useCaching)
                 {
                     if (CachedConnectionStrings.TryGetValue(type, out var cachedConnectionString))
-                        return cachedConnectionString;                    
+                        return cachedConnectionString;
                 }
 
                 string typeName = type.ToString();
@@ -84,7 +83,7 @@ namespace Sushi.MicroORM
                     //if the pattern is found, return the mapped connection string
                     if (MappedConnectionStrings.ContainsKey(searchPattern))
                     {
-                        connectionString =  MappedConnectionStrings[searchPattern];
+                        connectionString = MappedConnectionStrings[searchPattern];
                         break;
                     }
                     //make the search pattern one part less specific
@@ -92,13 +91,13 @@ namespace Sushi.MicroORM
                 }
 
                 //cache result
-                if(useCaching)
+                if (useCaching)
                 {
-                    CachedConnectionStrings[type] = connectionString;                    
+                    CachedConnectionStrings[type] = connectionString;
                 }
                 return connectionString;
-            }            
-            
+            }
+
             return DefaultConnectionString;
         }
     }

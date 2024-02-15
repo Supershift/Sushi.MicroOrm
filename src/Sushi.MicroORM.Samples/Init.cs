@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Sushi.MicroORM.Samples
 {
@@ -22,7 +20,7 @@ namespace Sushi.MicroORM.Samples
                 var configuration = configurationBuilder.Build();
 
                 string connectionString = configuration.GetConnectionString("TestDatabase");
-                DatabaseConfiguration.SetDefaultConnectionString(connectionString);                
+                DatabaseConfiguration.SetDefaultConnectionString(connectionString);
             }
             else
             {

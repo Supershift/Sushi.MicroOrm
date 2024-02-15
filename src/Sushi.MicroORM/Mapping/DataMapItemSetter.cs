@@ -1,12 +1,6 @@
-﻿using Sushi.MicroORM.Supporting;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Data;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.Mapping
 {
@@ -16,10 +10,12 @@ namespace Sushi.MicroORM.Mapping
     public class DataMapItemSetter
     {
         internal DataMapItem _dbcol;
+
         /// <summary>
         /// The database column configuration
         /// </summary>
-        public DataMapItem DataItem { get { return _dbcol; } }
+        public DataMapItem DataItem
+        { get { return _dbcol; } }
 
         internal DataMapItemSetter(DataMapItem dbcol)
         {
@@ -46,7 +42,7 @@ namespace Sushi.MicroORM.Mapping
         {
             _dbcol.Length = length;
             return this;
-        }        
+        }
 
         /// <summary>
         /// Sets the property to read-only, indicating the underlying column cannot be modified. UPDATE and INSERT statements will not alter the mapped column.
@@ -57,7 +53,6 @@ namespace Sushi.MicroORM.Mapping
             _dbcol.IsReadOnly = true;
             return this;
         }
-
 
         /// <summary>
         /// Sets the alias for the database column.
@@ -71,7 +66,7 @@ namespace Sushi.MicroORM.Mapping
 
         /// <summary>
         /// Sets a value indicating the underlying column is an identity column, assigned by the database on INSERT. This is the default for columns mapped with <see cref="DataMap{T}.Id(Expression{Func{T, object}}, string)"/>.
-        /// </summary>        
+        /// </summary>
         /// <returns></returns>
         public DataMapItemSetter Identity()
         {
@@ -81,7 +76,7 @@ namespace Sushi.MicroORM.Mapping
 
         /// <summary>
         /// Sets a value indicating the underlying column is assigned by the application. This is the default for columns mapped with <see cref="DataMap{T}.Map(Expression{Func{T, object}}, string)" />.
-        /// </summary>        
+        /// </summary>
         /// <returns></returns>
         public DataMapItemSetter Assigned()
         {
@@ -89,5 +84,4 @@ namespace Sushi.MicroORM.Mapping
             return this;
         }
     }
-
 }

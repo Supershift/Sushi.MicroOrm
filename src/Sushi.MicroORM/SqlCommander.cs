@@ -1,12 +1,8 @@
-﻿using System;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Web;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Data;
-
-using System.Threading.Tasks;
 using System.Threading;
-using Microsoft.Data.SqlClient;
+using System.Threading.Tasks;
 
 namespace Sushi.MicroORM
 {
@@ -15,35 +11,36 @@ namespace Sushi.MicroORM
     /// </summary>
     internal class SqlCommander : IDisposable
     {
-        private SqlCommand Command;        
-        private SqlConnection Connection;
+        private readonly SqlCommand Command;
+        private readonly SqlConnection Connection;
         internal string Parameterlist;
         private bool m_Disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlCommander"/> class.
         /// </summary>
-        /// <param name="connectionString">The connection.</param>                
+        /// <param name="connectionString">The connection.</param>
         /// <param name="commandTimeout">The wait time before terminating the attempt to execute a command and generating an error.</param>
         public SqlCommander(string connectionString, int? commandTimeout)
         {
             if (string.IsNullOrWhiteSpace(connectionString))
                 throw new ArgumentNullException(nameof(connectionString));
 
-            this.Parameterlist = string.Empty;            
-            this.Commandtype = CommandType.Text;
-            this.ConnectionString = connectionString;
-            this.CommandTimeout = commandTimeout;
+            Parameterlist = string.Empty;
+            Commandtype = CommandType.Text;
+            ConnectionString = connectionString;
+            CommandTimeout = commandTimeout;
 
             //create sql connection
             Connection = new SqlConnection(ConnectionString);
 
             //create a command
-            Command = new SqlCommand() {
+            Command = new SqlCommand()
+            {
                 Connection = Connection
             };
             //set the commands time out
-            if(commandTimeout.HasValue)
+            if (commandTimeout.HasValue)
                 Command.CommandTimeout = commandTimeout.Value;
         }
 
@@ -62,7 +59,7 @@ namespace Sushi.MicroORM
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!this.m_Disposed)
+            if (!m_Disposed)
             {
                 if (disposing)
                 {
@@ -72,7 +69,7 @@ namespace Sushi.MicroORM
                         Connection.Close();
                 }
             }
-            this.m_Disposed = true;
+            m_Disposed = true;
         }
 
         /// <summary>
@@ -82,17 +79,17 @@ namespace Sushi.MicroORM
         ~SqlCommander()
         {
             Dispose(false);
-        }        
+        }
 
         /// <summary>
         /// The database connectionString
         /// </summary>
         /// <value>The connection string.</value>
         public string ConnectionString { get; protected set; }
-                
+
         /// <summary>
         /// Get or sets the SQL statement that will be executed.
-        /// </summary>        
+        /// </summary>
         public string SqlText
         {
             get { return Command.CommandText; }
@@ -102,7 +99,6 @@ namespace Sushi.MicroORM
             }
         }
 
-        
         /// <summary>
         /// Gets or sets the commandtype.
         /// </summary>
@@ -112,36 +108,22 @@ namespace Sushi.MicroORM
         /// <summary>
         /// Gets or sets the wait time in seconds before terminating the attempt to execute a command and generating an error.
         /// </summary>
-        public int? CommandTimeout { get; protected set; }        
-
-        /// <summary>
-        /// Removes unnecessary whitespaces and line endings from <paramref name="sqlText"/>.
-        /// </summary>
-        /// <param name="sqlText">The SQL text.</param>
-        /// <returns></returns>
-        private static string CleanSql(string sqlText)
-        {
-            sqlText = Regex.Replace(sqlText, "\n", "");
-            sqlText = Regex.Replace(sqlText, "(  *)", " ");
-            sqlText = Regex.Replace(sqlText, "( , )", " ,");
-            sqlText = Regex.Replace(sqlText, "( = )", " =");
-            return sqlText;
-        }
+        public int? CommandTimeout { get; protected set; }
 
         /// <summary>
         /// Set Sqlparameter as output value
         /// </summary>
         public void SetParameterOutput(string name, SqlDbType type, int length)
         {
-            this.SetParameter(name, null, type, length, ParameterDirection.Output);
-        }        
-        
+            SetParameter(name, null, type, length, ParameterDirection.Output);
+        }
+
         /// <summary>
         /// Set Sqlparameter as input value
         /// </summary>
         public void SetParameterInput(string name, object itemvalue, SqlDbType type)
         {
-            this.SetParameter(name, itemvalue, type, 0, ParameterDirection.Input);
+            SetParameter(name, itemvalue, type, 0, ParameterDirection.Input);
         }
 
         /// <summary>
@@ -149,15 +131,15 @@ namespace Sushi.MicroORM
         /// </summary>
         public void SetParameterInput(string name, object itemvalue, SqlDbType type, string typeName)
         {
-            this.SetParameter(name, itemvalue, type, 0, ParameterDirection.Input, typeName);
-        }                
+            SetParameter(name, itemvalue, type, 0, ParameterDirection.Input, typeName);
+        }
 
         /// <summary>
         /// Set Sqlparameter as input value
         /// </summary>
         public void SetParameterInput(string name, object itemvalue, SqlDbType type, int length)
         {
-            this.SetParameter(name, itemvalue, type, length, ParameterDirection.Input);
+            SetParameter(name, itemvalue, type, length, ParameterDirection.Input);
         }
 
         /// <summary>
@@ -165,7 +147,7 @@ namespace Sushi.MicroORM
         /// </summary>
         public void SetParameterInput(string name, object itemvalue, SqlDbType type, int length, string typeName)
         {
-            this.SetParameter(name, itemvalue, type, length, ParameterDirection.Input, typeName);
+            SetParameter(name, itemvalue, type, length, ParameterDirection.Input, typeName);
         }
 
         /// <summary>
@@ -173,15 +155,16 @@ namespace Sushi.MicroORM
         /// </summary>
         public void SetParameter(string name, object itemvalue, SqlDbType type, int length, ParameterDirection direction)
         {
-            this.SetParameter(name, itemvalue, type, length, 0, direction);
+            SetParameter(name, itemvalue, type, length, 0, direction);
         }
+
         /// <summary>
         /// Set Sql parameter
         /// </summary>
         public void SetParameter(string name, object itemvalue, SqlDbType type, int length, ParameterDirection direction, string typeName)
         {
-            this.SetParameter(name, itemvalue, type, length, 0, direction, typeName);
-        }        
+            SetParameter(name, itemvalue, type, length, 0, direction, typeName);
+        }
 
         /// <summary>
         /// Sets the parameter.
@@ -196,15 +179,15 @@ namespace Sushi.MicroORM
         public void SetParameter(string name, object itemvalue, SqlDbType type, int length, byte scale, ParameterDirection direction, string typeName = null)
         {
             //if we already have the parameter, ignore the call
-            if (this.Command.Parameters.Contains(name)) return;
+            if (Command.Parameters.Contains(name)) return;
 
             //create the parametr and add it to the command's collection of parameters
-            var parameter = this.Command.Parameters.Add(name, type, length);
+            var parameter = Command.Parameters.Add(name, type, length);
 
             parameter.Direction = direction;
             parameter.Scale = scale;
 
-            if(!string.IsNullOrWhiteSpace(typeName))
+            if (!string.IsNullOrWhiteSpace(typeName))
             {
                 parameter.TypeName = typeName;
             }
@@ -224,7 +207,7 @@ namespace Sushi.MicroORM
                 }
             }
 
-            this.Parameterlist += string.Format("{0} = '{1}' ({2})\r\n", name, itemvalue, type.ToString());            
+            Parameterlist += string.Format("{0} = '{1}' ({2})\r\n", name, itemvalue, type.ToString());
         }
 
         /// <summary>
@@ -232,7 +215,7 @@ namespace Sushi.MicroORM
         /// </summary>
         public object GetParameter(string name)
         {
-            return this.Command.Parameters[name].Value;
+            return Command.Parameters[name].Value;
         }
 
         /// <summary>
@@ -240,29 +223,28 @@ namespace Sushi.MicroORM
         /// </summary>
         public int GetParamInt(string name)
         {
-            object param = this.GetParameter(name);
+            object param = GetParameter(name);
             if (param == System.DBNull.Value)
                 return 0;
 
             return int.Parse(param.ToString());
-        }        
+        }
 
-        
         /// <summary>
         /// Executes the <see cref="Command"/> and returns a <see cref="SqlDataReader"/> to read the result set.
         /// </summary>
         /// <value>The exec reader.</value>
         public SqlDataReader ExecReader()
-        {            
+        {
             try
             {
                 Open();
-                var reader = this.Command.ExecuteReader();
+                var reader = Command.ExecuteReader();
                 return reader;
             }
             catch (Exception ex)
             {
-                throw new Exception(this.GetErrorText(ex.Message), ex);
+                throw new Exception(GetErrorText(ex.Message), ex);
             }
             finally
             {
@@ -281,19 +263,19 @@ namespace Sushi.MicroORM
             catch (TaskCanceledException) { throw; }
             catch (Exception ex)
             {
-                throw new Exception(this.GetErrorText(ex.Message), ex);
+                throw new Exception(GetErrorText(ex.Message), ex);
             }
             finally
             {
                 Log();
             }
-        }       
+        }
 
         /// <summary>
         /// Execute the SqlCommand non query.
         /// </summary>
         public int ExecNonQuery()
-        {            
+        {
             try
             {
                 Open();
@@ -301,7 +283,7 @@ namespace Sushi.MicroORM
             }
             catch (Exception ex)
             {
-                throw new Exception(this.GetErrorText(ex.Message), ex);
+                throw new Exception(GetErrorText(ex.Message), ex);
             }
             finally
             {
@@ -310,7 +292,7 @@ namespace Sushi.MicroORM
         }
 
         public async Task<int> ExecNonQueryAsync(CancellationToken cancellationToken)
-        {            
+        {
             try
             {
                 await OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -319,7 +301,7 @@ namespace Sushi.MicroORM
             catch (TaskCanceledException) { throw; }
             catch (Exception ex)
             {
-                throw new Exception(this.GetErrorText(ex.Message), ex);
+                throw new Exception(GetErrorText(ex.Message), ex);
             }
             finally
             {
@@ -331,15 +313,15 @@ namespace Sushi.MicroORM
         /// Execute the SqlCommand scalar.
         /// </summary>
         public object ExecScalar()
-        {            
+        {
             try
             {
                 Open();
                 return Command.ExecuteScalar();
             }
             catch (Exception ex)
-            {                
-                throw new Exception(this.GetErrorText(ex.Message), ex);
+            {
+                throw new Exception(GetErrorText(ex.Message), ex);
             }
             finally
             {
@@ -356,8 +338,8 @@ namespace Sushi.MicroORM
             }
             catch (TaskCanceledException) { throw; }
             catch (Exception ex)
-            {   
-                throw new Exception(this.GetErrorText(ex.Message), ex);
+            {
+                throw new Exception(GetErrorText(ex.Message), ex);
             }
             finally
             {
@@ -387,13 +369,13 @@ namespace Sushi.MicroORM
         }
 
         public void Open()
-        {   
+        {
             if (Connection.State != ConnectionState.Open)
                 Connection.Open();
         }
 
         public async Task OpenAsync(CancellationToken cancellationToken)
-        {   
+        {
             if (Connection.State != ConnectionState.Open)
                 await Connection.OpenAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -406,8 +388,8 @@ namespace Sushi.MicroORM
         private string GetErrorText(string error)
         {
             return string.Format("Error while executing<br/>{0}<br/>{1}<br/><br/><b>{2}</b>",
-                this.SqlText,
-                this.Parameterlist,
+                SqlText,
+                Parameterlist,
                 error);
         }
     }

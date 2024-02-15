@@ -4,18 +4,14 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using static Sushi.MicroORM.Mapping.DataMap;
 
 namespace Sushi.MicroORM.Mapping
 {
     /// <summary>
     /// Represents the mapping between database objects and code objects.
     /// </summary>
-    public class DataMap 
-    {   
+    public class DataMap
+    {
         /// <summary>
         /// Initializes a new instance of <see cref="DataMap"/> for a type defined by <paramref name="mappedType"/>.
         /// </summary>
@@ -44,7 +40,7 @@ namespace Sushi.MicroORM.Mapping
         /// <param name="tableName"></param>
         public void Table(string tableName)
         {
-            TableName = tableName;            
+            TableName = tableName;
         }
 
         /// <summary>
@@ -59,7 +55,7 @@ namespace Sushi.MicroORM.Mapping
         public List<DataMapItem> GetPrimaryKeyColumns()
         {
             return Items.Where(x => x.IsPrimaryKey).ToList();
-        }        
+        }
 
         /// <summary>
         /// Validates if this map can be used to generate queries.
@@ -69,8 +65,6 @@ namespace Sushi.MicroORM.Mapping
             if (string.IsNullOrWhiteSpace(TableName))
                 throw new Exception("This mapping cannot be used to generate queries because no tablename is defined. Use Map.Table() to specify a tablename.");
         }
-
-        
     }
 
     /// <summary>
@@ -84,15 +78,14 @@ namespace Sushi.MicroORM.Mapping
         /// </summary>
         public DataMap() : base(typeof(T))
         {
-            
-        }        
+        }
 
         /// <summary>
-        /// Maps the property defined by <paramref name="memberExpression"/> to <paramref name="columnName"/> as (part of) a primary key. By default, the property will be mapped as an 
+        /// Maps the property defined by <paramref name="memberExpression"/> to <paramref name="columnName"/> as (part of) a primary key. By default, the property will be mapped as an
         /// identity column.
         /// </summary>
         /// <param name="memberExpression"></param>
-        /// <param name="columnName"></param>        
+        /// <param name="columnName"></param>
         /// <returns></returns>
         public DataMapItemSetter Id(Expression<Func<T, object>> memberExpression, string columnName)
         {
@@ -101,7 +94,7 @@ namespace Sushi.MicroORM.Mapping
                 Sender = this,
                 Column = columnName,
                 IsPrimaryKey = true,
-                IsIdentity = true                
+                IsIdentity = true
             };
 
             var members = ReflectionHelper.GetMemberTree(memberExpression);
@@ -121,11 +114,11 @@ namespace Sushi.MicroORM.Mapping
         /// <param name="columnName"></param>
         /// <returns></returns>
         public DataMapItemSetter Map(Expression<Func<T, object>> memberExpression, string columnName)
-        { 
+        {
             DataMapItem dbcol = new DataMapItem
             {
                 Sender = this,
-                Column = columnName                
+                Column = columnName
             };
 
             var members = ReflectionHelper.GetMemberTree(memberExpression);

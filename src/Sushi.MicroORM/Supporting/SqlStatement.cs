@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Sushi.MicroORM.Supporting
 {
     /// <summary>
     /// Represents a SQL statement to be executed against a database.
     /// </summary>
-    /// <typeparam name="TMapped">The mapped type that was used to generate the statement.</typeparam>    
+    /// <typeparam name="TMapped">The mapped type that was used to generate the statement.</typeparam>
     public class SqlStatement<TMapped>
-    {        
+    {
         /// <summary>
         /// Creates a new instance of <see cref="SqlStatement{TMapped}"/>.
         /// </summary>
@@ -40,14 +38,17 @@ namespace Sushi.MicroORM.Supporting
         /// Gets or sets the INTO clause of an INSERT statement, ie. INTO MyTable(MyColumn1, MyColumn2).
         /// </summary>
         public string InsertIntoClause { get; set; }
+
         /// <summary>
         /// Gets or sets the VALUES clause of an INSERT statement, ie. VALUES (@myValue1, @myValue2).
         /// </summary>
         public string InsertValuesClause { get; set; }
+
         /// <summary>
         /// Get or sets the SET clause of an UPDATE statement, ie. SET MyColumn1 = @myValue1, MyColumn2 = @myValue2.
         /// </summary>
         public string UpdateSetClause { get; set; }
+
         /// <summary>
         /// Gets or sets the output clause of the statement, ie. OUTPUT Inserted.MyColumn.
         /// </summary>
@@ -99,9 +100,11 @@ namespace Sushi.MicroORM.Supporting
                     case DMLStatementType.Insert:
                         result = $"{DmlClause}\r\n{InsertIntoClause}\r\n{OutputClause}\r\n{InsertValuesClause}";
                         break;
+
                     case DMLStatementType.Update:
                         result = $"{DmlClause}\r\n{UpdateSetClause}\r\n{OutputClause}\r\n{FromClause}\r\n{WhereClause}";
                         break;
+
                     default:
                         result = $"{DmlClause}\r\n{FromClause}\r\n{WhereClause}\r\n{OrderByClause}";
                         if (AddPagingRowCountStatement)

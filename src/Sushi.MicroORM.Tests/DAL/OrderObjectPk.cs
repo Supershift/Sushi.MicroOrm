@@ -1,13 +1,8 @@
 ﻿using Sushi.MicroORM.Mapping;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.Tests.DAL
 {
-    
     public class OrderObjectAsPk
     {
         public class OrderMap : DataMap<OrderObjectAsPk>
@@ -37,6 +32,4 @@ namespace Sushi.MicroORM.Tests.DAL
         public decimal? Amount { get; set; }
         public double? Measurement { get; set; }
     }
-
-    
 }

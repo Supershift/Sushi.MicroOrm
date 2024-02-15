@@ -1,13 +1,10 @@
 ﻿using Sushi.MicroORM.Mapping;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.Tests.DAL
 {
-    [DataMap(typeof(OrderMap))]    
+    [DataMap(typeof(OrderMap))]
     public class Order
     {
         public class OrderMap : DataMap<Order>
@@ -42,9 +39,8 @@ namespace Sushi.MicroORM.Tests.DAL
                 Map(x => x.DeliveryTime2, "Order_DeliveryTime2");
                 Map(x => x.Amount, "Order_Amount");
                 Map(x => x.Measurement, "Order_Measurement");
-                
             }
-        }        
+        }
 
         public int ID;
         public int CustomerID;
@@ -62,13 +58,11 @@ namespace Sushi.MicroORM.Tests.DAL
         {
             var connector = new Connector<Order>();
             var filter = connector.CreateDataFilter();
-            
+
             filter.Add(x => x.CustomerID, customerID);
-            
+
             var result = connector.FetchAll(filter);
             return result;
         }
     }
-
-    
 }

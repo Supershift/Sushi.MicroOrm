@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Sushi.MicroORM
 {
@@ -10,7 +6,7 @@ namespace Sushi.MicroORM
     /// Represents the result to a query which returned multiple entities.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class QueryListResult<T> : List<T> 
+    public class QueryListResult<T> : List<T>
     {
         /// <summary>
         /// After a query is performed the total number of rows for the supplied where clause is set here.

@@ -3,12 +3,7 @@ using Sushi.MicroORM.Supporting;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM
 {
@@ -23,11 +18,11 @@ namespace Sushi.MicroORM
 
         /// <summary>
         /// Determines the best matching <see cref="SqlDbType"/> for <paramref name="type"/>.
-        /// </summary>        
+        /// </summary>
         /// <returns></returns>
         public static SqlDbType GetSqlDbType(Type type)
         {
-            //if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)            
+            //if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)
             var underlyingType = Nullable.GetUnderlyingType(type);
             if (underlyingType != null)
                 type = underlyingType;
@@ -62,7 +57,6 @@ namespace Sushi.MicroORM
                 sqlDbType = SqlDbType.Time;
             else if (type == typeof(byte[]))
                 sqlDbType = SqlDbType.VarBinary;
-            
 
             return sqlDbType;
         }
@@ -92,7 +86,7 @@ namespace Sushi.MicroORM
 
                     dataColumn.ColumnName = databaseColumn.Column;
 
-                    //nullable types are not supported, the underlying type needs to be provided 
+                    //nullable types are not supported, the underlying type needs to be provided
                     var type = ReflectionHelper.GetMemberType(databaseColumn.MemberInfoTree);
                     var underlyingType = Nullable.GetUnderlyingType(type);
                     if (underlyingType != null)

@@ -1,9 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM
 {
@@ -14,13 +9,13 @@ namespace Sushi.MicroORM
     {
         /// <summary>
         /// Adds a default implementation for the <see cref="Connector{T}"/> service.
-        /// </summary>        
+        /// </summary>
         /// <returns></returns>
-        public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString) 
+        public static IServiceCollection AddMicroORM(this IServiceCollection services, string defaultConnectionString)
         {
             // todo: use options or builder pattern for configuration
             DatabaseConfiguration.SetDefaultConnectionString(defaultConnectionString);
-            
+
             services.AddTransient(typeof(Connector<>));
 
             return services;

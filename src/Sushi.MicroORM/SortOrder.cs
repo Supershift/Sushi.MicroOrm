@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Sushi.MicroORM
+﻿namespace Sushi.MicroORM
 {
     /// <summary>
     /// Specifies the options available for ordering data.
@@ -13,6 +9,7 @@ namespace Sushi.MicroORM
         /// Data is sorted ascending.
         /// </summary>
         ASC,
+
         /// <summary>
         /// Data is sorted descending.
         /// </summary>

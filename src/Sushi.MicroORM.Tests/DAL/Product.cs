@@ -1,12 +1,9 @@
 ﻿using Sushi.MicroORM.Mapping;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.Tests.DAL
-{   
+{
     public class Product
     {
         public class ProductMap : DataMap<Product>
@@ -30,7 +27,7 @@ namespace Sushi.MicroORM.Tests.DAL
         {
             public string Name { get; set; }
             public string Description { get; set; }
-            public ProducType? ProductTypeID { get; set; }
+            public ProductType? ProductTypeID { get; set; }
             public Identification Identification { get; set; }
         }
 
@@ -41,11 +38,11 @@ namespace Sushi.MicroORM.Tests.DAL
             public Guid GUID { get; set; }
         }
 
-        public int ID { get; set; }        
+        public int ID { get; set; }
         public decimal Price { get; set; }
         public ProductMetaData MetaData { get; set; }
 
-        public enum ProducType
+        public enum ProductType
         {
             Hifi = 1,
             Computer = 2,

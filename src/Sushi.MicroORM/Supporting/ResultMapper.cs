@@ -2,7 +2,6 @@
 using Sushi.MicroORM.Mapping;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Sushi.MicroORM.Supporting
 {
@@ -13,8 +12,8 @@ namespace Sushi.MicroORM.Supporting
     {
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="T"/> using the provided <paramref name="map"/>.
-        /// </summary>                   
-        public static T MapToSingleResult<T>(SqlDataReader reader, DataMap<T> map, FetchSingleMode fetchSingleMode) where T : new() 
+        /// </summary>
+        public static T MapToSingleResult<T>(SqlDataReader reader, DataMap<T> map, FetchSingleMode fetchSingleMode) where T : new()
         {
             var instance = new T();
             //read the first row from the result
@@ -24,27 +23,28 @@ namespace Sushi.MicroORM.Supporting
                 //map the columns of the first row to the instance, using the map
                 SetResultValuesToObject(reader, map, instance);
             }
-            else            
+            else
             {
-                //return default or empty object, based on configuration                
+                //return default or empty object, based on configuration
                 switch (fetchSingleMode)
                 {
                     case FetchSingleMode.ReturnDefaultWhenNotFound:
                         instance = default(T);
                         break;
+
                     case FetchSingleMode.ReturnNewObjectWhenNotFound:
                         break;
                 }
             }
-                                    
+
             return instance;
         }
 
         /// <summary>
         /// Maps the first row found in <paramref name="reader"/> to an object of type <typeparamref name="TResult"/>
-        /// </summary>          
-        /// <param name="reader"></param>        
-        public static TResult MapToSingleResultScalar<TResult>(SqlDataReader reader) 
+        /// </summary>
+        /// <param name="reader"></param>
+        public static TResult MapToSingleResultScalar<TResult>(SqlDataReader reader)
         {
             //read the first row from the result
             bool recordFound = reader.Read();
@@ -54,19 +54,19 @@ namespace Sushi.MicroORM.Supporting
                 var value = reader.GetValue(0);
                 //does it have the correct type?
                 if (value is TResult)
-                    return (TResult)value;                
+                    return (TResult)value;
             }
-            
+
             return default(TResult);
         }
 
         /// <summary>
-        /// Maps all rows found in the first resultset of <paramref name="reader"/> to a collectiobn of objects of type <typeparamref name="T"/> using the provided <paramref name="map"/>.        
+        /// Maps all rows found in the first resultset of <paramref name="reader"/> to a collectiobn of objects of type <typeparamref name="T"/> using the provided <paramref name="map"/>.
         /// If <paramref name="reader"/> contains a second resultset, it is expected to contain a scalar value that will be used to set <see cref="PagingData.NumberOfRows"/>.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="reader"></param>
-        /// <param name="map"></param>        
+        /// <param name="map"></param>
         public static List<T> MapToMultipleResults<T>(SqlDataReader reader, DataMap<T> map) where T : new()
         {
             var result = new List<T>();
@@ -75,16 +75,16 @@ namespace Sushi.MicroORM.Supporting
             {
                 T instance = new T();
                 SetResultValuesToObject(reader, map, instance);
-                result.Add(instance);                
-            }            
+                result.Add(instance);
+            }
 
             return result;
         }
 
         /// <summary>
         /// Converts the first column of all rows found in <paramref name="reader"/> to an object of type <typeparamref name="TResult"/>
-        /// </summary>          
-        /// <param name="reader"></param>        
+        /// </summary>
+        /// <param name="reader"></param>
         public static QueryListResult<TResult> MapToMultipleResultsScalar<TResult>(SqlDataReader reader)
         {
             var result = new QueryListResult<TResult>();
@@ -96,7 +96,7 @@ namespace Sushi.MicroORM.Supporting
                 if (value is TResult)
                     result.Add((TResult)value);
                 else
-                    result.Add(default(TResult));        
+                    result.Add(default(TResult));
             }
 
             return result;

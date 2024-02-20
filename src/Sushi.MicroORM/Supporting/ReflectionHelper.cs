@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.Supporting
 {
@@ -26,8 +23,10 @@ namespace Sushi.MicroORM.Supporting
             {
                 case MemberTypes.Field:
                     return ((FieldInfo)memberInfo).FieldType;
+
                 case MemberTypes.Property:
                     return ((PropertyInfo)memberInfo).PropertyType;
+
                 default:
                     throw new ArgumentException($"Only {MemberTypes.Field} and {MemberTypes.Property} are supported.", nameof(memberInfo));
             }
@@ -60,7 +59,7 @@ namespace Sushi.MicroORM.Supporting
                 throw new ArgumentException("cannot contain zero items", nameof(memberInfoTree));
 
             foreach (var memberInfo in memberInfoTree)
-            {                    
+            {
                 entity = GetMemberValue(memberInfo, entity);
                 if (entity == null)
                     return null;
@@ -83,8 +82,10 @@ namespace Sushi.MicroORM.Supporting
             {
                 case MemberTypes.Field:
                     return ((FieldInfo)memberInfo).GetValue(entity);
+
                 case MemberTypes.Property:
                     return ((PropertyInfo)memberInfo).GetValue(entity);
+
                 default:
                     throw new ArgumentException($"Only {MemberTypes.Field} and {MemberTypes.Property} are supported.", nameof(memberInfo));
             }
@@ -98,10 +99,10 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="entity"></param>
         public static void SetMemberValue(MemberInfo memberInfo, object value, object entity)
         {
-            // if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)            
+            // if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)
             var type = GetMemberType(memberInfo);
             var underlyingType = Nullable.GetUnderlyingType(type);
-            if(underlyingType != null)
+            if (underlyingType != null)
             {
                 type = underlyingType;
             }
@@ -111,27 +112,27 @@ namespace Sushi.MicroORM.Supporting
                 value = null;
             }
             else
-            {                
+            {
                 value = ConvertValueToEnum(value, type);
             }
 
             // custom support for converting to DateOnly and TimeOnly
-            if(type == typeof(DateOnly) && value is DateTime dt1)
+            if (type == typeof(DateOnly) && value is DateTime dt1)
             {
                 value = DateOnly.FromDateTime(dt1);
             }
-            else if(type == typeof(TimeOnly))
+            else if (type == typeof(TimeOnly))
             {
-                switch(value)
+                switch (value)
                 {
                     case DateTime dt2:
                         value = TimeOnly.FromDateTime(dt2);
                         break;
+
                     case TimeSpan ts:
                         value = TimeOnly.FromTimeSpan(ts);
                         break;
                 }
-                
             }
 
             try
@@ -141,18 +142,20 @@ namespace Sushi.MicroORM.Supporting
                     case MemberTypes.Field:
                         ((FieldInfo)memberInfo).SetValue(entity, value);
                         break;
+
                     case MemberTypes.Property:
                         ((PropertyInfo)memberInfo).SetValue(entity, value, null);
                         break;
+
                     default:
                         throw new ArgumentException($"Only {MemberTypes.Field} and {MemberTypes.Property} are supported.", nameof(memberInfo));
-                }                
+                }
             }
             catch (Exception innerException)
             {
                 string valueType = value == null ? "unknown (=NULL)" : value.GetType().ToString();
                 string message = $"Error while setting the {memberInfo.Name} member with an object of type {value}";
-                    
+
                 throw new Exception(message, innerException);
             }
         }
@@ -192,8 +195,6 @@ namespace Sushi.MicroORM.Supporting
             SetMemberValue(lastMemberInfo, value, entity);
         }
 
-
-
         /// <summary>
         /// Converts <paramref name="value"/> to an enumeration member if <paramref name="type"/> or its underlying <see cref="Type"/> is an <see cref="Enum"/>.
         /// </summary>
@@ -201,7 +202,7 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="type"></param>
         /// <returns></returns>
         public static object ConvertValueToEnum(object value, Type type)
-        {   
+        {
             //if the type is an enum, we need to convert the value to the enum's type
             if (type.IsEnum)
             {
@@ -222,7 +223,7 @@ namespace Sushi.MicroORM.Supporting
                 throw new ArgumentNullException(nameof(expression));
 
             //get body of the expression
-            var body = expression.Body;            
+            var body = expression.Body;
 
             var current = body;
             var result = new List<MemberInfo>();
@@ -240,10 +241,12 @@ namespace Sushi.MicroORM.Supporting
                         result.Add(memberExpression.Member);
                         current = ((MemberExpression)current).Expression;
                         break;
+
                     case ParameterExpression parameterExpression:
                         //this is the root node
                         current = null;
                         break;
+
                     default:
                         //unsupported expression type
                         throw new Exception($"Unsupported expression type {current.GetType()} in: {body}, only MemberExpressions are supported.");
@@ -256,7 +259,6 @@ namespace Sushi.MicroORM.Supporting
                 result.Reverse();
 
             return result;
-        }       
-        
+        }
     }
 }

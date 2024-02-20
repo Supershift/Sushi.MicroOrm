@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.Mapping
 {
     /// <summary>
     /// Defines the connection between a class and a <see cref="DataMap"/>. Set the attribute on the class you want to map the <see cref="DataMap"/> against.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class)]    
+    [AttributeUsage(AttributeTargets.Class)]
     public class DataMapAttribute : Attribute
     {
         /// <summary>

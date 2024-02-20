@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Sushi.MicroORM.Tests.DAL;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -13,8 +11,10 @@ namespace Sushi.MicroORM.Tests
     [TestClass]
     public class ConnectorTestAsync
     {
-        Connector<Order> ConnectorOrders { get { return new Connector<Order>(); } }
-        Connector<Product> ConnectorProducts { get { return new Connector<Product>(); } }
+        private Connector<Order> ConnectorOrders
+        { get { return new Connector<Order>(); } }
+        private Connector<Product> ConnectorProducts
+        { get { return new Connector<Product>(); } }
 
         [TestMethod]
         public async Task FetchSingleByIDAsync()
@@ -96,7 +96,7 @@ namespace Sushi.MicroORM.Tests
             filter.AddParameter("@orderID", id);
 
             var order = await ConnectorOrders.FetchSingleAsync(sql, filter);
-            
+
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
             Assert.IsTrue(order?.ID == id);
@@ -116,7 +116,6 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchAllAsync()
         {
-            
             var orders = await ConnectorOrders.FetchAllAsync();
             foreach (var order in orders)
             {
@@ -163,12 +162,9 @@ namespace Sushi.MicroORM.Tests
                 var orders = await ConnectorOrders.FetchAllAsync(filter, cts.Token);
                 Assert.Fail();
             }
-            catch(TaskCanceledException)
+            catch (TaskCanceledException)
             {
-                
             }
-            
-            
         }
 
         [TestMethod]
@@ -217,13 +213,13 @@ namespace Sushi.MicroORM.Tests
         {
             var request = new DataQuery<Order>();
             request.AddPaging(5, 2);
-                
+
             var orders = await ConnectorOrders.FetchAllAsync(request);
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
             }
-            
+
             Console.WriteLine("Total number of rows: " + orders.TotalNumberOfRows);
             Console.WriteLine("Total number of pages: " + orders.TotalNumberOfPages);
 
@@ -255,7 +251,6 @@ namespace Sushi.MicroORM.Tests
         [TestMethod]
         public async Task FetchWhereInIntAsync()
         {
-
             var request = new DataQuery<Order>();
             //request.WhereClause.Add(new DatabaseDataValueColumn("Order_Key", System.Data.SqlDbType.Int, new int[] { 1, 2,3 }, ComparisonOperator.In));
             request.Add(x => x.ID, new int[] { 1, 2, 3 }, ComparisonOperator.In);
@@ -272,7 +267,7 @@ namespace Sushi.MicroORM.Tests
         public async Task FetchWhereInEmptyEnumerableAsync()
         {
             var request = new DataQuery<Order>();
-            
+
             request.Add(x => x.ID, new int[] { }, ComparisonOperator.In);
             var orders = await ConnectorOrders.FetchAllAsync(request);
             foreach (var order in orders)
@@ -325,6 +320,7 @@ namespace Sushi.MicroORM.Tests
             var order = await ConnectorOrders.FetchSingleAsync(-1);
             Assert.IsTrue(order == null);
         }
+
         [TestMethod]
         public async Task ExecuteNonQueryAsync()
         {
@@ -357,7 +353,6 @@ WHERE Product_Key = @productID";
             filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
             var count = await ConnectorProducts.ExecuteScalarAsync<int>(query, filter);
             Assert.AreEqual(1, count);
-
         }
 
         [TestMethod]
@@ -369,7 +364,7 @@ WHERE Product_Key = @productID";
 SELECT DISTINCT(Product_ProductTypeID)
 FROM cat_Products";
 
-            var productTypes = await ConnectorProducts.ExecuteSetAsync<Product.ProducType?>(query);
+            var productTypes = await ConnectorProducts.ExecuteSetAsync<Product.ProductType?>(query);
 
             foreach (var productType in productTypes)
             {
@@ -391,7 +386,7 @@ FROM cat_Products
 WHERE Product_Key > @productID";
             var filter = new DataQuery<Product>();
             filter.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
-            var productTypes = await ConnectorProducts.ExecuteSetAsync<Product.ProducType?>(query, filter);
+            var productTypes = await ConnectorProducts.ExecuteSetAsync<Product.ProductType?>(query, filter);
 
             foreach (var productType in productTypes)
             {
@@ -421,7 +416,6 @@ WHERE Product_Key > @productID";
             //save the order
             var order = ConnectorOrders.FetchSingle(20);
 
-
             string newComments = DateTime.UtcNow.ToString();
 
             order.Comments = newComments;
@@ -431,7 +425,6 @@ WHERE Product_Key > @productID";
 
             //retrieve order again from database
             order = await ConnectorOrders.FetchSingleAsync(20);
-
 
             Assert.AreEqual(newComments, order.Comments);
         }
@@ -473,7 +466,6 @@ WHERE Product_Key > @productID";
                     }
                 },
                 Price = 12.50M,
-                
             };
             await ConnectorProducts.InsertAsync(product);
         }
@@ -521,10 +513,9 @@ WHERE Product_Key > @productID";
             //retrieve updated object
             var updatedIdentifier = await connector.FetchSingleAsync(filter);
 
-
             Assert.IsNotNull(updatedIdentifier);
             Assert.AreEqual(newIdentifier.Batch, updatedIdentifier.Batch);
-        }       
+        }
 
         [TestMethod]
         public async Task InsertComposityKeyAsync()

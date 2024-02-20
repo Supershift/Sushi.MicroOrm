@@ -1,7 +1,6 @@
 ﻿using Sushi.MicroORM.Supporting;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -19,7 +18,7 @@ namespace Sushi.MicroORM.Samples.Caching
         private ConcurrentDictionary<string, object> Cache { get; } = new ConcurrentDictionary<string, object>();
 
         public override SqlStatementResult<TResult> ExecuteSqlStatement<TResult>(SqlStatement<T> statement)
-        {            
+        {
             SqlStatementResult<TResult> result = null;
 
             //does this operation interact with the cache?
@@ -39,10 +38,11 @@ namespace Sushi.MicroORM.Samples.Caching
                         Cache.TryRemove(keyToDelete, out object val);
 
                     break;
+
                 case DMLStatementType.Select:
                     //check if in cache, return if found
                     string key = GenerateKey(statement);
-                    if(Cache.TryGetValue(key, out object cachedValue))
+                    if (Cache.TryGetValue(key, out object cachedValue))
                     {
                         if (cachedValue is SqlStatementResult<TResult>)
                             result = (SqlStatementResult<TResult>)cachedValue;
@@ -55,6 +55,7 @@ namespace Sushi.MicroORM.Samples.Caching
                         Cache.TryAdd(key, result);
                     }
                     break;
+
                 default:
                     result = base.ExecuteSqlStatement<TResult>(statement);
                     break;
@@ -67,10 +68,10 @@ namespace Sushi.MicroORM.Samples.Caching
         {
             //use the type name of the mapped class as first key part
             //this will allow us to clear all objects in the cache with the same type
-            var firstKeyPart = typeof(T).FullName;           
+            var firstKeyPart = typeof(T).FullName;
 
             //hash the query and parameters
-            var query = statement.GenerateSqlStatement();            
+            var query = statement.GenerateSqlStatement();
             using (var md5 = System.Security.Cryptography.MD5.Create())
             {
                 //hash query

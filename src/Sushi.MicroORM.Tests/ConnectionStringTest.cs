@@ -1,14 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Sushi.MicroORM.Tests
 {
     [TestClass]
     public class ConnectionStringTest
-    {        
+    {
         [TestMethod]
         public void FetchMappedByPartOfName()
         {
@@ -50,7 +47,7 @@ namespace Sushi.MicroORM.Tests
         public void ReplaceConnectionString()
         {
             var provider = new ConnectionStringProvider();
-            
+
             provider.AddConnectionString(typeof(object).ToString(), "a");
             var resultA = provider.GetConnectionString(typeof(object));
 

@@ -1,7 +1,4 @@
 ﻿using Sushi.MicroORM.Mapping;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Sushi.MicroORM.Tests.DAL
 {

@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.Mapping
 {
@@ -24,7 +20,7 @@ namespace Sushi.MicroORM.Mapping
         /// <typeparam name="Y"></typeparam>
         public void AddMapping<T, Y>() where T : new() where Y : DataMap<T>, new()
         {
-            DataMapTypes[typeof(T)] = typeof(Y);            
+            DataMapTypes[typeof(T)] = typeof(Y);
         }
 
         /// <summary>
@@ -57,11 +53,12 @@ namespace Sushi.MicroORM.Mapping
             var objectType = typeof(T);
             return GetMapForType(objectType);
         }
+
         /// <summary>
         /// Returns an instance of DataMap for <param name="type"></param> if declared. If not, null is returned
-        /// </summary>        
+        /// </summary>
         /// <returns></returns>
-        public DataMap GetMapForType(System.Type type)
+        public DataMap GetMapForType(Type type)
         {
             Type dataMapType = null;
             if (DataMapTypes.ContainsKey(type))
@@ -76,7 +73,7 @@ namespace Sushi.MicroORM.Mapping
                 if (dataMapType != null)
                 {
                     //add the map to collection of datamaptypes
-                    this.AddMapping(type, dataMapType);
+                    AddMapping(type, dataMapType);
                 }
             }
 
@@ -92,7 +89,7 @@ namespace Sushi.MicroORM.Mapping
                         dataMapType = nestedType;
                         //do we need to check if it is a generic type for T?
                         //add the map to collection of datamaptypes
-                        this.AddMapping(type, dataMapType);
+                        AddMapping(type, dataMapType);
                         break;
                     }
                 }
@@ -101,17 +98,18 @@ namespace Sushi.MicroORM.Mapping
             if (dataMapType != null)
             {
                 //MV: I think this instance should be singleton, so there is only one datamap object for each DataMap. Maybe that singleton container should be backed by MemoryCache to avoid memory issues
-                var dataMap = (DataMap)System.Activator.CreateInstance(dataMapType);
+                var dataMap = (DataMap)Activator.CreateInstance(dataMapType);
                 return dataMap;
             }
             else
                 return null;
         }
+
         /// <summary>
         /// Checks if type<param name="type"/> has a DataMapAttribute defining. Returns null if no attribute found
         /// </summary>
         /// <returns></returns>
-        public static Type RetrieveMapFromAttributeOnType(System.Type type)
+        public static Type RetrieveMapFromAttributeOnType(Type type)
         {
             var dataMapAttribute = Attribute.GetCustomAttribute(type, typeof(DataMapAttribute)) as DataMapAttribute;
             if (dataMapAttribute != null)

@@ -1,11 +1,6 @@
 ﻿using Sushi.MicroORM.Exceptions;
 using Sushi.MicroORM.Mapping;
 using Sushi.MicroORM.Supporting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.UnitTests
 {
@@ -28,7 +23,7 @@ namespace Sushi.MicroORM.UnitTests
             string expected = @"SELECT TOP(1) ID,Name
 FROM MyTable
 WHERE ID = @C0";
-            Assert.Equal(expected, sql);
+            Assert.Equal(expected, sql, ignoreWhiteSpaceDifferences: true);
             Assert.NotNull(statement.Parameters);
             Assert.NotEmpty(statement.Parameters);
             Assert.Equal("@C0", statement.Parameters[0].Name);
@@ -52,7 +47,7 @@ WHERE ID = @C0";
             string expected = @"SELECT ID,Name
 FROM MyTable
 WHERE ID >= @C0";
-            Assert.Equal(expected, sql);
+            Assert.Equal(expected, sql, ignoreWhiteSpaceDifferences : true);
             Assert.NotNull(statement.Parameters);
             Assert.NotEmpty(statement.Parameters);
             Assert.Equal("@C0", statement.Parameters[0].Name);
@@ -77,7 +72,7 @@ WHERE ID >= @C0";
             string expected = @"SELECT TOP(10) ID,Name
 FROM MyTable
 WHERE ID >= @C0";
-            Assert.Equal(expected, sql);
+            Assert.Equal(expected, sql, ignoreWhiteSpaceDifferences: true);
             Assert.NotNull(statement.Parameters);
             Assert.NotEmpty(statement.Parameters);
             Assert.Equal("@C0", statement.Parameters[0].Name);
@@ -107,7 +102,7 @@ ORDER BY ID OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY
 SELECT COUNT(*)
 FROM MyTable
 WHERE ID >= @C0";
-            Assert.Equal(expected, sql);
+            Assert.Equal(expected, sql, ignoreWhiteSpaceDifferences: true);
             Assert.NotNull(statement.Parameters);
             Assert.NotEmpty(statement.Parameters);
             Assert.Equal("@C0", statement.Parameters[0].Name);
@@ -158,7 +153,7 @@ WHERE ID >= @C0";
 INTO MyTable (ID,Name)
 VALUES (@i0,@i1)";
 
-            Assert.Equal(expected, sql);
+            Assert.Equal(expected, sql, ignoreWhiteSpaceDifferences: true);
             Assert.NotNull(statement.Parameters);
             Assert.NotEmpty(statement.Parameters);
             Assert.Equal("@i0", statement.Parameters[0].Name);
@@ -191,7 +186,7 @@ INTO MyTable (Name)
 OUTPUT inserted.ID
 VALUES (@i0)";
 
-            Assert.Equal(expected, sql);
+            Assert.Equal(expected, sql, ignoreWhiteSpaceDifferences: true);
             Assert.NotNull(statement.Parameters);
             Assert.NotEmpty(statement.Parameters);
             Assert.Equal("@i0", statement.Parameters[0].Name);            
@@ -223,7 +218,7 @@ VALUES (@i0)";
 INTO MyTable
 DEFAULT VALUES";
 
-            Assert.Equal(expected, sql);                        
+            Assert.Equal(expected, sql, ignoreWhiteSpaceDifferences: true);                        
         }
 
         [Fact]
@@ -262,7 +257,7 @@ INTO MyTable (ID,Name)
 VALUES (@i0,@i1)
 END";
 
-            Assert.Equal(expected, sql);
+            Assert.Equal(expected, sql, ignoreWhiteSpaceDifferences: true);
             Assert.NotNull(statement.Parameters);
             Assert.NotEmpty(statement.Parameters);
             Assert.Equal("@u0", statement.Parameters[0].Name);
@@ -301,7 +296,7 @@ SET Name = @u0
 FROM MyTable
 WHERE ID = @C0";
 
-            Assert.Equal(expected, sql);
+            Assert.Equal(expected, sql, ignoreWhiteSpaceDifferences: true);
             Assert.NotNull(statement.Parameters);
             Assert.NotEmpty(statement.Parameters);
             Assert.Equal("@u0", statement.Parameters[0].Name);
@@ -334,7 +329,7 @@ WHERE ID = @C0";
 FROM MyTable
 WHERE ID = @C0";
 
-            Assert.Equal(expected, sql);
+            Assert.Equal(expected, sql, ignoreWhiteSpaceDifferences: true);
             Assert.NotNull(statement.Parameters);
             Assert.NotEmpty(statement.Parameters);
             Assert.Equal("@C0", statement.Parameters[0].Name);

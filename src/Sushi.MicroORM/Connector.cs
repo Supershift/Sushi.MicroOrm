@@ -236,7 +236,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <inheritdoc />
-        public async Task UpdateAsync(T entity, DataQuery<T> query, CancellationToken cancellationToken)
+        public virtual async Task UpdateAsync(T entity, DataQuery<T> query, CancellationToken cancellationToken)
         {
             // generate sql statement
             var sqlStatement = _sqlStatementGenerator.GenerateSqlStatment(DMLStatementType.Update, SqlStatementResultCardinality.None, _map, query, entity, false);
@@ -264,7 +264,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <inheritdoc />
-        public async Task InsertOrUpdateAsync(T entity, bool isIdentityInsert, CancellationToken cancellationToken)
+        public virtual async Task InsertOrUpdateAsync(T entity, bool isIdentityInsert, CancellationToken cancellationToken)
         {
             var query = new DataQuery<T>(_map);
             // generate query condition for primary key
@@ -296,7 +296,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <inheritdoc />
-        public async Task InsertAsync(T entity, bool isIdentityInsert, CancellationToken cancellationToken)
+        public virtual async Task InsertAsync(T entity, bool isIdentityInsert, CancellationToken cancellationToken)
         {
             // generate insert statement
             var query = CreateQuery();

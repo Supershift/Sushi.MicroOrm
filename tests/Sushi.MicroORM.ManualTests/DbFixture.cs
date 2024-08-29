@@ -30,7 +30,7 @@ public class DbFixture : IAsyncLifetime
         var dacService = new DacServices(connectionString);
 
         // import bacpacs
-        var databaseNames = new List<string>() { "TestDatabase", "Customers", "Addresses" };
+        var databaseNames = new List<string> { "TestDatabase", "Customers", "Addresses" };
         using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
         foreach (var databaseName in databaseNames)
         {
@@ -50,7 +50,7 @@ public class DbFixture : IAsyncLifetime
 
     private void AddMicroOrm(ServiceCollection serviceCollection, string connectionString)
     {
-        SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);// (connectionStringx.ConnectionString);
+        SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
         // primary
         builder.InitialCatalog = "TestDatabase";
         var primaryConnectionString = new SqlServerConnectionString(builder.ToString(), true);

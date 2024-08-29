@@ -340,13 +340,13 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <inheritdoc />
-        public virtual async Task ExecuteNonQueryAsync(DataQuery<T> query)
+        public async Task ExecuteNonQueryAsync(DataQuery<T> query)
         {
             await ExecuteNonQueryAsync(query, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public virtual async Task ExecuteNonQueryAsync(DataQuery<T> query, CancellationToken cancellationToken)
+        public async Task ExecuteNonQueryAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
             await ExecuteScalarAsync<int>(query, cancellationToken).ConfigureAwait(false);
         }

@@ -29,6 +29,7 @@ jobs:
       # Restore dependencies
       - name: Restore dependencies
         run: dotnet restore
+        working-directory: src/
 
       # Build the solution
       - name: Build

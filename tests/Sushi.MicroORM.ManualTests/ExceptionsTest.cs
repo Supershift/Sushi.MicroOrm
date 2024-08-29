@@ -1,46 +1,21 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Sushi.MicroORM.Exceptions;
 using Sushi.MicroORM.ManualTests.DAL;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.ManualTests
 {
-    [TestClass]
+    [Collection("Database collection")]
     public class ExceptionsTest
     {   
         private readonly ServiceProvider _serviceProvider;
 
-        public ExceptionsTest()
+        public ExceptionsTest(DbFixture fixture)
         {
-            var configuration = new ConfigurationBuilder()
-            .AddUserSecrets(Assembly.GetExecutingAssembly(), optional: true)
-            .AddEnvironmentVariables()
-            .Build();
-
-            // get connection strings
-            string connectionString = configuration.GetConnectionString("TestDatabase");            
-
-            // register dependencies
-            IServiceCollection serviceCollection = new ServiceCollection();
-
-            // add micro orm
-            serviceCollection.AddMicroORM(connectionString, c =>
-            {
-                
-            });
-
             // build provider
-            _serviceProvider = serviceCollection.BuildServiceProvider();
+            _serviceProvider = fixture.Services;
         }
 
-        [TestMethod]
+        [Fact]
         public async Task UniqueIndexViolation()
         {
             // arrange
@@ -51,10 +26,10 @@ namespace Sushi.MicroORM.ManualTests
             var act = async () => await connector.InsertAsync(uniqueValue);
 
             // assert
-            await Assert.ThrowsExceptionAsync<UniqueIndexViolationException>(act);
+            await Assert.ThrowsAsync<UniqueIndexViolationException>(act);
         }
 
-        [TestMethod]
+        [Fact]
         public async Task PrimaryKeyConstraintViolation()
         {
             // arrange
@@ -65,10 +40,10 @@ namespace Sushi.MicroORM.ManualTests
             var act = async () => await connector.InsertAsync(uniqueValue);
 
             // assert            
-            await Assert.ThrowsExceptionAsync<UniqueConstraintViolationException>(act);
+            await Assert.ThrowsAsync<UniqueConstraintViolationException>(act);
         }
 
-        [TestMethod]
+        [Fact]
         public async Task ConstraintViolation()
         {
             // arrange
@@ -80,10 +55,10 @@ namespace Sushi.MicroORM.ManualTests
             var act = async () => await connector.DeleteAsync(query);
 
             // assert            
-            await Assert.ThrowsExceptionAsync<ConstraintViolationException>(act);
+            await Assert.ThrowsAsync<ConstraintViolationException>(act);
         }
 
-        [TestMethod]
+        [Fact]
         public async Task BulkInsert_UniqueIndexViolation()
         {
             // arrange
@@ -94,7 +69,7 @@ namespace Sushi.MicroORM.ManualTests
             var act = async () => await connector.BulkInsertAsync(new [] { uniqueValue });
 
             // assert
-            await Assert.ThrowsExceptionAsync<UniqueIndexViolationException>(act);
+            await Assert.ThrowsAsync<UniqueIndexViolationException>(act);
         }
     }
 }

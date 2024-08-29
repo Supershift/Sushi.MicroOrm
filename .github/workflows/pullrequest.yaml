@@ -15,9 +15,9 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: src/
+    # defaults:
+    #   run:
+    #     working-directory: src/
     steps:
       # Checkout current branch
       - name: Checkout
@@ -32,10 +32,12 @@ jobs:
       # Restore dependencies
       - name: Restore dependencies
         run: dotnet restore
+        working-directory: src/
 
       # Build the solution
       - name: Build
         run: dotnet build --no-restore
+        working-directory: src/
 
       # Run tests and generate code coverage
       - name: Test

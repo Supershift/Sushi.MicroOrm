@@ -4,12 +4,9 @@ using Sushi.MicroORM.Exceptions;
 using Sushi.MicroORM.Mapping;
 using Sushi.MicroORM.Supporting;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.PortableExecutable;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -207,13 +204,13 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <inheritdoc />
-        public async Task SaveAsync(T entity)
+        public virtual async Task SaveAsync(T entity)
         {
             await SaveAsync(entity, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public async Task SaveAsync(T entity, CancellationToken cancellationToken)
+        public virtual async Task SaveAsync(T entity, CancellationToken cancellationToken)
         {
             if (IsInsert(entity))
                 await InsertAsync(entity, false, cancellationToken).ConfigureAwait(false);
@@ -222,13 +219,13 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <inheritdoc />
-        public async Task UpdateAsync(T entity)
+        public virtual async Task UpdateAsync(T entity)
         {
             await UpdateAsync(entity, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public async Task UpdateAsync(T entity, CancellationToken cancellationToken)
+        public virtual async Task UpdateAsync(T entity, CancellationToken cancellationToken)
         {
             var query = new DataQuery<T>(_map);
             AddPrimaryKeyToquery(query, entity);
@@ -258,7 +255,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <inheritdoc />
-        public async Task InsertOrUpdateAsync(T entity)
+        public virtual async Task InsertOrUpdateAsync(T entity)
         {
             await InsertOrUpdateAsync(entity, false, CancellationToken.None).ConfigureAwait(false);
         }
@@ -284,13 +281,13 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <inheritdoc />
-        public async Task InsertAsync(T entity)
+        public virtual async Task InsertAsync(T entity)
         {
             await InsertAsync(entity, false, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public async Task InsertAsync(T entity, bool isIdentityInsert)
+        public virtual async Task InsertAsync(T entity, bool isIdentityInsert)
         {
             await InsertAsync(entity, isIdentityInsert, CancellationToken.None).ConfigureAwait(false);
         }
@@ -343,31 +340,31 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
         }
 
         /// <inheritdoc />
-        public async Task ExecuteNonQueryAsync(DataQuery<T> query)
+        public virtual async Task ExecuteNonQueryAsync(DataQuery<T> query)
         {
             await ExecuteNonQueryAsync(query, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public async Task ExecuteNonQueryAsync(DataQuery<T> query, CancellationToken cancellationToken)
+        public virtual async Task ExecuteNonQueryAsync(DataQuery<T> query, CancellationToken cancellationToken)
         {
             await ExecuteScalarAsync<int>(query, cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public async Task BulkInsertAsync(IEnumerable<T> entities)
+        public virtual async Task BulkInsertAsync(IEnumerable<T> entities)
         {
             await BulkInsertAsync(entities, false);
         }
         
         /// <inheritdoc />      
-        public async Task BulkInsertAsync(IEnumerable<T> entities, bool identityInsert)
+        public virtual async Task BulkInsertAsync(IEnumerable<T> entities, bool identityInsert)
         {
             await BulkInsertAsync(entities, identityInsert, SqlBulkCopyOptions.Default, CancellationToken.None);
         }
 
         /// <inheritdoc />
-        public async Task BulkInsertAsync(IEnumerable<T> entities, bool isIdentityInsert, SqlBulkCopyOptions sqlBulkCopyOptions, CancellationToken cancellationToken)
+        public virtual async Task BulkInsertAsync(IEnumerable<T> entities, bool isIdentityInsert, SqlBulkCopyOptions sqlBulkCopyOptions, CancellationToken cancellationToken)
         {
             // todo: move all this logic away from connector to dedicated bulk insert objects, into meaningful testable methods
             if (entities?.Any() != true)

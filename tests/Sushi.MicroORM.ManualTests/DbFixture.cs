@@ -22,11 +22,10 @@ public class DbFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-
         // setup databases
         await _msSqlContainer.StartAsync();
+        return;
         var connectionString = _msSqlContainer.GetConnectionString();
-
         var dacService = new DacServices(connectionString);
 
         // import bacpacs
@@ -64,11 +63,20 @@ public class DbFixture : IAsyncLifetime
         var addressesConnectionString = new SqlServerConnectionString(builder.ToString(), true);
 
         // add micro orm
-        serviceCollection.AddMicroORM(primaryConnectionString, c =>
-        {
-            c.ConnectionStringProvider.AddMappedConnectionString(typeof(DAL.Customers.Customer), customersConnectionString);
-            c.ConnectionStringProvider.AddMappedConnectionString(typeof(DAL.Customers.Address), addressesConnectionString);
-        });
+        serviceCollection.AddMicroORM(
+            primaryConnectionString,
+            c =>
+            {
+                c.ConnectionStringProvider.AddMappedConnectionString(
+                    typeof(DAL.Customers.Customer),
+                    customersConnectionString
+                );
+                c.ConnectionStringProvider.AddMappedConnectionString(
+                    typeof(DAL.Customers.Address),
+                    addressesConnectionString
+                );
+            }
+        );
     }
 
     [CollectionDefinition("Database collection")]
@@ -91,4 +99,3 @@ public class DbFixture : IAsyncLifetime
         }
     }
 }
-

@@ -1,7 +1,6 @@
-﻿using Microsoft.Build.Framework;
+﻿using DotNet.Testcontainers.Builders;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.SqlServer.Dac;
 using Testcontainers.MsSql;
 
@@ -14,7 +13,19 @@ public class DbFixture : IAsyncLifetime
 
     public DbFixture()
     {
-        _msSqlContainer = new MsSqlBuilder().Build();
+        _msSqlContainer = new MsSqlBuilder()
+            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            .WithPortBinding(11143, 1433)
+            .WithWaitStrategy(
+                Wait.ForUnixContainer()
+                    .UntilCommandIsCompleted(
+                        "/opt/mssql-tools18/bin/sqlcmd",
+                        "-C",
+                        "-Q",
+                        "SELECT 1;"
+                    )
+            )
+            .Build();
     }
 
     public async Task DisposeAsync()
@@ -25,9 +36,8 @@ public class DbFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         // setup databases
-        System.Diagnostics.Trace.WriteLine("MY: Container starting");
         await _msSqlContainer.StartAsync();
-        System.Diagnostics.Trace.WriteLine("MY: Container started");
+
         var connectionString = _msSqlContainer.GetConnectionString();
         var dacService = new DacServices(connectionString);
 

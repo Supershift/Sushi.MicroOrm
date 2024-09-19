@@ -10,13 +10,11 @@ namespace Sushi.MicroORM.ManualTests;
 public class DbFixture : IAsyncLifetime
 {
     private readonly MsSqlContainer _msSqlContainer;
-    private readonly ILogger<DbFixture> _logger;
     public ServiceProvider Services { get; private set; } = null!;
 
-    public DbFixture(ILogger<DbFixture> logger)
+    public DbFixture()
     {
         _msSqlContainer = new MsSqlBuilder().Build();
-        _logger = logger;
     }
 
     public async Task DisposeAsync()
@@ -27,10 +25,9 @@ public class DbFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         // setup databases
-        _logger.LogInformation("MY: Container starting");
+        System.Diagnostics.Trace.WriteLine("MY: Container starting");
         await _msSqlContainer.StartAsync();
-        _logger.LogInformation("MY: Container started");
-        return;
+        System.Diagnostics.Trace.WriteLine("MY: Container started");
         var connectionString = _msSqlContainer.GetConnectionString();
         var dacService = new DacServices(connectionString);
 

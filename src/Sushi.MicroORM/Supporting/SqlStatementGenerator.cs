@@ -136,7 +136,7 @@ END";
             {
                 var column = columnsToUpdate[i];
                 string parameterName = $"@u{i}";
-                var value = ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity);
+                var value = ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity, column.Converter);
                 statement.Parameters.Add(new SqlStatementParameter(parameterName, value, column.SqlType, column.Length));
                 setClauseColumns.Add($"{column.Column} = {parameterName}");
             }
@@ -204,7 +204,7 @@ END";
                 {
                     var column = insertColumns[i];
                     string parameterName = $"@i{i}";
-                    var value = ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity);
+                    var value = ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity, column.Converter);
                     statement.Parameters.Add(new SqlStatementParameter(parameterName, value, column.SqlType, column.Length));
                 }
                 //create column list

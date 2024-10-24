@@ -59,7 +59,7 @@ namespace Sushi.MicroORM
             var primaryKeyColumns = _map.GetPrimaryKeyColumns();
             foreach (var column in primaryKeyColumns)
             {
-                query.Add(column.Column, column.SqlType, ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity));
+                query.Add(column.Column, column.SqlType, ReflectionHelper.GetMemberValue(column.MemberInfoTree, entity, column.Converter));
             }
 
             if (primaryKeyColumns.Count == 0)
@@ -73,7 +73,7 @@ namespace Sushi.MicroORM
             if (identityColumn == null)
                 throw new Exception(@"No identity primary key column defined on mapping. Cannot determine if action is update or insert. 
 Please map identity primary key column using Map.Id(). Otherwise use Insert or Update explicitly.");
-            var currentIdentityValue = ReflectionHelper.GetMemberValue(identityColumn.MemberInfoTree, entity);
+            var currentIdentityValue = ReflectionHelper.GetMemberValue(identityColumn.MemberInfoTree, entity, identityColumn.Converter);
             return currentIdentityValue == null || currentIdentityValue as int? == 0;
         }
 
@@ -254,7 +254,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
             // use reflection to set the identity value on the entity's property mapped as identity column
             var identityColumn = _map.Items.FirstOrDefault(x => x.IsIdentity);
             if (identityValue > 0 && identityColumn != null)
-                ReflectionHelper.SetMemberValue(identityColumn.MemberInfoTree, identityValue, entity, _options.DateTimeKind);
+                ReflectionHelper.SetMemberValue(identityColumn.MemberInfoTree, identityValue, entity, _options.DateTimeKind, identityColumn.Converter);
         }
 
         /// <inheritdoc />
@@ -384,7 +384,7 @@ Please map identity primary key column using Map.Id(). Otherwise use Insert or U
                     //set values in the row for each column (and only if the column exists in the table definition)
                     if (dataTable.Columns.Contains(databaseColumn.Column))
                     {
-                        var value = ReflectionHelper.GetMemberValue(databaseColumn.MemberInfoTree, entity);
+                        var value = ReflectionHelper.GetMemberValue(databaseColumn.MemberInfoTree, entity, databaseColumn.Converter);
                         //if null, we must use DBNull
                         if (value == null)
                         {

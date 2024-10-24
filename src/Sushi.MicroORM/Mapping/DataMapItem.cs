@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sushi.MicroORM.Converters;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -45,6 +46,11 @@ namespace Sushi.MicroORM.Mapping
         /// Gets or sets the <see cref="SqlDbType"/> of the mapped column.
         /// </summary>
         public SqlDbType SqlType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the converter to use when reading and writing values to the database. WARNING: This is an experimental feature. 
+        /// </summary>
+        public IConverter? Converter { get; set; }
 
         /// <summary>
         /// Gets the statement to use in a select list. If <see cref="Alias"/> is defined, this will return '<see cref="Column"/> as <see cref="Alias"/>.

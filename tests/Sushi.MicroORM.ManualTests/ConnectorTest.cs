@@ -13,7 +13,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
-using NuGet.Frameworks;
 
 namespace Sushi.MicroORM.ManualTests
 {
@@ -21,7 +20,7 @@ namespace Sushi.MicroORM.ManualTests
     public class ConnectorTest
     {
         private readonly IConnector<Order> _connectorOrders;
-        private readonly IConnector<Product> _connectorProducts;                
+        private readonly IConnector<Product> _connectorProducts;
         private readonly ServiceProvider _serviceProvider;
 
         public ConnectorTest()
@@ -76,9 +75,9 @@ namespace Sushi.MicroORM.ManualTests
             int id = 2;
 
             var query = _connectorOrders.CreateQuery();
-            
+
             query.IsReadOnly = true;
-            
+
             query.Add(x => x.ID, id);
 
             var order = await _connectorOrders.GetFirstAsync(query);
@@ -119,7 +118,7 @@ namespace Sushi.MicroORM.ManualTests
 
 
             var order = await _connectorOrders.GetFirstAsync(query);
-            
+
             Assert.IsNotNull(order);
             Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
 
@@ -136,7 +135,7 @@ namespace Sushi.MicroORM.ManualTests
             var product = await connector.GetFirstAsync(query);
 
             Assert.IsNotNull(product);
-            
+
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(product, Newtonsoft.Json.Formatting.Indented));
 
             Assert.IsTrue(product.MetaData.Identification.GUID != Guid.Empty);
@@ -153,10 +152,10 @@ namespace Sushi.MicroORM.ManualTests
             var product = await connector.GetFirstAsync(query);
 
             Assert.IsNotNull(product);
-            
+
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(product, Newtonsoft.Json.Formatting.Indented));
 
-            Assert.IsNull(product.ExternalIdentification);            
+            Assert.IsNull(product.ExternalIdentification);
         }
 
         [TestMethod]
@@ -194,9 +193,9 @@ namespace Sushi.MicroORM.ManualTests
                 var orders = await _connectorOrders.GetAllAsync(filter, cts.Token);
                 Assert.Fail();
             }
-            catch(TaskCanceledException)
+            catch (TaskCanceledException)
             {
-                
+
             }
         }
 
@@ -234,17 +233,17 @@ namespace Sushi.MicroORM.ManualTests
         {
             var request = _connectorOrders.CreateQuery();
             request.AddPaging(5, 2);
-                
+
             var orders = await _connectorOrders.GetAllAsync(request);
             foreach (var order in orders)
             {
                 Console.WriteLine($"{order.ID} - {order.Created} - {order.CustomerID}");
             }
-            
+
             Console.WriteLine("Total number of rows: " + orders.TotalNumberOfRows);
             Console.WriteLine("Total number of pages: " + orders.TotalNumberOfPages);
 
-            Assert.IsTrue(orders.Count == request.Paging?.NumberOfRows);            
+            Assert.IsTrue(orders.Count == request.Paging?.NumberOfRows);
             Assert.IsTrue(orders.TotalNumberOfPages.HasValue);
             Assert.IsTrue(orders.TotalNumberOfRows.HasValue);
         }
@@ -288,7 +287,7 @@ namespace Sushi.MicroORM.ManualTests
         public async Task GetWhereInEmptyEnumerableAsync()
         {
             var request = _connectorOrders.CreateQuery();
-            
+
             request.Add(x => x.ID, new int[] { }, ComparisonOperator.In);
             var orders = await _connectorOrders.GetAllAsync(request);
             foreach (var order in orders)
@@ -420,7 +419,7 @@ FROM cat_Products";
 
         [TestMethod]
         public async Task ExecuteSetWithFilterAsync()
-        {   
+        {
             int productID = 1;
             var sql = @"
 SELECT DISTINCT(Product_ProductTypeID)
@@ -653,7 +652,7 @@ WHERE Product_Key > @productID";
 
             Assert.IsNotNull(updatedIdentifier);
             Assert.AreEqual(newIdentifier.Batch, updatedIdentifier.Batch);
-        }       
+        }
 
         [TestMethod]
         public async Task InsertComposityKeyAsync()
@@ -701,7 +700,7 @@ WHERE Product_Key > @productID";
             {
                 await _connectorProducts.ExecuteNonQueryAsync(query);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 exception = ex;
             }

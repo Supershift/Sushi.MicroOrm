@@ -1,23 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Version>3.1.0</Version>
-    <Authors>Supershift B.V.</Authors>    
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>    
-    <Description>Simple and high performance micro-ORM. Supports SQL Azure and SQL Server 2012 and higher.</Description>    
-    <Copyright>2023 Supershift B.V.</Copyright>    
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>    
-    <PackageProjectUrl>https://github.com/Supershift/Sushi.MicroOrm</PackageProjectUrl>    
-    <RepositoryUrl>https://github.com/Supershift/Sushi.MicroOrm</RepositoryUrl>    
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>    
+    <Authors>Supershift B.V.</Authors>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Description>Simple and high performance micro-ORM. Supports SQL Azure and SQL Server 2012 and higher.</Description>
+    <Copyright>2023 Supershift B.V.</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Supershift/Sushi.MicroOrm</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Supershift/Sushi.MicroOrm</RepositoryUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageIcon>logo.png</PackageIcon>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.3" />
   </ItemGroup>
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">

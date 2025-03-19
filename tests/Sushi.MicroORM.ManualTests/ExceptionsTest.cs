@@ -6,7 +6,7 @@ namespace Sushi.MicroORM.ManualTests
 {
     [Collection("Database collection")]
     public class ExceptionsTest
-    {   
+    {
         private readonly ServiceProvider _serviceProvider;
 
         public ExceptionsTest(DbFixture fixture)
@@ -50,7 +50,7 @@ namespace Sushi.MicroORM.ManualTests
             var connector = _serviceProvider.GetRequiredService<IConnector<Parent>>();
             var query = connector.CreateQuery();
             query.Add(x => x.Id, 1);
-            
+
             // act
             var act = async () => await connector.DeleteAsync(query);
 
@@ -66,7 +66,7 @@ namespace Sushi.MicroORM.ManualTests
             var uniqueValue = new UniqueValue(Guid.NewGuid(), 1234);
 
             // act
-            var act = async () => await connector.BulkInsertAsync(new [] { uniqueValue });
+            var act = async () => await connector.BulkInsertAsync(new[] { uniqueValue });
 
             // assert
             await Assert.ThrowsAsync<UniqueIndexViolationException>(act);

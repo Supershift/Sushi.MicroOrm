@@ -1,0 +1,34 @@
+name: NuGet Publish
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set VERSION variable from Release Tag
+        run: |
+          TAG=${{ github.event.release.tag_name }}
+          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Create MicroOrm NuGet Package
+        working-directory: src/Sushi.MicroOrm
+        run: dotnet pack --configuration Release /p:Version=${VERSION} --output ../nupkgs
+
+      - name: Push to NuGet
+        working-directory: src/nupkgs
+        run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${NUGET_TOKEN}
+        env:
+          NUGET_TOKEN: ${{ secrets.MEDIAKIWI_NUGET }}

@@ -96,20 +96,20 @@ namespace Sushi.MicroORM.Supporting
                 switch (DMLStatement)
                 {
                     case DMLStatementType.Insert:
-                        result = $"{DmlClause}\r\n{InsertIntoClause}\r\n{OutputClause}\r\n{InsertValuesClause}";
+                        result = $"{DmlClause}{Environment.NewLine}{InsertIntoClause}{Environment.NewLine}{OutputClause}{Environment.NewLine}{InsertValuesClause}";
                         break;
                     case DMLStatementType.Update:
-                        result = $"{DmlClause}\r\n{UpdateSetClause}\r\n{OutputClause}\r\n{FromClause}\r\n{WhereClause}";
+                        result = $"{DmlClause}{Environment.NewLine}{UpdateSetClause}{Environment.NewLine}{OutputClause}{Environment.NewLine}{FromClause}{Environment.NewLine}{WhereClause}";
                         break;
                     default:
-                        result = $"{DmlClause}\r\n{FromClause}\r\n{WhereClause}\r\n{OrderByClause}";
+                        result = $"{DmlClause}{Environment.NewLine}{FromClause}{Environment.NewLine}{WhereClause}{Environment.NewLine}{OrderByClause}";
                         if (AddPagingRowCountStatement)
-                            result += "\r\n" + GeneratePagingRowCountSqlStatement();
+                            result += $"{Environment.NewLine}" + GeneratePagingRowCountSqlStatement();
                         break;
                 }
 
                 // remove double line endings
-                result = result.Replace("\r\n\r\n", "\r\n");
+                result = result.Replace($"{Environment.NewLine}{Environment.NewLine}", Environment.NewLine);
                 result = result.TrimEnd();
 
                 return result;
@@ -122,7 +122,7 @@ namespace Sushi.MicroORM.Supporting
         /// <returns></returns>
         private string GeneratePagingRowCountSqlStatement()
         {
-            string result = $"SELECT COUNT(*)\r\n{FromClause}\r\n{WhereClause}";
+            string result = $"SELECT COUNT(*){Environment.NewLine}{FromClause}{Environment.NewLine}{WhereClause}";
             return result;
         }
     }

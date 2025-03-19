@@ -23,8 +23,8 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Create MicroOrm NuGet Package
-        working-directory: src/Sushi.MicroOrm
+      - name: Create MicroORM NuGet Package
+        working-directory: src/Sushi.MicroORM
         run: dotnet pack --configuration Release /p:Version=${VERSION} --output ../nupkgs
 
       - name: Push to NuGet

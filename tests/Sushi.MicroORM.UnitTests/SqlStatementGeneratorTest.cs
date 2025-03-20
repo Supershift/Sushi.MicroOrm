@@ -1,11 +1,6 @@
 ﻿using Sushi.MicroORM.Exceptions;
 using Sushi.MicroORM.Mapping;
 using Sushi.MicroORM.Supporting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sushi.MicroORM.UnitTests
 {

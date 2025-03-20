@@ -50,6 +50,10 @@ namespace Sushi.MicroORM
         /// Adds a default implementation for the <see cref="Connector{T}"/> service.
         /// </summary>        
         /// <returns></returns>
+        /// <param name="services">Service collection to which MicroOrm is added</param>
+        /// <param name="defaultConnectionString">Default connection string used when executing queries</param>
+        /// <param name="config"></param>
+        /// <param name="assemblies"></param>
         public static IServiceCollection AddMicroORM(this IServiceCollection services, ConnectionString defaultConnectionString, Action<MicroOrmConfigurationBuilder>? config, params Assembly[] assemblies) 
         {   
             services.TryAddTransient(typeof(IConnector<>), typeof(Connector<>));            
@@ -77,7 +81,7 @@ namespace Sushi.MicroORM
             if (config != null)
             {
                 config(microOrmBuilder);
-
+                
                 if(microOrmBuilder.Options != null)
                 {
                     optionsBuilder.Configure(microOrmBuilder.Options);

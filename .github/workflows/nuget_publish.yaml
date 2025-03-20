@@ -15,8 +15,6 @@ jobs:
           echo "VERSION=${TAG#v}" >> $GITHUB_ENV
 
       - uses: actions/checkout@v4
-        with:
-          ref: master
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4

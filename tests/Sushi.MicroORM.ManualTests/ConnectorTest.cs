@@ -326,6 +326,7 @@ namespace Sushi.MicroORM.ManualTests
             var order = await _connectorOrders.GetFirstAsync(query);
             Assert.True(order == null);
         }
+
         [Fact]
         public async Task ExecuteNonQueryAsync()
         {
@@ -336,7 +337,7 @@ UPDATE cat_Products
 SET Product_Name = @name
 WHERE Product_Key = @productID";
             var query = _connectorProducts.CreateQuery();
-            query.AddParameter(@"name", System.Data.SqlDbType.VarChar, name);
+            query.AddParameter("@name", System.Data.SqlDbType.VarChar, name);
             query.AddParameter("@productID", System.Data.SqlDbType.Int, productID);
             query.SqlQuery = sql;
             await _connectorProducts.ExecuteNonQueryAsync(query);

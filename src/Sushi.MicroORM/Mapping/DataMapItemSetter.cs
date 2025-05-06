@@ -1,4 +1,5 @@
-﻿using Sushi.MicroORM.Supporting;
+﻿using Sushi.MicroORM.Converters;
+using Sushi.MicroORM.Supporting;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -86,6 +87,17 @@ namespace Sushi.MicroORM.Mapping
         public DataMapItemSetter Assigned()
         {
             _dbcol.IsIdentity = false;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the converter to use when reading and writing values to the database. WARNING: This is an experimental feature.
+        /// </summary>
+        /// <param name="converter"></param>
+        /// <returns></returns>
+        public DataMapItemSetter Converter(IConverter converter)
+        {
+            _dbcol.Converter = converter;
             return this;
         }
     }

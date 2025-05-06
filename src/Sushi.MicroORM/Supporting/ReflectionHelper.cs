@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sushi.MicroORM.Converters;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -22,15 +23,26 @@ namespace Sushi.MicroORM.Supporting
         /// <returns></returns>
         public static Type GetMemberType(MemberInfo memberInfo)
         {
+            Type result;
             switch (memberInfo.MemberType)
             {
                 case MemberTypes.Field:
-                    return ((FieldInfo)memberInfo).FieldType;
+                    result = ((FieldInfo)memberInfo).FieldType;
+                    break;
                 case MemberTypes.Property:
-                    return ((PropertyInfo)memberInfo).PropertyType;
+                    result = ((PropertyInfo)memberInfo).PropertyType;
+                    break;
                 default:
                     throw new ArgumentException($"Only {MemberTypes.Field} and {MemberTypes.Property} are supported.", nameof(memberInfo));
             }
+
+            // if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)            
+            var underlyingType = Nullable.GetUnderlyingType(result);
+            if (underlyingType != null)
+            {
+                result = underlyingType;
+            }
+            return result;
         }
 
         /// <summary>
@@ -50,11 +62,9 @@ namespace Sushi.MicroORM.Supporting
 
         /// <summary>
         /// Gets the value of the deepest level member defined by <paramref name="memberInfoTree"/> on <paramref name="entity"/>.
-        /// </summary>
-        /// <param name="memberInfoTree"></param>
-        /// <param name="entity"></param>
+        /// </summary>        
         /// <returns></returns>
-        public static object? GetMemberValue(List<MemberInfo> memberInfoTree, object? entity)
+        public static object? GetMemberValue(List<MemberInfo> memberInfoTree, object? entity, IConverter? converter)
         {
             if (memberInfoTree == null)
                 throw new ArgumentNullException(nameof(memberInfoTree));
@@ -63,13 +73,21 @@ namespace Sushi.MicroORM.Supporting
             if (memberInfoTree.Count == 0)
                 throw new ArgumentException("cannot contain zero items", nameof(memberInfoTree));
 
+            var result = entity;
             foreach (var memberInfo in memberInfoTree)
-            {                    
-                entity = GetMemberValue(memberInfo, entity);
-                if (entity == null)
+            {
+                result = GetMemberValue(memberInfo, result);
+                if (result == null)
                     return null;
             }
-            return entity;
+
+            if (converter != null)
+            {
+                var sourceType = GetMemberType(memberInfoTree);
+                result = converter.ToDb(result, sourceType);
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -103,7 +121,8 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="value"></param>
         /// <param name="entity"></param>
         /// <param name="dateTimeKind">If not NULL, <see cref="DateTime"/> values are created with this <see cref="DateTimeKind"/>.</param>
-        public static void SetMemberValue(List<MemberInfo> memberInfoTree, object? value, object entity, DateTimeKind? dateTimeKind)
+        /// <param name="converter">Converter to use when setting the value.</param>
+        public static void SetMemberValue(List<MemberInfo> memberInfoTree, object? value, object entity, DateTimeKind? dateTimeKind, IConverter? converter)
         {
             if (memberInfoTree == null)
                 throw new ArgumentNullException(nameof(memberInfoTree));
@@ -148,14 +167,14 @@ namespace Sushi.MicroORM.Supporting
                         {
                             throw new Exception("Cannot use types without a parameterless constructor as subtypes.");
                         }
-                        SetMemberValue(memberInfo, instance, entity, dateTimeKind);
+                        SetMemberValue(memberInfo, instance, entity, dateTimeKind, null);
                     }
                     entity = instance;
                 }
             }
             //now set the db value on the final member
             var lastMemberInfo = memberInfoTree.Last();
-            SetMemberValue(lastMemberInfo, value, entity, dateTimeKind);
+            SetMemberValue(lastMemberInfo, value, entity, dateTimeKind, converter);
         }
 
         /// <summary>
@@ -165,45 +184,48 @@ namespace Sushi.MicroORM.Supporting
         /// <param name="memberInfo"></param>
         /// <param name="value"></param>
         /// <param name="dateTimeKind">If not NULL, <see cref="DateTime"/> values are created with this <see cref="DateTimeKind"/>.</param>
-        public static void SetMemberValue(MemberInfo memberInfo, object? value, object entity, DateTimeKind? dateTimeKind)
-        {
-            // if this is a nullable type, we need to get the underlying type (ie. int?, float?, guid?, etc.)            
-            var targetType = GetMemberType(memberInfo);
-            var underlyingType = Nullable.GetUnderlyingType(targetType);
-            if (underlyingType != null)
-            {
-                targetType = underlyingType;
-            }
+        /// <param name="converter">Converter to use when setting the value.</param>
+        public static void SetMemberValue(MemberInfo memberInfo, object? value, object entity, DateTimeKind? dateTimeKind, IConverter? converter)
+        {            
+            Type targetType = GetMemberType(memberInfo);
+            
 
-            // if the target type is an enum, we need to convert the value to the enum's type
-            value = Utility.ConvertValueToEnum(value, targetType);            
+            if (converter != null)
+            {
+                value = converter.FromDb(value, targetType);
+            }
+            else
+            {
+                // if the target type is an enum, we need to convert the value to the enum's type
+                value = Utility.ConvertValueToEnum(value, targetType);
 
-            // specify datetime kind
-            if (dateTimeKind.HasValue && targetType == typeof(DateTime) && value is DateTime dt && dt.Kind != dateTimeKind.Value)
-            {
-                value = DateTime.SpecifyKind(dt, dateTimeKind.Value);
-            }
-
-            // convert between double/decimal
-            if (targetType == typeof(double) && value is decimal d)
-            {
-                value = Convert.ToDouble(d);
-            }
-            // custom support for converting to DateOnly and TimeOnly
-            else if (targetType == typeof(DateOnly) && value is DateTime dt1)
-            {
-                value = DateOnly.FromDateTime(dt1);
-            }
-            else if (targetType == typeof(TimeOnly))
-            {
-                switch (value)
+                // specify datetime kind
+                if (dateTimeKind.HasValue && targetType == typeof(DateTime) && value is DateTime dt && dt.Kind != dateTimeKind.Value)
                 {
-                    case DateTime dt2:
-                        value = TimeOnly.FromDateTime(dt2);
-                        break;
-                    case TimeSpan ts:
-                        value = TimeOnly.FromTimeSpan(ts);
-                        break;
+                    value = DateTime.SpecifyKind(dt, dateTimeKind.Value);
+                }
+
+                // convert between double/decimal
+                if (targetType == typeof(double) && value is decimal d)
+                {
+                    value = Convert.ToDouble(d);
+                }
+                // custom support for converting to DateOnly and TimeOnly
+                else if (targetType == typeof(DateOnly) && value is DateTime dt1)
+                {
+                    value = DateOnly.FromDateTime(dt1);
+                }
+                else if (targetType == typeof(TimeOnly))
+                {
+                    switch (value)
+                    {
+                        case DateTime dt2:
+                            value = TimeOnly.FromDateTime(dt2);
+                            break;
+                        case TimeSpan ts:
+                            value = TimeOnly.FromTimeSpan(ts);
+                            break;
+                    }
                 }
             }
 

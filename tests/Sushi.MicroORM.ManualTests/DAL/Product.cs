@@ -21,7 +21,8 @@ namespace Sushi.MicroORM.ManualTests.DAL
                 Map(x => x.MetaData.Identification.BarCode, "Product_BarCode");
                 Map(x => x.MetaData.Identification.GUID, "Product_Guid");
                 Map(x => x.MetaData.ProductTypeID, "Product_ProductTypeID");
-                Map(x => x.ExternalIdentification.ExternalID, "Product_ExternalID");
+                Map(x => x.MetaData.Sizes, "Product_Sizes").Converter(new Converters.JsonConverter());
+                Map(x => x.ExternalIdentification!.ExternalID, "Product_ExternalID");                
             }
         }
 
@@ -32,6 +33,7 @@ namespace Sushi.MicroORM.ManualTests.DAL
             public string Description { get; set; }
             public ProducType? ProductTypeID { get; set; }
             public Identification Identification { get; set; }
+            public int[]? Sizes { get; set; }
         }
 
         public class Identification
@@ -48,7 +50,7 @@ namespace Sushi.MicroORM.ManualTests.DAL
         public int ID { get; set; }        
         public decimal Price { get; set; }
         public ProductMetaData MetaData { get; set; }
-        public Identification2? ExternalIdentification { get; set; }
+        public Identification2? ExternalIdentification { get; set; }        
 
         public enum ProducType
         {

@@ -163,7 +163,7 @@ namespace Sushi.MicroORM.Supporting
                             value = null;
                         }
 
-                        ReflectionHelper.SetMemberValue(item.MemberInfoTree, value, instance, _options.DateTimeKind);
+                        ReflectionHelper.SetMemberValue(item.MemberInfoTree, value, instance, _options.DateTimeKind, item.Converter);
                         break;
                     }
                 }

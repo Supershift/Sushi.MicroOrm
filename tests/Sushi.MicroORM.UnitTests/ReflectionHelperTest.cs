@@ -101,7 +101,7 @@ namespace Sushi.MicroORM.UnitTests
             ReflectionHelper.SetMemberValue(memberTree, value, instance, null, null);
 
             // assert
-            Assert.Null(instance.NullableSubProperty);            
+            Assert.Null(instance.NullableSubProperty);
         }
 
         [Fact]
@@ -139,7 +139,7 @@ namespace Sushi.MicroORM.UnitTests
         public void SetMutabableRecordProperty()
         {
             // arrange
-            var instance = new TestRecord() { MutableValue = 10};
+            var instance = new TestRecord() { MutableValue = 10 };
             var memberTree = ReflectionHelper.GetMemberTree<TestRecord>(x => x.MutableValue);
 
             // act
@@ -158,8 +158,8 @@ namespace Sushi.MicroORM.UnitTests
             string expected = "Converted";
             var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.Name);
             var converter = new Mock<IConverter>();
-            converter.Setup(x=>x.FromDb(value, typeof(string))).Returns(expected);
-            
+            converter.Setup(x => x.FromDb(value, typeof(string))).Returns(expected);
+
             // act
             ReflectionHelper.SetMemberValue(memberTree, value, instance, null, converter.Object);
 
@@ -171,7 +171,7 @@ namespace Sushi.MicroORM.UnitTests
         public void GetMemberValue()
         {
             // arrange
-            var instance = new TestClass() { Name = "Joe"};
+            var instance = new TestClass() { Name = "Joe" };
             var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.Name);
 
             // act
@@ -201,13 +201,13 @@ namespace Sushi.MicroORM.UnitTests
         {
             // arrange
             var instance = new TestClass();
-            instance.SubProperty = new SubTestClass(12);            
+            instance.SubProperty = new SubTestClass(12);
             var memberTree = ReflectionHelper.GetMemberTree<TestClass>(x => x.SubProperty.SomeValue);
 
             string expected = "Converted";
 
-            var converter = new Mock<IConverter>();            
-            converter.Setup(x=>x.ToDb(instance.SubProperty.SomeValue, typeof(int))).Returns(expected);
+            var converter = new Mock<IConverter>();
+            converter.Setup(x => x.ToDb(instance.SubProperty.SomeValue, typeof(int))).Returns(expected);
 
             // act
             var result = ReflectionHelper.GetMemberValue(memberTree, instance, converter.Object);
@@ -223,7 +223,7 @@ namespace Sushi.MicroORM.UnitTests
             public SubTestClass? NullableSubProperty { get; set; }
             public SubTestClass? NullableSubField = null;
             public double? DoubleValue { get; set; }
-            public string? Name { get; set; } 
+            public string? Name { get; set; }
         }
 
         private class SubTestClass
@@ -236,6 +236,6 @@ namespace Sushi.MicroORM.UnitTests
             }
 
             public int SomeValue { get; private set; }
-        }        
+        }
     }
 }

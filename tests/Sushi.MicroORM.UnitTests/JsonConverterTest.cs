@@ -10,7 +10,7 @@ namespace Sushi.MicroORM.UnitTests
     public class JsonConverterTest
     {
         [Fact]
-        public void ToStringArray()
+        public void FromDb_StringArray()
         {
             // arrange
             string dbValue = "[\"one\",\"two\",\"three\"]";
@@ -23,6 +23,38 @@ namespace Sushi.MicroORM.UnitTests
 
             // assert
             Assert.IsType(expectedType, result);
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void FromDb_EmptyString()
+        {
+            // arrange
+            string dbValue = "";
+            object? expected = null;      
+            var type = typeof(string[]);
+            var converter = new JsonConverter();
+
+            // act
+            var result = converter.FromDb(dbValue, type);
+
+            // assert            
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void FromDb_Null()
+        {
+            // arrange
+            string? dbValue = null;
+            object? expected = null;
+            var type = typeof(string[]);
+            var converter = new JsonConverter();
+
+            // act
+            var result = converter.FromDb(dbValue, type);
+
+            // assert            
             Assert.Equal(expected, result);
         }
 
